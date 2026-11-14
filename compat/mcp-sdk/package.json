@@ -1,0 +1,8 @@
+{
+  "name": "plumcheck-mcp-compatibility",
+  "private": true,
+  "type": "module",
+  "description": "Official MCP client compatibility checks; not a PlumbCheck runtime dependency.",
+  "scripts": { "test": "node --test check.mjs" },
+  "devDependencies": { "@modelcontextprotocol/sdk": "1.32.2" }
+}

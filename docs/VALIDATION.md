@@ -2,6 +2,14 @@
 
 Date: 14 November 2026.
 
+## MCP interoperability iteration
+
+The dependency-free core suite passes **86/86 tests** locally. The fixture server has also been exercised through the official `@modelcontextprotocol/sdk` **1.32.2** `Client` and `StdioClientTransport`: **7/7 compatibility checks passed** locally. Cases cover connection/discovery, two-step replay, approval denial, argument mismatch, generic JSON response envelopes, a skipped fixture at shutdown, and preserved recorded error responses. These dependencies live in the separate `compat/mcp-sdk` test package; core runtime dependencies remain zero.
+
+Additional raw-protocol checks cover malformed/repeated initialization, payload-free discovery schemas, preserved MCP responses, and final HTML/JSON/JUnit reports from observed client calls. Client-facing tool responses preserve fixture data; report/audit masking remains key-based.
+
+The previous commit `65c7d36` passed all four GitHub jobs on Windows/Linux and Node 22/24: [CI run](https://github.com/stepan4002/plumbcheck/actions/runs/43608142237). This demonstrates the original matrix; the expanded SDK CI steps require their own run after the MCP iteration is pushed.
+
 ## Agent-runner iteration
 
 The complete local suite now passes **76 tests, 0 failures** on the platform below. This includes actual agent-code execution, final-output equality, swallowed and unawaited tool failures, thrown non-Error values, per-case input cloning, closed-session behavior, invalid JSON outputs, and credential masking in assertion evidence. The existing CLI, Studio HTTP, and MCP stdio checks also pass.

@@ -83,7 +83,7 @@ client.verifyComplete();</pre><p>See the runnable <code>examples/customer-suppor
     function render() {
       if (!report) { $('inspector').textContent = 'No report loaded. Run a contract to get started.'; return; }
       $('suite-name').textContent = report.name;
-      $('mode-label').textContent = report.mode === 'agent-replay' ? 'AGENT CODE / REPLAY' : 'FIXTURE REPLAY';
+      $('mode-label').textContent = report.mode === 'agent-replay' ? 'AGENT CODE / REPLAY' : report.mode === 'mcp-replay' ? 'MCP CLIENT / REPLAY' : 'FIXTURE REPLAY';
       $('run-meta').textContent = `${report.passed ? 'PASSED' : 'FAILED'} · ${report.summary.total} checks · ${report.durationMs} ms · ${new Date(report.createdAt).toLocaleString()}`;
       $('passed-count').innerHTML = `${report.summary.passed}<small> / ${report.summary.total}</small>`;
       $('failed-count').textContent = report.summary.failed;

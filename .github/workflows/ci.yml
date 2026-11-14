@@ -19,6 +19,8 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm test
+      - run: npm ci --prefix compat/mcp-sdk --ignore-scripts --no-audit --no-fund
+      - run: npm run test:mcp
       - run: npm run example:sdk
       - run: npm run check:agent
       - run: node bin/plumcheck.js run examples/customer-support/safe.json --out reports/ci

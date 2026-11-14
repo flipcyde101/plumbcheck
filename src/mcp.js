@@ -1,7 +1,9 @@
 import { createInterface } from 'node:readline';
 import { ReplaySession } from './replay.js';
-import { validateSuite } from './validation.js';
+import { validateSuite, object } from './validation.js';
 import { redact } from './redact.js';
+import { evaluateSession, createReport } from './evaluate.js';
+import { fixtureInputSchema, mcpResult } from './mcp-schema.js';
 
 /** Minimal fixture-only MCP stdio adapter, pinned to the 2025-11-25 protocol. */
 export function serveMcp(suite, caseName, { input = process.stdin, output = process.stdout, audit = process.stderr } = {}) {
@@ -9,10 +11,11 @@ export function serveMcp(suite, caseName, { input = process.stdin, output = proc
   const scenario = suite.cases.find(c => c.name === caseName);
   if (!scenario) throw new Error(`Unknown case "${caseName}".`);
   const session = new ReplaySession({ fixtures: scenario.fixtures, policies: suite.policies, context: scenario.context });
+  const start = performance.now();
   let initialized = false;
   const definitions = [...new Set(scenario.fixtures.map(f => f.tool))].map(name => ({
     name, description: 'PlumbCheck fixture-only tool. No live service is connected.',
-    inputSchema: { type: 'object' },
+    inputSchema: fixtureInputSchema(scenario.fixtures.filter(f => f.tool === name)),
   }));
   const send = (message) => output.write(JSON.stringify(message) + '\n');
   const error = (id, code, message) => send({ jsonrpc: '2.0', id, error: { code, message } });
@@ -25,6 +28,11 @@ export function serveMcp(suite, caseName, { input = process.stdin, output = proc
     if (!Object.hasOwn(message, 'id')) return; // Notifications never produce responses.
     const id = message.id;
     if (message.method === 'initialize') {
+      const params = message.params;
+      if (!object(params) || typeof params.protocolVersion !== 'string' || !object(params.capabilities) || !object(params.clientInfo) || typeof params.clientInfo.name !== 'string' || typeof params.clientInfo.version !== 'string') {
+        return error(id, -32602, 'initialize requires protocolVersion, capabilities, and clientInfo with name/version.');
+      }
+      if (initialized) return error(id, -32600, 'This fixture session has already been initialized.');
       initialized = true;
       return send({ jsonrpc: '2.0', id, result: { protocolVersion: '2025-11-25', capabilities: { tools: {} }, serverInfo: { name: 'plumcheck-fixture-server', version: '0.1.0-alpha.1' }, instructions: 'Fixture-only replay. Approval context is a test fixture, not human authentication.' } });
     }
@@ -35,10 +43,12 @@ export function serveMcp(suite, caseName, { input = process.stdin, output = proc
     try {
       const result = await session.callTool(message.params);
       audit.write(JSON.stringify(redact(session.events.at(-1))) + '\n');
-      return send({ jsonrpc: '2.0', id, result });
+      return send({ jsonrpc: '2.0', id, result: mcpResult(result) });
     } catch (failure) {
-      audit.write(JSON.stringify(redact(session.events.at(-1))) + '\n');
-      return send({ jsonrpc: '2.0', id, result: { isError: true, content: [{ type: 'text', text: `${failure.code ?? 'REPLAY_ERROR'}: ${failure.message}` }] } });
+      const event = session.events.at(-1);
+      audit.write(JSON.stringify(redact(event)) + '\n');
+      const result = failure.code === 'TOOL_ERROR' ? { ...mcpResult(event.result), isError: true } : { isError: true, content: [{ type: 'text', text: `${failure.code ?? 'REPLAY_ERROR'}: ${failure.message}` }] };
+      return send({ jsonrpc: '2.0', id, result });
     }
   }
   // Keep input ordering even if the client pipelines multiple requests.
@@ -49,8 +59,10 @@ export function serveMcp(suite, caseName, { input = process.stdin, output = proc
   });
   return new Promise(resolve => lines.on('close', () => {
     pending.then(() => {
-      try { session.verifyComplete(); resolve({ complete: true, session }); }
-      catch (failure) { audit.write(`${failure.code}: ${failure.message}\n`); resolve({ complete: false, session }); }
+      const failures = evaluateSession(session, scenario.expect);
+      for (const failure of failures) audit.write(`${failure.code}: ${failure.message}\n`);
+      const report = createReport(suite, [{ name: scenario.name, description: scenario.description ?? '', passed: failures.length === 0, events: session.events, failures }], start, 'mcp-replay');
+      resolve({ complete: session.cursor === session.fixtures.length, session, report });
     });
   }));
 }

@@ -14,6 +14,7 @@
   "files": ["bin", "src", "web", "examples", "docs", "ROADMAP.md", "CONTRIBUTING.md", "README.md", "LICENSE", "SECURITY.md"],
   "scripts": {
     "test": "node --test",
+    "test:mcp": "npm --prefix compat/mcp-sdk test",
     "demo": "node bin/plumcheck.js demo",
     "start": "node bin/plumcheck.js studio",
     "check": "node bin/plumcheck.js run examples/customer-support/safe.json",

@@ -123,13 +123,15 @@ client.verifyComplete();
 node bin/plumcheck-mcp.js examples/customer-support/safe.json "Read-only order lookup"
 ```
 
-Configure that command as a stdio server in your MCP client, using absolute paths when necessary. It exposes only the selected case's fixture tools and consumes responses in order. The session is single use; restart it to reset. JSON-RPC goes to stdout and masked audit events to stderr.
+Configure that command as a stdio server in your MCP client, using absolute paths when necessary. It exposes the selected case's fixture tools with parameter shapes and consumes responses in order. Literal argument values are not exposed in discovery schemas. The session is single use; restart it to reset. JSON-RPC goes to stdout and masked audit events to stderr.
 
-This minimal adapter targets **MCP 2025-11-25**, with `initialize`, `ping`, `tools/list`, and `tools/call`. It does not claim compatibility with the newer 2026 protocol, HTTP transport, resources, prompts, sampling, elicitation, subscriptions, or tasks. The adapter enforces policies and fixtures; case `expect` assertions are evaluated by the CLI runner, not by the stdio server. Add the CLI check in CI as well. At EOF, the server exits nonzero for unused fixtures or failed tool calls.
+Add `--out reports/mcp` to write HTML, JSON, and JUnit evidence when the client closes its input stream. The server evaluates the **observed calls**, including `expect` assertions, at EOF and exits nonzero on a failed contract. Some clients ignore server exit codes; their test harness should inspect `report.passed` as well.
+
+This minimal adapter targets **MCP 2025-11-25**, with `initialize`, `ping`, `tools/list`, and `tools/call`. It does not claim compatibility with the newer 2026 protocol, HTTP transport, resources, prompts, sampling, elicitation, subscriptions, or tasks. See [MCP setup, response handling, CI reports, and SDK checks](docs/MCP.md).
 
 ## GitHub Actions
 
-The included [CI workflow](.github/workflows/ci.yml) tests Node 22 and 24 on Linux and Windows, checks the corrected contract, and uploads reports even on failure. It needs no credentials or external integrations. This matrix is configured; only the local environment has been exercised before publication.
+The included [CI workflow](.github/workflows/ci.yml) tests Node 22 and 24 on Linux and Windows, checks corrected contracts, exercises the official MCP client, and uploads reports even on failure. The core suite needs no external integrations. The separate SDK compatibility package downloads its locked test dependencies during setup; test execution requires no accounts or model API keys. Use the CI badge for current results.
 
 ## What this does and doesn't guarantee
 

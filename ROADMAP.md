@@ -11,6 +11,8 @@ The goal is a useful agent testing tool that developers choose repeatedly. Popul
 - [x] Actual-agent CLI runner with input/output assertions and swallowed-error detection
 - [x] Expected/actual evidence for call-order, result, and agent-output failures
 - [x] Minimal MCP 2025-11-25 fixture stdio server
+- [x] Fixture-derived tool parameter schemas without literal payload values
+- [x] CI reports and assertions over calls observed from MCP clients
 - [x] Editable Plumbnote-style workbench
 - [x] Search, filters, timeline inspection, standalone HTML report
 - [x] Masked JSON and JUnit for CI
@@ -20,8 +22,8 @@ The goal is a useful agent testing tool that developers choose repeatedly. Popul
 ## Before a public beta
 
 - [ ] Five independent developer walkthroughs and documented unmet needs
-- [ ] Test official MCP SDK clients against the fixture server
-- [ ] Validate the configured Windows/Linux CI matrix on GitHub
+- [x] Test official MCP SDK 1.32.2 against the fixture server
+- [x] Validate the Windows/Linux Node 22/24 CI matrix on GitHub (initial alpha)
 - [ ] Add TypeScript declarations and consumer type checks
 - [ ] Add structured expected-versus-actual diffs for failed arguments/results
 - [ ] Add schema-backed editor completion and full JSON Schema result assertions

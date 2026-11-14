@@ -1,0 +1,150 @@
+{
+  "version": 1,
+  "name": "Customer support agent",
+  "description": "Read an order. Send the right update. Require a trusted approval fixture.",
+  "policies": {
+    "allow": [
+      "orders.lookup",
+      "email.send"
+    ],
+    "deny": [
+      "orders.delete"
+    ],
+    "requireApproval": [
+      "email.send"
+    ]
+  },
+  "cases": [
+    {
+      "name": "Approved customer update",
+      "description": "The intended tool calls, arguments, and result all match.",
+      "context": {
+        "approvedTools": [
+          "email.send"
+        ]
+      },
+      "calls": [
+        {
+          "tool": "orders.lookup",
+          "arguments": {
+            "orderId": "ORD-1042"
+          }
+        },
+        {
+          "tool": "email.send",
+          "arguments": {
+            "to": "customer@example.com",
+            "subject": "Your order update",
+            "body": "Your order has shipped."
+          }
+        }
+      ],
+      "fixtures": [
+        {
+          "tool": "orders.lookup",
+          "arguments": {
+            "orderId": "ORD-1042"
+          },
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"status\": \"shipped\", \"customerEmail\": \"customer@example.com\"}"
+              }
+            ],
+            "structuredContent": {
+              "status": "shipped",
+              "customerEmail": "customer@example.com"
+            }
+          }
+        },
+        {
+          "tool": "email.send",
+          "arguments": {
+            "to": "customer@example.com",
+            "subject": "Your order update",
+            "body": "Your order has shipped."
+          },
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"messageId\": \"mock-001\", \"accepted\": true}"
+              }
+            ],
+            "structuredContent": {
+              "messageId": "mock-001",
+              "accepted": true
+            }
+          }
+        }
+      ],
+      "expect": {
+        "callOrder": [
+          "orders.lookup",
+          "email.send"
+        ],
+        "never": [
+          "orders.delete"
+        ],
+        "results": [
+          {
+            "call": 0,
+            "path": "structuredContent.status",
+            "equals": "shipped"
+          },
+          {
+            "call": 1,
+            "path": "structuredContent.accepted",
+            "equals": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "Read-only order lookup",
+      "description": "A read-only workflow should never send email.",
+      "calls": [
+        {
+          "tool": "orders.lookup",
+          "arguments": {
+            "orderId": "ORD-1042"
+          }
+        }
+      ],
+      "fixtures": [
+        {
+          "tool": "orders.lookup",
+          "arguments": {
+            "orderId": "ORD-1042"
+          },
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"status\": \"shipped\", \"customerEmail\": \"customer@example.com\"}"
+              }
+            ],
+            "structuredContent": {
+              "status": "shipped",
+              "customerEmail": "customer@example.com"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "never": [
+          "email.send",
+          "orders.delete"
+        ],
+        "results": [
+          {
+            "call": 0,
+            "path": "structuredContent.status",
+            "equals": "shipped"
+          }
+        ]
+      }
+    }
+  ]
+}

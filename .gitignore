@@ -1,0 +1,12 @@
+node_modules/
+.gitnexus
+.claude/skills/gitnexus/
+coverage/
+reports/
+recordings/
+.env
+.env.*
+!.env.example
+*.tgz
+.DS_Store
+Thumbs.db

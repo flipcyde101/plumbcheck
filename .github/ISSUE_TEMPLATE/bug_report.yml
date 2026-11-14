@@ -1,0 +1,22 @@
+name: Bug report
+description: Report unexpected behavior with a minimal synthetic reproduction.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include expected behavior and actual behavior. Report security vulnerabilities privately.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Use synthetic data. Do not include secrets or private traces.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: OS, Node.js version, PlumbCheck version

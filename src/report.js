@@ -1,5 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { redact } from './redact.js';
+import { createArtifactTools } from './artifacts.js';
+import { createContractValidator } from './contract.js';
+import { startWorkbench } from '../web/workbench.js';
 
 export const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
@@ -12,5 +15,8 @@ export async function toHtml(report) {
   const template = await readFile(new URL('../web/index.html', import.meta.url), 'utf8');
   // JSON lives in a non-executable script element. Escape < to prevent closing it.
   const payload = JSON.stringify(redact(report)).replace(/</g, '\\u003c');
-  return template.replace('/*__REPORT__*/null', () => payload);
+  const helpers = `(${createArtifactTools.toString()})(${redact.toString()}, (${createContractValidator.toString()})())`;
+  const bindings = { REPORT: payload, ARTIFACT_TOOLS: helpers, WORKBENCH: `(${startWorkbench.toString()})` };
+  // One pass: marker-like strings inside report data must never be reprocessed.
+  return template.replace(/\/\*__(REPORT|ARTIFACT_TOOLS|WORKBENCH)__\*\/null/g, (_match, key) => bindings[key]);
 }

@@ -14,6 +14,8 @@ Approval context is trusted test input. It is not proof that a real human approv
 
 Common credential keys are masked in delivered reports, but free-text secrets and personal data may remain. In-memory SDK reports, raw recorder fixtures, and authored suite files are not automatically sanitized. Review all fixtures and artifacts before committing, uploading, or publishing them. Default `.gitignore` entries exclude reports, recordings, and environment files.
 
+Workbench file/paste imports stay in the browser tab until you explicitly run a planned-call contract on the local server. Imports accept JSON data, not executable modules or HTML. They have byte, nesting, and value-count limits; imported reports are checked for internal consistency, masked for common credential keys, and rendered with escaped text. Reports are not signed or authenticated, and opening one does not rerun it. Contract downloads retain raw fixture values. See [the workbench guide](docs/WORKBENCH.md).
+
 Do not run untrusted JavaScript agents without an independent sandbox. JSON suite files cannot execute code through PlumbCheck, but they can consume local resources. Import only reasonably sized, trusted test data.
 
 Only the current alpha is maintained. No external security audit has been performed.

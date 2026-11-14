@@ -27,6 +27,8 @@ Open **http://127.0.0.1:4173**. No installation step is needed: the project curr
 
 The workbench starts with six synthetic checks, including four deliberate regressions. Inspect the blocked email, then click **Try the fixed agent** to see the corrected contract pass. Edit the contract to experiment. Nothing is sent to an external service.
 
+Use **Open JSON** to import your own contract or saved execution report by file or paste. Edit and download contracts, undo a contract import, or inspect a report with its **not rerun** source label. See [the workbench guide](docs/WORKBENCH.md) for import limits and sharing precautions.
+
 ```sh
 # Intentionally fails with exit code 1; creates reports/demo/report.html
 npm run demo

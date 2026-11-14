@@ -14,6 +14,8 @@
     .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;gap:20px}.toolbar h2{font-size:21px;letter-spacing:-.8px;margin:0}.toolbar h2 span{font:11px var(--mono);color:var(--muted);margin-left:12px}.filters{display:flex;gap:8px}.filters input,.filters select{border:1px solid var(--ink);border-radius:0;background:transparent;padding:9px 11px;font-size:12px}.filters input{width:190px}.workspace{display:grid;grid-template-columns:310px minmax(0,1fr);border:2px solid var(--ink);min-height:430px}.case-list{border-right:2px solid var(--ink)}.case-item{border:0;border-bottom:1px solid var(--line);width:100%;display:block;padding:19px 18px;text-align:left;white-space:normal;background:transparent}.case-item:hover{background:#e8e4db}.case-item[aria-pressed="true"]{background:#e3e0ff;box-shadow:inset 5px 0 0 var(--blue)}.case-top{display:flex;gap:10px;align-items:center;margin-bottom:9px}.case-title{font-weight:700;font-size:13px}.case-meta{font:10px var(--mono);color:var(--muted);padding-left:23px}.status-icon{font-family:var(--mono);font-size:13px;font-weight:bold;color:var(--red)}.status-icon.pass{color:var(--green)}.inspector{padding:26px 28px;min-width:0}.inspector-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}.inspector h3{font-size:24px;letter-spacing:-.9px;margin:0}.badge{font:700 10px var(--mono);border:1px solid currentColor;padding:5px 8px;white-space:nowrap}.badge.fail{background:#ffe1e7;color:var(--red)}.badge.pass{background:#e6f5ce;color:var(--green)}.description{color:var(--muted);line-height:1.6;font-size:13px;margin:12px 0 24px}.timeline-label{margin:24px 0 12px;display:flex;justify-content:space-between}.event{border:1px solid var(--line);margin-bottom:10px;background:#faf8f3}.event summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:13px 15px;font-size:12px}.event summary::-webkit-details-marker{display:none}.event summary .tool{font-family:var(--mono);font-weight:bold;flex:1;overflow-wrap:anywhere}.event summary .event-state{font:10px var(--mono);text-transform:uppercase;color:var(--green)}.event.failed summary .event-state,.event.blocked summary .event-state{color:var(--red)}.event summary .expand{font-size:18px}.event[open] summary .expand{transform:rotate(45deg)}.event.failed,.event.blocked{border-color:#d498a1}.event-body{border-top:1px solid var(--line);padding:15px}.event-body .error{color:var(--red);font:12px/1.6 var(--mono);margin:0 0 16px}.event-body pre{background:#eeece5;border:1px solid #d7d4cb;padding:12px;max-height:240px;overflow:auto;font:11px/1.6 var(--mono);white-space:pre-wrap;overflow-wrap:anywhere}.event-body .eyebrow{font-size:10px}.failures{border-left:3px solid var(--pink);padding:0 0 0 14px;margin-top:21px}.failures p{font-size:12px;line-height:1.6;margin:8px 0}.failures code{font:10px var(--mono);font-weight:bold;color:var(--red)}.empty{padding:24px;color:var(--muted);font-size:13px;line-height:1.6}.complete{border-left:3px solid var(--green);padding-left:13px;color:var(--green);font-size:12px;line-height:1.6;margin-top:22px}
     .bottom{display:flex;justify-content:space-between;gap:20px;align-items:center;padding:20px 0 30px;color:var(--muted);font:10px/1.6 var(--mono)}.bottom a{color:var(--ink)}footer{border-top:2px solid var(--ink);padding:20px 4%;display:flex;justify-content:space-between;font:10px var(--mono);gap:20px}.error-banner{border:2px solid var(--red);padding:16px;margin-bottom:20px;background:#ffe1e7;white-space:pre-wrap;overflow-wrap:anywhere}.panel{padding:25px 0 35px}.panel h2{font-size:32px;letter-spacing:-1px}.panel p{line-height:1.7;max-width:740px}.editor-bar{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:20px 0 15px}.editor-bar select{padding:10px;border:2px solid var(--ink);background:var(--paper)}textarea{display:block;width:100%;min-height:450px;background:#18181b;color:#e6e1d7;border:2px solid var(--ink);padding:22px;font:12px/1.7 var(--mono);resize:vertical;tab-size:2}.guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}.guide-card{border:2px solid var(--ink);padding:25px}.guide-card h3{font-size:21px;letter-spacing:-.6px;margin:0 0 15px}.guide-card pre{font:12px/1.7 var(--mono);background:#e7e4da;padding:15px;overflow:auto}.guide-card p{font-size:13px}.notice{border:1px solid var(--ink);padding:14px 18px;font:11px/1.7 var(--mono);background:#e7e4da;margin-top:20px}[hidden]{display:none!important}.loading::after{content:' …'}
     @media(min-width:1450px){.workspace{grid-template-columns:360px minmax(0,1fr)}}@media(max-width:900px){.hero-side{max-width:275px}.hero-actions{flex-wrap:wrap}.workspace{grid-template-columns:260px minmax(0,1fr)}header{padding:18px 4%}.header-right{gap:15px}nav{gap:15px}.version{display:none}.inspector{padding:23px 20px}.hero h1{font-size:50px}.toolbar h2 span{display:none}}@media(max-width:680px){header{align-items:flex-start;gap:15px}.brand{font-size:23px}.byline{font-size:8px}.header-right{padding-top:5px}nav{gap:11px}nav button{font-size:9px}.hero{display:block;margin-bottom:24px}.hero h1{font-size:49px;letter-spacing:-2.5px}.hero p{font-size:14px}.hero-side{max-width:none;text-align:left;margin-top:22px}.hero-side .sticker{display:none}.hero-actions{justify-content:flex-start}.local-note{margin-top:16px}.stats{grid-template-columns:1fr 1fr}.stat{border-bottom:1px solid var(--ink);padding:15px 18px}.stat:nth-child(2){border-right:0}.stat:nth-child(n+3){border-bottom:0}.stat .number{font-size:31px}.toolbar{align-items:flex-start;flex-direction:column;gap:12px}.filters{width:100%}.filters input{flex:1;width:100px}.workspace{grid-template-columns:minmax(0,1fr)}.case-list{border-right:0;max-height:240px;overflow:auto;border-bottom:2px solid var(--ink)}.case-item{padding:13px 16px}.inspector{padding:23px 16px}.inspector h3{font-size:21px}.runbar{padding:15px}.runbar strong{font-size:13px}.mode{display:none}.bottom{align-items:flex-start;flex-direction:column;gap:8px}.guide-grid{grid-template-columns:1fr}.editor-bar{align-items:stretch;flex-direction:column}footer{font-size:9px;line-height:1.7}.inspector-heading{align-items:flex-start}.event summary{padding:12px 10px;gap:9px}.event summary .event-state{font-size:9px}}
+    .artifact-bar{display:flex;justify-content:space-between;align-items:center;gap:18px;border-top:1px solid var(--line);padding:15px 0;margin-bottom:12px}.artifact-actions,.editor-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.artifact-bar button,.editor-actions button{font-size:12px;padding:9px 12px}.artifact-source{font:10px/1.6 var(--mono);color:var(--muted);overflow-wrap:anywhere}.import-panel{border:2px solid var(--ink);padding:22px;margin-bottom:22px;box-shadow:5px 5px 0 var(--ink)}.import-panel h2{font-size:23px;letter-spacing:-.7px;margin:0 0 10px}.import-panel p{font-size:12px;line-height:1.7;color:var(--muted)}.import-panel textarea{min-height:150px;margin:12px 0;font-size:11px}.import-panel input[type=file]{max-width:100%;font-size:12px;margin:12px 0}.import-panel label{display:block}.draft-note{font:11px/1.7 var(--mono);margin:12px 0 16px;color:var(--muted)}.draft-note.agent{color:var(--blue);border-left:3px solid var(--blue);padding-left:12px}.import-panel .import-actions{display:flex;gap:12px}.saved-report{background:#e3e0ff;padding:8px 12px;border-left:3px solid var(--blue)}@media(max-width:680px){.artifact-bar{align-items:flex-start;flex-direction:column}.artifact-actions{width:100%}.editor-actions{gap:8px}.import-panel{padding:17px}.editor-bar .editor-actions{align-items:stretch;flex-direction:column}.import-panel .import-actions{flex-wrap:wrap}}
+    .case-list,.case-title,.case-meta,.inspector-heading h3,.runbar>div{min-width:0;overflow-wrap:anywhere}.case-meta{white-space:normal}
   </style>
 </head>
 <body data-studio="false">
@@ -27,6 +29,8 @@
       <div><div class="eyebrow">AI AUTOMATIONS. TESTED BEFORE THEY ACT.</div><h1>Test the <em>work.</em><br>Trust the agent.</h1><p>Catch the wrong recipient. Block the forbidden action.<br>Turn tool-call regressions into tests you can ship.</p></div>
       <div class="hero-side"><span class="sticker">✦ LOCAL-FIRST. OPEN SOURCE.</span><div class="hero-actions"><button id="fix" class="lime">Try the fixed agent ↗</button><button id="rerun" class="primary">Run checks →</button></div><div id="local-note" class="local-note">No API keys. No live tools. Just evidence.</div></div>
     </section>
+    <div class="artifact-bar"><span id="artifact-source" class="artifact-source">LOCAL CHECKS / NO FILE LOADED</span><div class="artifact-actions"><button id="resume-local" hidden>Back to local checks</button><button id="open-json" aria-expanded="false" aria-controls="import-panel">Open JSON ↗</button></div></div>
+    <section id="import-panel" class="import-panel" aria-label="Open local JSON" hidden><h2>Bring your own evidence.</h2><p>Open a contract or a PlumbCheck report. Files stay in this tab. Reports are read-only and are not rerun.</p><label for="artifact-file" class="eyebrow">CHOOSE A JSON FILE · 1 MB MAXIMUM</label><input id="artifact-file" type="file" accept=".json,application/json"><label for="import-text" class="eyebrow">OR PASTE JSON</label><textarea id="import-text" spellcheck="false" aria-label="Paste contract or report JSON" placeholder="Paste a contract or report here…"></textarea><div class="import-actions"><button id="open-pasted" class="primary">Open pasted JSON →</button><button id="close-import">Close</button></div></section>
     <div id="error" class="error-banner" role="alert" hidden></div>
     <div id="announcement" role="status" aria-live="polite" class="eyebrow" style="margin-bottom:12px"></div>
     <section id="overview" aria-label="Test results">
@@ -36,7 +40,7 @@
       <div class="workspace"><div id="cases" class="case-list" aria-label="Test cases"></div><section id="inspector" class="inspector" aria-label="Selected test evidence"></section></div>
       <div class="bottom"><span>Replay covers intercepted tool calls. Model reasoning and other I/O are outside this boundary.</span><button id="export" class="quiet mono">Download JSON report ↓</button></div>
     </section>
-    <section id="contract" class="panel" hidden aria-label="Contract editor"><div class="eyebrow">01 / DEFINE THE BEHAVIOR</div><h2>Your automation. Your contract.</h2><p>Fixtures define the exact calls and responses you expect. Policies decide which tools are allowed. Change an argument below and run the checks to see a regression.</p><div class="editor-bar"><label>Example <select id="example" aria-label="Example contract"><option value="regression">Support agent / regressions</option><option value="safe">Support agent / fixed</option><option value="custom" disabled>Custom contract</option></select></label><button id="run-editor" class="primary">Run this contract →</button></div><label for="editor" class="eyebrow">SUITE JSON</label><textarea id="editor" spellcheck="false" aria-label="Suite JSON"></textarea><div class="notice">Approval context is a trusted test fixture. It models your app’s approval decision; it does not authenticate a human. Never accept it from agent-generated arguments.</div></section>
+    <section id="contract" class="panel" hidden aria-label="Contract editor"><div class="eyebrow">01 / DEFINE THE BEHAVIOR</div><h2>Your automation. Your contract.</h2><p>Fixtures define the exact calls and responses you expect. Policies decide which tools are allowed. Change an argument below and run the checks to see a regression.</p><div class="editor-bar"><label>Example <select id="example" aria-label="Example contract"><option value="regression">Support agent / regressions</option><option value="safe">Support agent / fixed</option><option value="custom" disabled>Custom contract</option></select></label><div class="editor-actions"><button id="undo-import" hidden>Undo contract import</button><button id="download-contract">Download contract ↓</button><button id="run-editor" class="primary">Run this contract →</button></div></div><div id="draft-note" class="draft-note"></div><label for="editor" class="eyebrow">SUITE JSON</label><textarea id="editor" spellcheck="false" aria-label="Suite JSON"></textarea><div class="notice">Approval context is a trusted test fixture. It models your app’s approval decision; it does not authenticate a human. Never accept it from agent-generated arguments.</div></section>
     <section id="guide" class="panel" hidden aria-label="Quickstart"><div class="eyebrow">02 / TAKE IT TO YOUR REPO</div><h2>From one bug to a regression test.</h2><div class="guide-grid"><article class="guide-card"><h3>01. Run it locally</h3><p>Requires Node.js 22 or later. From the downloaded project folder:</p><pre>npm test
 npm start
 
@@ -55,90 +59,8 @@ client.verifyComplete();</pre><p>See the runnable <code>examples/customer-suppor
   <footer><span>Plumb<span class="pink">[</span>note<span class="pink">]</span> / SMALL TOOLS. REAL PROOF.</span><span>MIT LICENSE · LOCAL FIRST · NO TELEMETRY</span></footer>
   <script type="application/json" id="report-data">/*__REPORT__*/null</script>
   <script>
-    'use strict';
-    const $ = (id) => document.getElementById(id);
-    const esc = (v) => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    let report = JSON.parse($('report-data').textContent);
-    let selected = report?.cases.findIndex(c => !c.passed) ?? 0;
-    if (selected < 0) selected = 0;
-    let examples = null;
-    let currentSuite = null;
-    let busy = false;
-    const studio = document.body.dataset.studio === 'true';
-    function syncEditor(suite) {
-      const serialized = JSON.stringify(suite);
-      $('example').value = Object.keys(examples || {}).find(key => JSON.stringify(examples[key]) === serialized) || 'custom';
-      $('editor').value = JSON.stringify(suite, null, 2);
-    }
-    function showView(name) {
-      for (const view of ['overview','contract','guide']) $(view).hidden = view !== name;
-      document.querySelectorAll('nav button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === name)));
-    }
-    function evidence(value, title) {
-      return `<div class="event-body"><div class="eyebrow">${esc(title)}</div><pre>${esc(JSON.stringify(value,null,2))}</pre></div>`;
-    }
-    function failureHtml(f) {
-      return `<p><code>${esc(f.code)}</code><br>${esc(f.message)}</p>${Object.hasOwn(f,'expected')?evidence(f.expected,'Expected'):''}${f.actualMissing?'<p class="muted">Actual value was missing.</p>':Object.hasOwn(f,'actual')?evidence(f.actual,'Actual'):''}`;
-    }
-    function render() {
-      if (!report) { $('inspector').textContent = 'No report loaded. Run a contract to get started.'; return; }
-      $('suite-name').textContent = report.name;
-      $('mode-label').textContent = report.mode === 'agent-replay' ? 'AGENT CODE / REPLAY' : report.mode === 'mcp-replay' ? 'MCP CLIENT / REPLAY' : 'FIXTURE REPLAY';
-      $('run-meta').textContent = `${report.passed ? 'PASSED' : 'FAILED'} · ${report.summary.total} checks · ${report.durationMs} ms · ${new Date(report.createdAt).toLocaleString()}`;
-      $('passed-count').innerHTML = `${report.summary.passed}<small> / ${report.summary.total}</small>`;
-      $('failed-count').textContent = report.summary.failed;
-      $('failed-count').style.color = report.summary.failed ? 'var(--red)' : 'var(--ink)';
-      $('blocked-count').textContent = report.summary.blocked;
-      const query = $('search').value.toLowerCase();
-      const filter = $('filter').value;
-      const visible = report.cases.map((c,i)=>({c,i})).filter(({c}) => (c.name+' '+c.description).toLowerCase().includes(query) && (filter === 'all' || c.passed === (filter === 'passed')));
-      if (!visible.some(({i}) => i === selected)) selected = visible[0]?.i ?? -1;
-      $('cases').innerHTML = visible.length ? visible.map(({c,i}) => `<button class="case-item" data-case="${i}" aria-pressed="${i === selected}"><div class="case-top"><span class="status-icon ${c.passed?'pass':''}">${c.passed?'✓':'×'}</span><span class="case-title">${esc(c.name)}</span></div><div class="case-meta">${c.events.length} CALL${c.events.length===1?'':'S'} · ${c.passed?'PASSED':c.failures[0]?.code ?? 'FAILED'}</div></button>`).join('') : '<div class="empty">No checks match these filters.<br>Try another search or status.</div>';
-      document.querySelectorAll('[data-case]').forEach(b => b.addEventListener('click', () => { selected = Number(b.dataset.case); render(); }));
-      const c = report.cases[selected];
-      if (!c) { $('inspector').innerHTML = '<p class="empty">Select a matching check to inspect its execution evidence.</p>'; return; }
-      $('inspector').innerHTML = `<div class="inspector-heading"><h3>${esc(c.name)}</h3><span class="badge ${c.passed?'pass':'fail'}">${c.passed?'PASSED':'FAILED'}</span></div><p class="description">${esc(c.description)}</p><div class="timeline-label eyebrow"><span>Tool-call timeline</span><span class="muted">${c.events.length} intercepted</span></div>${c.events.map(e=>`<details class="event ${esc(e.status)}" ${e.status!=='replayed'?'open':''}><summary><span class="status-icon ${e.status==='replayed'?'pass':''}">${e.status==='replayed'?'✓':'×'}</span><span class="tool">${esc(e.tool)}</span><span class="event-state">${esc(e.status)}</span><span class="expand" aria-hidden="true">+</span></summary><div class="event-body">${e.message?`<p class="error">${esc(e.code)}: ${esc(e.message)}</p>`:''}<div class="eyebrow">Attempted arguments</div><pre>${esc(JSON.stringify(e.arguments,null,2))}</pre>${e.expectedArguments?`<div class="eyebrow">Expected arguments</div><pre>${esc(JSON.stringify(e.expectedArguments,null,2))}</pre>`:''}${Object.hasOwn(e,'result')?`<div class="eyebrow">Fixture response</div><pre>${esc(JSON.stringify(e.result,null,2))}</pre>`:''}</div></details>`).join('')}${Object.hasOwn(c,'output')?evidence(c.output,'Agent output'):''}${c.passed?'<div class="complete">All calls matched their fixtures and policies.<br>No live tools were invoked through replay.</div>':`<div class="failures">${c.failures.map(failureHtml).join('')}</div>`}`;
-    }
-    function showError(message) { $('error').textContent = message; $('error').hidden = false; }
-    async function run(suite) {
-      if (busy) return;
-      busy = true;
-      $('error').hidden = true;
-      for (const id of ['rerun','fix','run-editor']) $(id).disabled = true;
-      $('announcement').textContent = 'Running local checks…';
-      try {
-        const response = await fetch('/api/run', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(suite) });
-        const value = await response.json();
-        if (!response.ok) throw new Error(value.error || 'The suite could not run.');
-        currentSuite = suite;
-        syncEditor(suite);
-        report = value;
-        selected = report.cases.findIndex(c => !c.passed);
-        if (selected < 0) selected = 0;
-        $('search').value = ''; $('filter').value = 'all';
-        render(); showView('overview');
-        $('announcement').textContent = `${report.summary.passed} of ${report.summary.total} checks passed. ${report.summary.failed} failed. Zero live tool calls through replay.`;
-        $('fix').textContent = JSON.stringify(currentSuite) === JSON.stringify(examples.safe) ? 'Try the regression ↗' : 'Try the fixed agent ↗';
-      } catch (error) { showError(error.message); $('announcement').textContent = 'Contract could not run. Fix the error and retry.'; }
-      finally { busy = false; for (const id of ['rerun','fix','run-editor']) $(id).disabled = false; }
-    }
-    document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
-    document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();showView('overview');});
-    $('search').addEventListener('input',render); $('filter').addEventListener('change',render);
-    $('rerun').addEventListener('click',()=>run(currentSuite));
-    $('fix').addEventListener('click',()=>run(JSON.stringify(currentSuite)===JSON.stringify(examples.safe)?examples.regression:examples.safe));
-    $('run-editor').addEventListener('click',()=>{try{run(JSON.parse($('editor').value));}catch(e){showError(`Invalid JSON: ${e.message}`);}});
-    $('example').addEventListener('change',()=>{if(examples[$('example').value])syncEditor(examples[$('example').value]);});
-    $('editor').addEventListener('input',()=>{$('example').value='custom';});
-    $('export').addEventListener('click',()=>{const a=document.createElement('a');const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));a.href=url;a.download='plumbcheck-report.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
-    render();
-    if (studio) {
-      for (const id of ['rerun','fix','run-editor']) $(id).disabled = true;
-      fetch('/api/examples').then(async r=>{if(!r.ok)throw new Error('Could not load examples.');return r.json();}).then(value=>{examples=value;currentSuite=examples.regression;syncEditor(currentSuite);for(const id of ['rerun','fix','run-editor'])$(id).disabled=false;}).catch(e=>showError(e.message));
-    } else {
-      $('rerun').hidden=true;$('fix').hidden=true;document.querySelector('[data-view="contract"]').hidden=true;
-      $('local-note').textContent='SAVED REPORT / Read-only execution evidence';
-    }
+    const artifacts = /*__ARTIFACT_TOOLS__*/null;
+    (/*__WORKBENCH__*/null)(artifacts);
   </script>
 </body>
 </html>

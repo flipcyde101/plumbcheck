@@ -17,6 +17,8 @@ The goal is a useful agent testing tool that developers choose repeatedly. Popul
 - [x] CI reports and assertions over calls observed from MCP clients
 - [x] Editable Plumbnote-style workbench
 - [x] Search, filters, timeline inspection, standalone HTML report
+- [x] Local file/paste contract and report import, contract export, and draft undo
+- [x] Read-only saved-report inspection with consistency and resource checks
 - [x] Masked JSON and JUnit for CI
 - [x] Meaningful regression tests and cross-platform CI configuration
 - [x] MIT license and contributor documentation
@@ -32,7 +34,7 @@ The goal is a useful agent testing tool that developers choose repeatedly. Popul
 - [ ] Improve recording sanitization with explicit field/path configuration
 - [ ] Add a runnable model-backed agent example behind opt-in credentials
 - [ ] Include two real framework adapters based on design partner needs
-- [ ] Audit arbitrary text/PII handling and imported artifact size limits
+- [ ] Audit arbitrary text/PII handling and externally review artifact import protections
 - [ ] Bundle licensed brand fonts and complete accessibility review
 
 ## After demonstrated repeat use

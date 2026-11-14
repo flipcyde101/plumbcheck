@@ -1,68 +1,44 @@
-# Initial build verification
+# Verification record
 
-Date: 14 November 2026.
+Date: 14 November 2026. Local platform: Windows, Node.js 26.13.0, npm 11.20.0.
 
-## Typed package and recording-snapshot iteration
+## Current local checks
 
-The core suite passes **100/100 tests** locally, and the official MCP suite passes **7/7** using the canonical `plumbcheck-mcp` entry. The package now uses `plumbcheck` as its canonical name and provides both old command spellings as compatibility aliases.
+- `npm test`: **130 passed, 0 failed**. Covers planned and actual-agent replay, policy precedence, exact argument matching, result/output assertions, swallowed tool failures, fixture isolation, completed recorder snapshots, CLI commands and exit codes, credential masking, HTML/JUnit output, Studio HTTP boundaries, and MCP child-process stdio.
+- `npm run test:mcp`: **7 passed, 0 failed**, using official `@modelcontextprotocol/sdk` **1.32.2**. Checks discovery, replay, approval denial, argument mismatch, generic JSON response envelopes, skipped fixtures at shutdown, and recorded tool errors.
+- `npm run test:types`: **1 packed-consumer check passed**. Packs and installs the real archive into a temporary consumer, checks strict positive/negative usage on TypeScript **5.9.3** and **7.0.2** under NodeNext and Bundler resolution, and exercises installed canonical/legacy CLI commands and runtime exports.
 
-`npm run test:types` packs and installs the real archive into a separate temporary consumer. It passes strict positive/negative usage checks on TypeScript **5.9.3** and **7.0.2**, with both NodeNext and Bundler resolution. Installed canonical/legacy CLI commands and runtime exports are also exercised. The compilers are isolated test dependencies; the package still ships no third-party runtime dependencies.
+The 130 core checks include 30 artifact-import checks: both contract modes, all three report modes, runnable export round trips, legacy optional metadata, masking without source mutation, inconsistent counts/status/evidence, invalid JSON, byte/depth limits, BOM handling, UTF-8 sizing, compact exports, optional description validation, embedded helper independence, marker-like payload strings, blank native Error messages, and escaped case-row markup.
 
-Recorder checks cover in-flight snapshots, invocation ordering, copies independent of raw entries, non-Error failures, invalid/non-JSON data, and the boundary between calls present at snapshot invocation and later calls. `snapshot()` returns raw completed fixtures; it does not mask sensitive data.
+HTTP tests require loopback networking. They passed with that access; restricted runs that return EACCES before binding a socket do not test the application.
 
-The MCP iteration `074dd7a` passed all four GitHub jobs including the official SDK suite: [CI run](https://github.com/stepan4002/plumbcheck/actions/runs/43610736021). The expanded packed-consumer steps need their own CI run after this iteration is pushed.
+Core runtime dependencies remain zero. MCP SDK and TypeScript are isolated development compatibility dependencies.
 
-## MCP interoperability iteration
+## Browser checks
 
-The dependency-free core suite passes **86/86 tests** locally. The fixture server has also been exercised through the official `@modelcontextprotocol/sdk` **1.32.2** `Client` and `StdioClientTransport`: **7/7 compatibility checks passed** locally. Cases cover connection/discovery, two-step replay, approval denial, argument mismatch, generic JSON response envelopes, a skipped fixture at shutdown, and preserved recorded error responses. These dependencies live in the separate `compat/mcp-sdk` test package; core runtime dependencies remain zero.
+The local workbench was exercised through its loopback server with synthetic data:
 
-Additional raw-protocol checks cover malformed/repeated initialization, payload-free discovery schemas, preserved MCP responses, and final HTML/JSON/JUnit reports from observed client calls. Client-facing tool responses preserve fixture data; report/audit masking remains key-based.
+- Opened an observed MCP execution report and verified its read-only/not-rerun banner, case evidence, and hidden rerun controls.
+- Rejected an inconsistent report without replacing the current report.
+- Displayed HTML-like case/failure content as text, with no injected elements or event handler execution; common credential keys were masked.
+- Downloaded a masked JSON report.
+- Imported an agent-code contract, verified its CLI-only notice and disabled browser run control, then undid the import to restore the exact dirty draft.
+- Ran that restored draft successfully and downloaded it as a contract. The exported file also passed through the CLI runner.
+- Rejected invalid pasted JSON and an oversized file without replacing the draft.
+- Imported a valid contract by paste and ran it successfully (2/2); imported a saved MCP report by paste and inspected its tool-call evidence.
 
-The previous commit `65c7d36` passed all four GitHub jobs on Windows/Linux and Node 22/24: [CI run](https://github.com/stepan4002/plumbcheck/actions/runs/43608142237). This demonstrates the original matrix; the expanded SDK CI steps require their own run after the MCP iteration is pushed.
+The existing demo also exercised broken/fixed scenarios, expected-versus-attempted arguments, search/filter empty states, invalid editor JSON, and draft preservation during navigation. Screenshots are in `docs/images`.
 
-## Agent-runner iteration
+## GitHub checks and scope
 
-The complete local suite now passes **76 tests, 0 failures** on the platform below. This includes actual agent-code execution, final-output equality, swallowed and unawaited tool failures, thrown non-Error values, per-case input cloning, closed-session behavior, invalid JSON outputs, and credential masking in assertion evidence. The existing CLI, Studio HTTP, and MCP stdio checks also pass.
+The preceding typed-package commit `44ebb8d` passed all four jobs on Windows/Linux and Node 22/24, including official MCP SDK and packed TypeScript consumers: [verified CI run](https://github.com/stepan4002/plumbcheck/actions/runs/43613777377). Current push results are available in the [CI workflow](https://github.com/stepan4002/plumbcheck/actions/workflows/ci.yml).
 
-`npm run check:agent` passes both actual support-agent cases. `npm run demo:agent` intentionally fails its wrong-recipient case even though the agent catches the tool exception. CLI reports distinguish agent-code replay from planned-call replay and state that zero live calls counts only calls through replay.
+GitNexus impact checks covered the shared validator, report generation, and redactor before this iteration. Validation was flagged HIGH because it serves planned, agent, and MCP runners; their full regression checks passed after extraction into the shared browser-neutral validator. A staged change-scope check is required before each commit.
 
-The browser confirmed expected-versus-actual response evidence and successful switching to the corrected agent scenario after the report changes. The screenshot has been updated.
+## Remaining limits
 
-A PlumbCheck-specific GitNexus index is now registered. Impact analysis covered the shared runner, validator, and replay class before changes; the validator and replay class were flagged HIGH because they affect both Studio and MCP paths. Their relevant regression tests passed. The older parent-index limitations below describe the initial build, not the current index.
-
-## Automated checks actually run
-
-Local platform: Windows, Node.js **v26.13.0**, npm **11.20.0**.
-
-`npm test`: **48 passed, 0 failed**. Includes deep argument matching, policy precedence, trusted approval context, unknown tools, fixture exhaustion, repeated calls, unused fixtures, result assertions, fixture mutation isolation, recorder behavior and concurrency, malformed contracts, credential-key redaction, HTML script-breakout resistance, JUnit escaping, CLI exit codes, generated report artifacts, HTTP Host/Origin validation, JSON-only requests, body limits, and real JSON-RPC messages over child-process stdio.
-
-The HTTP tests require loopback networking. The initial restricted execution environment returned EACCES before reaching the app. Running the suite with loopback access exercised the server successfully. A forged-Host test was corrected to use raw HTTP because the installed Node fetch implementation replaced that header.
-
-`npm run check`: corrected synthetic contract passed, **2/2**, exit 0.
-
-`npm run example:sdk`: an actual JavaScript agent function returned the replayed order status and consumed its fixture.
-
-`node bin/plumcheck.js demo`: deliberately failed, **2 passed / 4 failed**, demonstrating missing approval, changed recipient, forbidden deletion, and changed result. Zero live tool calls.
-
-`npm pack --dry-run --ignore-scripts`: inspected intended source, examples, web template, and documentation; no environment files, reports, raw recordings, or dependencies. A zero-dependency lockfile is included.
-
-## Browser behavior actually exercised
-
-- Workbench loaded from its loopback server.
-- Deliberate regressions displayed as failed checks with readable evidence.
-- Fixed-agent button produced 2/2 passing checks.
-- Search produced a useful empty state and restored results when cleared.
-- Invalid JSON remained in the editor and produced an error without a successful run.
-- Fixed/regression selection stayed synchronized after a UI correction.
-- Unsaved editor content survived navigation between Contract and Overview.
-- Wrong-recipient evidence displayed both attempted and expected arguments.
-- Desktop screenshot saved in `docs/images/workbench.jpg`.
-
-## Limits of this validation
-
-- The configured Node 22/24, Windows/Linux GitHub Actions matrix has **not run on GitHub**. It still needs execution before a public release.
-- The browser viewport override did not change the reported viewport size, so a true mobile layout check is **unverified** despite responsive CSS being present.
-- Browser policy blocked opening a `file:` report directly. Generated HTML payloads and artifacts are tested; a standalone report still needs a manual browser opening.
-- No official MCP SDK client, live LLM, or production integration has been tested. Stdio tests cover the documented minimal 2025-11-25 subset.
-- GitNexus's existing parent `work` index does not contain this new standalone repository. Symbol lookups were unavailable for the new code; the parent change detector also reported that its indexed directory was not a Git repository. No existing project symbols were changed. Local Git review and direct tests cover the new project; this is not a successful graph impact analysis.
-- No external adoption, security audit, or competitor usability study has been completed.
+- A true mobile viewport has not been verified; the available override did not change the reported viewport dimensions.
+- Browser policy blocked opening a standalone `file:` report. Generated HTML data isolation, embedded helper independence, and script compilation are tested, but a direct offline browser opening still needs a manual check.
+- No live LLM, production integration, external security audit, or independent developer usability study has been completed.
+- Import validation checks structure and consistency, not report authenticity. Masking is key-based and does not detect arbitrary-text secrets or personal data.
+- The package has not been published to npm. Its name is not reserved.

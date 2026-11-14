@@ -1,0 +1,29 @@
+{
+  "appId": "com.plumbnote.plumbcheck",
+  "productName": "PlumbCheck",
+  "electronVersion": "45.3.2",
+  "directories": { "app": "app", "output": "../dist/windows", "buildResources": "assets" },
+  "asar": true,
+  "extraResources": [{ "from": "mcp-runtime", "to": "mcp-runtime" }],
+  "electronFuses": {
+    "runAsNode": false,
+    "enableNodeOptionsEnvironmentVariable": false,
+    "enableNodeCliInspectArguments": false,
+    "grantFileProtocolExtraPrivileges": false,
+    "onlyLoadAppFromAsar": true,
+    "enableEmbeddedAsarIntegrityValidation": true
+  },
+  "files": ["**/*", "!**/node_modules/**"],
+  "artifactName": "PlumbCheck-${version}-Windows-${arch}.${ext}",
+  "win": { "target": ["nsis", "zip"], "icon": "assets/icon.ico", "signExecutable": false },
+  "nsis": {
+    "artifactName": "PlumbCheck-${version}-Windows-x64-Setup.exe",
+    "oneClick": false,
+    "perMachine": false,
+    "allowElevation": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": false,
+    "runAfterFinish": false
+  },
+  "publish": null
+}

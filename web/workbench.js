@@ -1,9 +1,10 @@
 /** Self-contained browser runtime, inlined into both Studio and saved reports. */
-export function startWorkbench(artifacts) {
+export function startWorkbench(artifacts, diffs) {
   'use strict';
   const $ = id => document.getElementById(id);
   const esc = artifacts.escapeHtml;
   const studio = document.body.dataset.studio === 'true';
+  const desktop = studio && typeof window.plumbcheckDesktop?.createMcpSetup === 'function';
   let report = JSON.parse($('report-data').textContent);
   let lastLocalReport = report;
   let selected = report?.cases.findIndex(c => !c.passed) ?? 0;
@@ -23,7 +24,8 @@ export function startWorkbench(artifacts) {
     catch { return null; }
   }
   function updateControls() {
-    const agent = draftInfo()?.runner === 'agent';
+    const draft = draftInfo();
+    const agent = draft?.runner === 'agent';
     for (const id of ['open-json', 'open-pasted', 'artifact-file', 'close-import', 'example', 'download-contract', 'undo-import', 'resume-local']) $(id).disabled = busy;
     $('rerun').disabled = busy || !studio || !currentSuite || agent;
     $('run-editor').disabled = busy || !studio || agent;
@@ -36,6 +38,12 @@ export function startWorkbench(artifacts) {
     $('draft-note').textContent = agent
       ? 'AGENT-CODE CONTRACT / Edit and download here. Run it from the CLI with --agent; Studio does not execute JavaScript modules.'
       : 'Contract downloads include your fixture data. Review it before sharing.';
+    $('mcp-connect').hidden = !desktop;
+    const caseName = $('mcp-case').value;
+    $('mcp-case').innerHTML = draft && !agent ? draft.value.cases.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('') : '';
+    if (draft?.value.cases.some(c => c.name === caseName)) $('mcp-case').value = caseName;
+    $('mcp-case').disabled = busy || !draft || agent;
+    $('create-mcp').disabled = busy || !draft || agent;
     $('artifact-source').textContent = activeView === 'contract' ? `CONTRACT DRAFT / ${agent ? 'AGENT CODE · CLI RUNNER' : 'PLANNED TOOL CALLS'}` : viewingSavedReport ? `${sourceName} / READ ONLY · NOT RERUN` : 'LOCAL CHECKS / FIXTURE REPLAY';
     $('artifact-source').classList.toggle('saved-report', viewingSavedReport && activeView !== 'contract');
   }
@@ -62,8 +70,9 @@ export function startWorkbench(artifacts) {
   function evidence(value, title) {
     return `<div class="event-body"><div class="eyebrow">${esc(title)}</div><pre>${esc(JSON.stringify(value, null, 2))}</pre></div>`;
   }
-  function failureHtml(failure) {
-    return `<p><code>${esc(failure.code)}</code><br>${esc(failure.message)}</p>${Object.hasOwn(failure, 'expected') ? evidence(failure.expected, 'Expected') : ''}${failure.actualMissing ? '<p class="muted">Actual value was missing.</p>' : Object.hasOwn(failure, 'actual') ? evidence(failure.actual, 'Actual') : ''}`;
+  function failureHtml(failure, c) {
+    const raw = `${Object.hasOwn(failure, 'expected') ? evidence(failure.expected, 'Expected') : ''}${failure.actualMissing ? '<p class="muted">Actual value was missing.</p>' : Object.hasOwn(failure, 'actual') ? evidence(failure.actual, 'Actual') : ''}`;
+    return `<section class="failure-detail"><p><code>${esc(failure.code)}</code><br>${esc(failure.message)}</p>${diffs.html(diffs.forFailure(c, failure), esc)}${raw ? `<details class="raw-evidence"><summary>Full expected / actual JSON</summary>${raw}</details>` : ''}</section>`;
   }
   function resetSelection() {
     selected = report.cases.findIndex(c => !c.passed);
@@ -75,7 +84,7 @@ export function startWorkbench(artifacts) {
     if (!report) { $('inspector').textContent = 'No report loaded. Open a report or run a contract to get started.'; return; }
     $('suite-name').textContent = report.name;
     $('mode-label').textContent = report.mode === 'agent-replay' ? 'AGENT CODE / REPLAY' : report.mode === 'mcp-replay' ? 'MCP CLIENT / REPLAY' : 'FIXTURE REPLAY';
-    $('run-meta').textContent = `${report.passed ? 'PASSED' : 'FAILED'} · ${report.summary.total} checks · ${report.durationMs} ms · ${new Date(report.createdAt).toLocaleString()}`;
+    $('run-meta').textContent = `${report.passed ? 'PASSED' : 'FAILED'} · ${report.summary.total} check${report.summary.total === 1 ? '' : 's'} · ${report.durationMs} ms · ${new Date(report.createdAt).toLocaleString()}`;
     $('passed-count').innerHTML = `${report.summary.passed}<small> / ${report.summary.total}</small>`;
     $('failed-count').textContent = report.summary.failed;
     $('failed-count').style.color = report.summary.failed ? 'var(--red)' : 'var(--ink)';
@@ -88,7 +97,12 @@ export function startWorkbench(artifacts) {
     document.querySelectorAll('[data-case]').forEach(button => button.addEventListener('click', () => { selected = Number(button.dataset.case); render(); }));
     const c = report.cases[selected];
     if (!c) { $('inspector').innerHTML = '<p class="empty">Select a matching check to inspect its execution evidence.</p>'; return; }
-    $('inspector').innerHTML = `<div class="inspector-heading"><h3>${esc(c.name)}</h3><span class="badge ${c.passed ? 'pass' : 'fail'}">${c.passed ? 'PASSED' : 'FAILED'}</span></div><p class="description">${esc(c.description)}</p><div class="timeline-label eyebrow"><span>Tool-call timeline</span><span class="muted">${c.events.length} intercepted</span></div>${c.events.map(event => `<details class="event ${esc(event.status)}" ${event.status !== 'replayed' ? 'open' : ''}><summary><span class="status-icon ${event.status === 'replayed' ? 'pass' : ''}">${event.status === 'replayed' ? '✓' : '×'}</span><span class="tool">${esc(event.tool)}</span><span class="event-state">${esc(event.status)}</span><span class="expand" aria-hidden="true">+</span></summary><div class="event-body">${event.message ? `<p class="error">${esc(event.code)}: ${esc(event.message)}</p>` : ''}<div class="eyebrow">Attempted arguments</div><pre>${esc(JSON.stringify(event.arguments, null, 2))}</pre>${event.expectedArguments ? `<div class="eyebrow">Expected arguments</div><pre>${esc(JSON.stringify(event.expectedArguments, null, 2))}</pre>` : ''}${Object.hasOwn(event, 'result') ? `<div class="eyebrow">Fixture response</div><pre>${esc(JSON.stringify(event.result, null, 2))}</pre>` : ''}</div></details>`).join('')}${Object.hasOwn(c, 'output') ? evidence(c.output, 'Agent output') : ''}${c.passed ? '<div class="complete">All calls matched their fixtures and policies.<br>No live tools were invoked through replay.</div>' : `<div class="failures">${c.failures.map(failureHtml).join('')}</div>`}`;
+    $('inspector').innerHTML = `<div class="inspector-heading"><h3>${esc(c.name)}</h3><span class="badge ${c.passed ? 'pass' : 'fail'}">${c.passed ? 'PASSED' : 'FAILED'}</span></div><p class="description">${esc(c.description)}</p>
+      ${c.passed ? '' : `<div class="failures">${c.failures.map(failure => failureHtml(failure, c)).join('')}</div>`}
+      <div class="timeline-label eyebrow"><span>Tool-call timeline</span><span class="muted">${c.events.length} intercepted</span></div>
+      ${c.events.map(event => `<details class="event ${esc(event.status)}" ${event.status !== 'replayed' ? 'open' : ''}><summary><span class="status-icon ${event.status === 'replayed' ? 'pass' : ''}">${event.status === 'replayed' ? '✓' : '×'}</span><span class="tool">${esc(event.tool)}</span><span class="event-state">${esc(event.status)}</span><span class="expand" aria-hidden="true">+</span></summary><div class="event-body">${event.message ? `<p class="error">${esc(event.code)}: ${esc(event.message)}</p>` : ''}<div class="eyebrow">Attempted arguments</div><pre>${esc(JSON.stringify(event.arguments, null, 2))}</pre>${event.expectedArguments ? `<div class="eyebrow">Expected arguments</div><pre>${esc(JSON.stringify(event.expectedArguments, null, 2))}</pre>` : ''}${Object.hasOwn(event, 'result') ? `<div class="eyebrow">Fixture response</div><pre>${esc(JSON.stringify(event.result, null, 2))}</pre>` : ''}</div></details>`).join('')}
+      ${Object.hasOwn(c, 'output') ? evidence(c.output, 'Agent output') : ''}
+      ${c.passed ? '<div class="complete">All calls matched their fixtures and policies.<br>No live tools were invoked through replay.</div>' : ''}`;
   }
   function download(value, filename) {
     const anchor = document.createElement('a');
@@ -164,6 +178,19 @@ export function startWorkbench(artifacts) {
   $('download-contract').addEventListener('click', () => {
     try { const item = artifacts.exportContract($('editor').value); download(item.json, 'plumbcheck-contract.json'); clearError(); announce('Contract downloaded. It contains the current fixture data.'); }
     catch (error) { showError(error.message); }
+  });
+  $('create-mcp').addEventListener('click', async () => {
+    if (!desktop || busy) return;
+    clearError(); setBusy(true);
+    try {
+      const setup = await window.plumbcheckDesktop.createMcpSetup($('editor').value, $('mcp-case').value);
+      if (setup.canceled) { announce('Contract save canceled. Your draft is unchanged.'); return; }
+      $('mcp-config').value = JSON.stringify(setup.config, null, 2);
+      $('mcp-output').textContent = `Contract: ${setup.contractPath}\nReports after clean agent disconnect: ${setup.reportPath}`;
+      $('mcp-result').hidden = false;
+      announce('Contract saved. Copy the configuration into your MCP client, then run your agent against these fixture tools.');
+    } catch (error) { showError(error.message); }
+    finally { setBusy(false); }
   });
   $('export').addEventListener('click', () => download(JSON.stringify(report, null, 2), 'plumbcheck-report.json'));
   render();

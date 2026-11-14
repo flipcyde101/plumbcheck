@@ -1,0 +1,17 @@
+{
+  "name": "plumbcheck-desktop-build",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "description": "Isolated Windows desktop build tools for PlumbCheck",
+  "license": "MIT",
+  "scripts": {
+    "stage": "node scripts/stage.mjs",
+    "start": "npm run stage && electron app",
+    "build:win": "npm run stage && electron-builder --config electron-builder.json --win nsis zip --x64 --publish never",
+    "test:exe": "node scripts/check-exe.mjs"
+  },
+  "devDependencies": {
+    "electron": "45.3.2",
+    "electron-builder": "26.18.0"
+  }
+}

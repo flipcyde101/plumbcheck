@@ -1,0 +1,48 @@
+name: Windows desktop
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['desktop/**', 'src/**', 'web/**', 'examples/**', 'package.json', '.github/workflows/windows-desktop.yml']
+  pull_request:
+    paths: ['desktop/**', 'src/**', 'web/**', 'examples/**', 'package.json', '.github/workflows/windows-desktop.yml']
+permissions:
+  contents: read
+jobs:
+  windows-executable:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - run: npm ci --prefix desktop --ignore-scripts --no-audit --no-fund
+      - run: node desktop/node_modules/electron/install.js
+      - run: npm --prefix desktop run build:win
+      - run: npm --prefix desktop run test:exe
+      - name: Install and verify the application
+        shell: pwsh
+        run: |
+          $installDirectory = Join-Path $env:RUNNER_TEMP 'plumbcheck-installed'
+          $installer = Get-ChildItem dist/windows/*-Setup.exe | Select-Object -First 1
+          $installation = Start-Process -FilePath $installer.FullName -ArgumentList @('/S', "/D=$installDirectory") -WindowStyle Hidden -Wait -PassThru
+          if ($installation.ExitCode -ne 0) { throw "Installer failed: $($installation.ExitCode)" }
+          node desktop/scripts/check-exe.mjs (Join-Path $installDirectory 'PlumbCheck.exe')
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Compute executable checksum
+        shell: pwsh
+        run: Get-ChildItem dist/windows/* -File | Where-Object { $_.Extension -in '.exe', '.zip' } | Get-FileHash -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } | Set-Content dist/windows/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PlumbCheck-Windows-x64
+          path: |
+            dist/windows/*.exe
+            dist/windows/*.zip
+            dist/windows/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30

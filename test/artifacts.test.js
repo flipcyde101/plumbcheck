@@ -80,7 +80,7 @@ test('shared validation rejects malformed optional descriptions before a run',as
   }
 });
 test('report payload marker strings are data and cannot replace runtime bindings',async()=>{
-  const r=await report();r.name='/*__REPORT__*/null /*__ARTIFACT_TOOLS__*/null /*__WORKBENCH__*/null </script>';
+  const r=await report();r.name='/*__REPORT__*/null /*__ARTIFACT_TOOLS__*/null /*__DIFF_TOOLS__*/null /*__WORKBENCH__*/null </script>';
   const html=await toHtml(r);const payload=html.match(/id="report-data">([\s\S]*?)<\/script>/)[1];
   assert.equal(JSON.parse(payload).name,r.name);
   const runtime=html.match(/<script>\s*([\s\S]*?)<\/script>/)[1];assert.doesNotThrow(()=>new Function(runtime));
@@ -101,4 +101,12 @@ test('the actual case-row renderer escapes untrusted names and failure codes',as
   const markup=tools.caseButton(c,2,2);
   assert.ok(!markup.includes('<svg'));assert.ok(!markup.includes('<img'));assert.ok(markup.includes('&lt;svg'));assert.ok(markup.includes('&lt;img'));
   assert.match(markup,/aria-pressed="true"/);
+});
+
+test('imports a genuine agent report whose result assertion targets a call never made',async()=>{
+  const suite={version:1,name:'Skipped result',policies:{allow:['read']},cases:[{name:'No call',fixtures:[],expect:{results:[{call:2,path:'status',equals:'ok'}],callOrder:[]}}]};
+  const r=await runAgentSuite(suite,async()=>{});
+  assert.equal(r.cases[0].events.length,0);assert.equal(r.cases[0].failures[0].actualMissing,true);
+  const imported=tools.open(JSON.stringify(r));assert.equal(imported.kind,'report');assert.equal(imported.value.passed,false);
+  r.cases[0].failures[0].actualMissing=false;assert.throws(()=>tools.report(r),/out of range/);
 });

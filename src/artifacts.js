@@ -63,7 +63,11 @@ export function createArtifactTools(mask, validateSuite) {
       });
       c.failures.forEach(f => {
         check(object(f), 'Each failure must be an object.'); text(f.code, 'Failure code', true); text(f.message, 'Failure message');
-        if (own(f, 'call')) { count(f.call, 'Failure call index'); check(f.call < c.events.length, 'Failure call index is out of range.'); }
+        if (own(f, 'call')) {
+          count(f.call, 'Failure call index');
+          // Result assertions can target a call an agent/MCP client never made.
+          check(f.call < c.events.length || (f.code === 'RESULT_MISMATCH' && f.actualMissing === true), 'Failure call index is out of range.');
+        }
         if (own(f, 'actualMissing')) check(typeof f.actualMissing === 'boolean', 'actualMissing must be a boolean.');
       });
       check(c.passed === (c.failures.length === 0), 'Case passed disagrees with its failures.');

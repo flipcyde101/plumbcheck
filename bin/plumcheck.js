@@ -7,6 +7,7 @@ import { runAgentSuite } from '../src/agent-runner.js';
 import { validateSuite } from '../src/validation.js';
 import { toHtml, toJUnit } from '../src/report.js';
 import { redact } from '../src/redact.js';
+import { createDiffTools } from '../src/diff.js';
 import { loadExamples, startStudio } from '../src/studio.js';
 
 const help = `PlumbCheck · Test the work. Trust the agent.
@@ -73,10 +74,15 @@ async function main() {
   }
   if (options.json) console.log(JSON.stringify(redact(report), null, 2));
   else {
+    const diffs = createDiffTools(redact);
     console.log(`\nPlumbCheck · ${report.name}\nMode: ${report.mode === 'agent-replay' ? 'agent replay (trusted local code; not sandboxed)' : 'fixture replay'}\n`);
     for (const c of report.cases) {
       console.log(`${c.passed ? 'PASS' : 'FAIL'}  ${c.name}`);
-      for (const failure of c.failures) console.log(`      ${failure.code}: ${failure.message}`);
+      for (const failure of c.failures) {
+        console.log(`      ${failure.code}: ${failure.message}`);
+        const detail = diffs.forFailure(c, failure);
+        if (detail) console.log(diffs.format(detail).split('\n').map(line => `        ${line}`).join('\n'));
+      }
     }
     console.log(`\n${report.summary.passed}/${report.summary.total} passed · ${report.summary.blocked} blocked calls · 0 live tool calls through replay\n`);
   }

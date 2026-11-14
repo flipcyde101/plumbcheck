@@ -14,6 +14,8 @@ Importing a contract preserves the previous editor text behind **Undo contract i
 
 ## Download and share
 
+Failed argument, result, order, and agent-output checks include a field comparison above the timeline. Inspect a changed path directly, then expand the complete JSON or tool-call evidence when needed. See [reading field differences](DIFFERENCES.md).
+
 **Download contract** validates and exports the current editor contents, including raw fixture data. It does not export whichever example happened to be selected earlier. A downloaded planned-call contract can be run with:
 
 ```sh

@@ -4,7 +4,7 @@
 
 Local tool-call regression tests for AI agents and business automations. Catch a changed recipient, an unapproved send, a forbidden operation, or an unexpected response before deploying your automation.
 
-Built by [Plumbnote](https://plumbnote.com). MIT licensed. No account, API key, runtime dependencies, or telemetry.
+Built by [Plumbnote](https://plumbnote.com). MIT licensed. No account, API key, or telemetry. The core CLI has zero third-party runtime dependencies; the Windows application bundles its desktop runtime.
 
 Canonical commands: `plumbcheck` and `plumbcheck-mcp`. Earlier `plumcheck` / `plumcheck-mcp` aliases remain supported. TypeScript declarations ship with the package; see [typed usage and completed recording snapshots](docs/TYPESCRIPT.md).
 
@@ -15,6 +15,10 @@ Canonical commands: `plumbcheck` and `plumbcheck-mcp`. Earlier `plumcheck` / `pl
 [![CI](https://github.com/stepan4002/plumbcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/stepan4002/plumbcheck/actions/workflows/ci.yml)
 
 ## Start in 30 seconds
+
+**Windows app:** download the artifact from a successful [Windows desktop build](https://github.com/stepan4002/plumbcheck/actions/workflows/windows-desktop.yml), extract it, and run the `.exe` installer. A portable ZIP is included too. No Node.js setup is needed. This unsigned alpha includes a native workbench and a bundled MCP fixture server. See [the Windows app guide](docs/WINDOWS_APP.md).
+
+**Source version:**
 
 Download this repository, open a terminal in its folder, and use **Node.js 22 or later**:
 
@@ -107,6 +111,8 @@ The output directory contains a standalone interactive `report.html`, masked `re
 
 See [the contract format](docs/CONTRACTS.md) for assertion semantics.
 
+Failures identify changed fields such as `/to` or `/structuredContent/status`, with expected and actual values in the workbench, CLI, and JUnit output. Missing fields, unexpected fields, and type changes are distinct. See [reading field differences](docs/DIFFERENCES.md) for paths, masking, and display limits.
+
 ## Put your agent behind a replay client
 
 ```js
@@ -147,6 +153,8 @@ The included [CI workflow](.github/workflows/ci.yml) tests Node 22 and 24 on Lin
 - Recordings and the programmatic `runSuite` result are raw in memory. CLI, HTML, JUnit, and studio output mask common credential **keys**. Free-text secrets and PII are **not automatically detected**. Review artifacts before sharing.
 
 ## Build with us
+
+Planned direction: a Windows `.exe`, an Android app with offline fixture checks, optional device sync, multiple model/framework adapters, and Claude/ChatGPT testing integrations. See [the phased platform roadmap](docs/PLATFORM_ROADMAP.md) for what remains to build and verify. These are planned capabilities, not current universal-agent compatibility.
 
 Start with [CONTRIBUTING.md](CONTRIBUTING.md), [the roadmap](ROADMAP.md), and [the security policy](SECURITY.md). The [product brief](docs/PRODUCT_BRIEF.md) explains the differentiation, research, and validation still needed. The [build prompt](docs/BUILD_PROMPT.md) gives a reusable implementation brief for future coding sessions.
 

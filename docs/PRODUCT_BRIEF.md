@@ -36,7 +36,7 @@ The workbench carries the same bracket wordmark, paper surface, direct copy, and
 
 ## What is working
 
-CLI runner; nested argument matching; explicit policies; trusted approval fixtures; result equality; recorder adapter; JavaScript agent example; fixture-only MCP stdio adapter; editable local workbench; case search and filtering; fixed/regression example switching; JSON export; interactive standalone reports; JUnit; local HTTP boundary checks; credential-key masking; automated tests; CI configuration; MIT license; contributor and release documentation.
+CLI runner; nested argument matching; explicit policies; trusted approval fixtures; result and agent-output assertions; completed recorder snapshots; actual-agent runner; fixture-only MCP stdio adapter and official client checks; typed package exports; editable local workbench; file/paste contract and report imports; draft undo and contract export; case search and filtering; field-level failure differences; interactive standalone reports; JSON and JUnit; local HTTP boundary checks; credential-key masking; automated tests; verified cross-platform CI; MIT license; contributor and release documentation.
 
 ## Validation and launch gates
 

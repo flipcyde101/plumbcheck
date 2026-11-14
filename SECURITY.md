@@ -16,6 +16,8 @@ Common credential keys are masked in delivered reports, but free-text secrets an
 
 Workbench file/paste imports stay in the browser tab until you explicitly run a planned-call contract on the local server. Imports accept JSON data, not executable modules or HTML. They have byte, nesting, and value-count limits; imported reports are checked for internal consistency, masked for common credential keys, and rendered with escaped text. Reports are not signed or authenticated, and opening one does not rerun it. Contract downloads retain raw fixture values. See [the workbench guide](docs/WORKBENCH.md).
 
+The Windows application loads its bundled UI through a loopback server with an isolated, sandboxed Electron renderer and a limited native save/configuration bridge. It also bundles a separate Node.js console runtime for the MCP fixture server. No system Node.js installation is needed, but this helper runs with the user's ordinary local permissions and is not a sandbox. Desktop builds are currently unsigned; signing and an independent security review remain public-release gates. See [the Windows guide](docs/WINDOWS_APP.md).
+
 Do not run untrusted JavaScript agents without an independent sandbox. JSON suite files cannot execute code through PlumbCheck, but they can consume local resources. Import only reasonably sized, trusted test data.
 
 Only the current alpha is maintained. No external security audit has been performed.

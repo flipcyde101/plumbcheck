@@ -1,4 +1,8 @@
 node_modules/
+desktop/app/
+desktop/mcp-runtime/
+desktop/.cache/
+dist/
 .gitnexus
 .claude/skills/gitnexus/
 coverage/

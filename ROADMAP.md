@@ -2,6 +2,30 @@
 
 The goal is a useful agent testing tool that developers choose repeatedly. Popularity is an outcome to validate, not a release guarantee.
 
+## Windows, Android, AI integrations, and sync
+
+The founder's expanded direction is an independent Windows and Android app, with optional synced projects/results, multiple agent-platform adapters, provider APIs and local models, and plugins that let a user ask Claude or ChatGPT to run tests.
+
+The implementation sequence and acceptance criteria are in [the platform roadmap](docs/PLATFORM_ROADMAP.md). Planned work is distinct from the working alpha below.
+
+| Order | Milestone | Required result |
+| --- | --- | --- |
+| 1 | Windows `.exe` | Own app window, bundled runtime, packaged MCP test mode, downloadable verified artifact |
+| 2 | Claude/ChatGPT testing integrations | An authenticated MCP control server starts real test jobs and returns their evidence |
+| 3 | Models and agent platforms | API models, official subscription routes where supported, Ollama/LM Studio, Python/framework adapters |
+| 4 | Cross-device sync | Paired Windows/Android devices share versioned contracts, jobs, baselines, and masked reports |
+| 5 | Android application | Offline fixture tests plus actual-agent runs on a paired worker, verified on real devices |
+| 6 | Public beta / 1.0 | Signed distribution, secure updates, independent usability/security/accessibility checks |
+
+- [ ] M1: Finish and verify the Windows executable (in progress).
+- [ ] M2: Separate fixture MCP from the new testing-control MCP; validate host-specific plugins.
+- [ ] M3: Add provider, local-model, and officially supported subscription connections; publish a tested adapter matrix.
+- [ ] M4: Pair/revoke devices, handle offline edits/conflicts, and dispatch jobs without duplicate execution.
+- [ ] M5: Ship a signed Android app with independent fixture testing and explicit remote-runner behavior.
+- [ ] M6: Meet the detailed release gates and validate repeat developer use.
+
+The detailed roadmap also includes AI-assisted test drafting, scenario packs, cost/token budgets, baseline review, multi-agent handoff assertions, path-based sanitization, failure simulation, self-hostable sync, and future iOS/macOS/Linux evaluation.
+
 ## 0.1 alpha — current foundation
 
 - [x] Offline broken/fixed support-agent scenario
@@ -12,6 +36,7 @@ The goal is a useful agent testing tool that developers choose repeatedly. Popul
 - [x] Canonical `plumbcheck` commands with legacy aliases
 - [x] Actual-agent CLI runner with input/output assertions and swallowed-error detection
 - [x] Expected/actual evidence for call-order, result, and agent-output failures
+- [x] Field-level argument/result/order/output differences in the workbench, CLI, and JUnit
 - [x] Minimal MCP 2025-11-25 fixture stdio server
 - [x] Fixture-derived tool parameter schemas without literal payload values
 - [x] CI reports and assertions over calls observed from MCP clients
@@ -29,7 +54,7 @@ The goal is a useful agent testing tool that developers choose repeatedly. Popul
 - [x] Test official MCP SDK 1.32.2 against the fixture server
 - [x] Validate the Windows/Linux Node 22/24 CI matrix on GitHub (initial alpha)
 - [x] TypeScript declarations and packed-consumer checks on TypeScript 5.9/7.0
-- [ ] Add structured expected-versus-actual diffs for failed arguments/results
+- [x] Add structured expected-versus-actual diffs for failed arguments/results
 - [ ] Add schema-backed editor completion and full JSON Schema result assertions
 - [ ] Improve recording sanitization with explicit field/path configuration
 - [ ] Add a runnable model-backed agent example behind opt-in credentials

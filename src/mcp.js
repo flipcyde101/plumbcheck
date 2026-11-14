@@ -34,7 +34,7 @@ export function serveMcp(suite, caseName, { input = process.stdin, output = proc
       }
       if (initialized) return error(id, -32600, 'This fixture session has already been initialized.');
       initialized = true;
-      return send({ jsonrpc: '2.0', id, result: { protocolVersion: '2025-11-25', capabilities: { tools: {} }, serverInfo: { name: 'plumcheck-fixture-server', version: '0.1.0-alpha.1' }, instructions: 'Fixture-only replay. Approval context is a test fixture, not human authentication.' } });
+      return send({ jsonrpc: '2.0', id, result: { protocolVersion: '2025-11-25', capabilities: { tools: {} }, serverInfo: { name: 'plumbcheck-fixture-server', version: '0.1.0-alpha.1' }, instructions: 'Fixture-only replay. Approval context is a test fixture, not human authentication.' } });
     }
     if (message.method === 'ping') return send({ jsonrpc: '2.0', id, result: {} });
     if (!initialized) return error(id, -32000, 'Initialize before calling tools.');

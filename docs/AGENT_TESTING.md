@@ -11,10 +11,10 @@ From the repository root:
 
 ```sh
 # Correct implementation: passes
-node bin/plumcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/support-agent.js --out reports/agent
+node bin/plumbcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/support-agent.js --out reports/agent
 
 # Buggy implementation: fails, even though the agent catches the mismatch
-node bin/plumcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/regressed-agent.js --out reports/regressed-agent
+node bin/plumbcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/regressed-agent.js --out reports/regressed-agent
 ```
 
 Both implementations read the order response. The correct one sends the update to the returned customer address. The regressed one chooses an outsider address and catches the resulting tool error. Its test still fails because the runner owns the call evidence independently of the function's error handling.

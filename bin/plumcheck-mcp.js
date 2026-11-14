@@ -8,7 +8,7 @@ import { redact } from '../src/redact.js';
 // stdout is reserved for JSON-RPC. Diagnostics go to stderr.
 try {
   const [path, caseName, ...extra] = process.argv.slice(2);
-  if (!path || !caseName || (extra.length && (extra.length !== 2 || extra[0] !== '--out' || !extra[1] || extra[1].startsWith('--')))) throw new Error('Usage: plumcheck-mcp <suite.json> "<case name>" [--out <directory>]');
+  if (!path || !caseName || (extra.length && (extra.length !== 2 || extra[0] !== '--out' || !extra[1] || extra[1].startsWith('--')))) throw new Error('Usage: plumbcheck-mcp <suite.json> "<case name>" [--out <directory>]');
   const suite = JSON.parse((await readFile(path, 'utf8')).replace(/^\uFEFF/, ''));
   const { report } = await serveMcp(suite, caseName);
   if (extra.length) {

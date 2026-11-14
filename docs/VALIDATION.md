@@ -2,6 +2,16 @@
 
 Date: 14 November 2026.
 
+## Typed package and recording-snapshot iteration
+
+The core suite passes **100/100 tests** locally, and the official MCP suite passes **7/7** using the canonical `plumbcheck-mcp` entry. The package now uses `plumbcheck` as its canonical name and provides both old command spellings as compatibility aliases.
+
+`npm run test:types` packs and installs the real archive into a separate temporary consumer. It passes strict positive/negative usage checks on TypeScript **5.9.3** and **7.0.2**, with both NodeNext and Bundler resolution. Installed canonical/legacy CLI commands and runtime exports are also exercised. The compilers are isolated test dependencies; the package still ships no third-party runtime dependencies.
+
+Recorder checks cover in-flight snapshots, invocation ordering, copies independent of raw entries, non-Error failures, invalid/non-JSON data, and the boundary between calls present at snapshot invocation and later calls. `snapshot()` returns raw completed fixtures; it does not mask sensitive data.
+
+The MCP iteration `074dd7a` passed all four GitHub jobs including the official SDK suite: [CI run](https://github.com/stepan4002/plumbcheck/actions/runs/43610736021). The expanded packed-consumer steps need their own CI run after this iteration is pushed.
+
 ## MCP interoperability iteration
 
 The dependency-free core suite passes **86/86 tests** locally. The fixture server has also been exercised through the official `@modelcontextprotocol/sdk` **1.32.2** `Client` and `StdioClientTransport`: **7/7 compatibility checks passed** locally. Cases cover connection/discovery, two-step replay, approval denial, argument mismatch, generic JSON response envelopes, a skipped fixture at shutdown, and preserved recorded error responses. These dependencies live in the separate `compat/mcp-sdk` test package; core runtime dependencies remain zero.

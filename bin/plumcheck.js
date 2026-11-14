@@ -12,9 +12,9 @@ import { loadExamples, startStudio } from '../src/studio.js';
 const help = `PlumbCheck · Test the work. Trust the agent.
 
 Usage:
-  plumcheck studio [--port 4173]         Open the local test workbench
-  plumcheck demo [--out reports/demo]   Run an intentionally failing demo
-  plumcheck run suite.json [options]    Run your tool-call contract
+  plumbcheck studio [--port 4173]        Open the local test workbench
+  plumbcheck demo [--out reports/demo]   Run an intentionally failing demo
+  plumbcheck run suite.json [options]    Run your tool-call contract
 
 Options:
   --agent <module>   Test a trusted local module's default function (run only)

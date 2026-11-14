@@ -9,21 +9,21 @@ This is a generic stdio configuration; adapt the surrounding config key to your 
 ```json
 {
   "mcpServers": {
-    "plumcheck": {
+    "plumbcheck": {
       "command": "node",
       "args": [
-        "/absolute/path/plumcheck/bin/plumcheck-mcp.js",
-        "/absolute/path/plumcheck/examples/customer-support/safe.json",
+        "/absolute/path/plumbcheck/bin/plumbcheck-mcp.js",
+        "/absolute/path/plumbcheck/examples/customer-support/safe.json",
         "Approved customer update",
         "--out",
-        "/absolute/path/plumcheck/reports/mcp"
+        "/absolute/path/plumbcheck/reports/mcp"
       ]
     }
   }
 }
 ```
 
-On Windows, JSON paths can use forward slashes (`C:/Projects/plumcheck/...`) or escaped backslashes. The command may also be an absolute path to Node.js. The server does not launch a live backend.
+On Windows, JSON paths can use forward slashes (`C:/Projects/plumbcheck/...`) or escaped backslashes. The command may also be an absolute path to Node.js. The server does not launch a live backend.
 
 ## Discovery and replay
 

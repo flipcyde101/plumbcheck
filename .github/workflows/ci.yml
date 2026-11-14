@@ -21,9 +21,11 @@ jobs:
       - run: npm test
       - run: npm ci --prefix compat/mcp-sdk --ignore-scripts --no-audit --no-fund
       - run: npm run test:mcp
+      - run: npm ci --prefix compat/typescript --ignore-scripts --no-audit --no-fund
+      - run: npm run test:types
       - run: npm run example:sdk
       - run: npm run check:agent
-      - run: node bin/plumcheck.js run examples/customer-support/safe.json --out reports/ci
+      - run: node bin/plumbcheck.js run examples/customer-support/safe.json --out reports/ci
       - uses: actions/upload-artifact@v4
         if: always()
         with:

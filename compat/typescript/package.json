@@ -1,0 +1,10 @@
+{
+  "name": "plumbcheck-typescript-compatibility",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test check.mjs" },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "typescript-legacy": "npm:typescript@5.9.3"
+  }
+}

@@ -44,7 +44,7 @@ npm start
 npm run demo
 
 # Corrected contract, exit code 0
-npm run check</pre></article><article class="guide-card"><h3>02. Gate a pull request</h3><p>Commit a synthetic or reviewed fixture. Run a contract in CI and keep the evidence as a build artifact.</p><pre>node bin/plumcheck.js run \
+npm run check</pre></article><article class="guide-card"><h3>02. Gate a pull request</h3><p>Commit a synthetic or reviewed fixture. Run a contract in CI and keep the evidence as a build artifact.</p><pre>node bin/plumbcheck.js run \
   examples/customer-support/safe.json \
   --out reports/ci</pre><p>Outputs HTML, masked JSON, and JUnit XML. Exit codes: <b>0</b> passed, <b>1</b> failed, <b>2</b> invalid input.</p></article><article class="guide-card"><h3>03. Exercise your agent code</h3><p>Pass a ReplaySession wherever your agent accepts a client with <code>callTool({ name, arguments })</code>. Then verify all fixtures were consumed.</p><pre>const client = new ReplaySession({
   fixtures, policies, context

@@ -17,7 +17,7 @@ async function supportAgent(client) {
   return result.structuredContent.status;
 }
 
-const replay = new ReplaySession({ fixtures: recorder.fixtures, policies: { allow: ['orders.lookup'] } });
+const replay = new ReplaySession({ fixtures: await recorder.snapshot(), policies: { allow: ['orders.lookup'] } });
 console.log('Replayed agent output:', await supportAgent(replay));
 replay.verifyComplete();
 console.log('Replay completed. Live tool calls during replay: 0.');

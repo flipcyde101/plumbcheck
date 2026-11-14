@@ -8,6 +8,8 @@ The goal is a useful agent testing tool that developers choose repeatedly. Popul
 - [x] Exact ordered fixture replay and explicit action policies
 - [x] Result equality and forbidden-call assertions
 - [x] JavaScript `callTool` adapter and explicit recorder
+- [x] Completed, independent recording snapshots with JSON validation
+- [x] Canonical `plumbcheck` commands with legacy aliases
 - [x] Actual-agent CLI runner with input/output assertions and swallowed-error detection
 - [x] Expected/actual evidence for call-order, result, and agent-output failures
 - [x] Minimal MCP 2025-11-25 fixture stdio server
@@ -24,7 +26,7 @@ The goal is a useful agent testing tool that developers choose repeatedly. Popul
 - [ ] Five independent developer walkthroughs and documented unmet needs
 - [x] Test official MCP SDK 1.32.2 against the fixture server
 - [x] Validate the Windows/Linux Node 22/24 CI matrix on GitHub (initial alpha)
-- [ ] Add TypeScript declarations and consumer type checks
+- [x] TypeScript declarations and packed-consumer checks on TypeScript 5.9/7.0
 - [ ] Add structured expected-versus-actual diffs for failed arguments/results
 - [ ] Add schema-backed editor completion and full JSON Schema result assertions
 - [ ] Improve recording sanitization with explicit field/path configuration

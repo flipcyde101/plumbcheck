@@ -14,7 +14,7 @@ const regressionPath = join(root, 'examples/customer-support/regression.json');
 async function connected(t, { suite = safePath, name = 'Read-only order lookup' } = {}) {
   const dir = await mkdtemp(join(tmpdir(), 'plumcheck-official-sdk-'));
   const client = new Client({ name: 'plumcheck-compatibility', version: '1.0.0' }, { capabilities: {} });
-  const transport = new StdioClientTransport({ command: process.execPath, args: [join(root, 'bin/plumcheck-mcp.js'), suite, name, '--out', dir], cwd: root, stderr: 'pipe' });
+  const transport = new StdioClientTransport({ command: process.execPath, args: [join(root, 'bin/plumbcheck-mcp.js'), suite, name, '--out', dir], cwd: root, stderr: 'pipe' });
   let diagnostics = '';
   transport.stderr.on('data', chunk => { diagnostics += chunk.toString(); });
   t.after(async () => { await client.close(); await rm(dir, { recursive: true, force: true }); });
@@ -31,7 +31,7 @@ async function connected(t, { suite = safePath, name = 'Read-only order lookup' 
 
 test('official SDK connects, discovers parameter shapes, calls a tool, and closes cleanly', { timeout: 15000 }, async t => {
   const { client, finish } = await connected(t);
-  assert.equal(client.getServerVersion().name, 'plumcheck-fixture-server');
+  assert.equal(client.getServerVersion().name, 'plumbcheck-fixture-server');
   const tools = await client.listTools();
   assert.equal(tools.tools[0].name, 'orders.lookup');
   assert.equal(tools.tools[0].inputSchema.properties.orderId.type, 'string');

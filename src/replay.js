@@ -1,4 +1,5 @@
 import { object, same } from './validation.js';
+import { copyJson } from './json-data.js';
 
 export class ContractError extends Error {
   constructor(code, message) {
@@ -65,20 +66,41 @@ export class ReplaySession {
 export function createRecorder(client) {
   if (typeof client?.callTool !== 'function') throw new TypeError('A client with callTool(request) is required.');
   const fixtures = [];
+  const operations = new WeakMap();
   return {
     fixtures,
-    async callTool(request) {
-      const entry = { tool: request.name, arguments: structuredClone(request.arguments ?? {}) };
+    callTool(request) {
+      let entry;
+      try { entry = { tool: request.name, arguments: structuredClone(request.arguments ?? {}) }; }
+      catch (error) {
+        const rejected = Promise.reject(error);
+        rejected.catch(() => {});
+        return rejected;
+      }
       // Insert in invocation order, even when responses complete out of order.
       fixtures.push(entry);
-      try {
-        const result = await client.callTool(request);
-        entry.result = structuredClone(result);
-        return result;
-      } catch (error) {
-        entry.result = { isError: true, content: [{ type: 'text', text: error.message }] };
-        throw error;
-      }
+      const operation = (async () => {
+        try {
+          const result = await client.callTool(request);
+          entry.result = structuredClone(result);
+          return result;
+        } catch (error) {
+          let message = 'Tool call failed with an unreadable error.';
+          try { const candidate = error?.message; message = typeof candidate === 'string' ? candidate : String(error); } catch { /* Keep a valid text response even for unusual thrown values. */ }
+          entry.result = { isError: true, content: [{ type: 'text', text: message }] };
+          throw error;
+        }
+      })();
+      operations.set(entry, operation);
+      operation.catch(() => {});
+      return operation;
+    },
+    async snapshot() {
+      const selected = fixtures.slice();
+      await Promise.allSettled(selected.map(entry => operations.get(entry)));
+      if (selected.some(entry => !Object.hasOwn(entry, 'result'))) throw new ContractError('RECORDING_INCOMPLETE', 'A recording entry has no completed response.');
+      try { return copyJson(selected); }
+      catch { throw new ContractError('RECORDING_NOT_JSON', 'Recording contains values that cannot be saved as JSON. Use JSON tool arguments and results.'); }
     },
   };
 }

@@ -1,5 +1,5 @@
 {
-  "name": "plumcheck",
+  "name": "plumbcheck",
   "version": "0.1.0-alpha.1",
   "description": "Test what your AI automation does before it does it. Local tool-call contracts, fixture replay, and CI reports.",
   "type": "module",
@@ -9,18 +9,20 @@
   "repository": { "type": "git", "url": "git+https://github.com/stepan4002/plumbcheck.git" },
   "bugs": { "url": "https://github.com/stepan4002/plumbcheck/issues" },
   "engines": { "node": ">=22" },
-  "bin": { "plumcheck": "bin/plumcheck.js", "plumcheck-mcp": "bin/plumcheck-mcp.js" },
-  "exports": { ".": "./src/index.js" },
+  "bin": { "plumbcheck": "bin/plumbcheck.js", "plumbcheck-mcp": "bin/plumbcheck-mcp.js", "plumcheck": "bin/plumcheck.js", "plumcheck-mcp": "bin/plumcheck-mcp.js" },
+  "types": "./src/index.d.ts",
+  "exports": { ".": { "types": "./src/index.d.ts", "import": "./src/index.js", "default": "./src/index.js" } },
   "files": ["bin", "src", "web", "examples", "docs", "ROADMAP.md", "CONTRIBUTING.md", "README.md", "LICENSE", "SECURITY.md"],
   "scripts": {
     "test": "node --test",
     "test:mcp": "npm --prefix compat/mcp-sdk test",
-    "demo": "node bin/plumcheck.js demo",
-    "start": "node bin/plumcheck.js studio",
-    "check": "node bin/plumcheck.js run examples/customer-support/safe.json",
+    "test:types": "npm --prefix compat/typescript test",
+    "demo": "node bin/plumbcheck.js demo",
+    "start": "node bin/plumbcheck.js studio",
+    "check": "node bin/plumbcheck.js run examples/customer-support/safe.json",
     "example:sdk": "node examples/customer-support/agent.js",
-    "check:agent": "node bin/plumcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/support-agent.js --out reports/agent",
-    "demo:agent": "node bin/plumcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/regressed-agent.js --out reports/regressed-agent"
+    "check:agent": "node bin/plumbcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/support-agent.js --out reports/agent",
+    "demo:agent": "node bin/plumbcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/regressed-agent.js --out reports/regressed-agent"
   },
   "keywords": ["ai", "agents", "mcp", "testing", "regression", "automation", "fixtures", "ci"]
 }

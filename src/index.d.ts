@@ -129,6 +129,17 @@ export interface TestReport<TOutput = unknown> {
   createdAt: string;
   durationMs: number;
   passed: boolean;
+  /** Optional app-recorded provenance; an imported report is not authenticated. */
+  execution?: {
+    runner: 'builtin-model';
+    provider: 'openai' | 'anthropic' | 'google' | 'ollama' | 'lmstudio' | 'compatible';
+    model: string;
+    connectionName: string;
+    contractRevision: number;
+    contractHash: string;
+    limits: { timeoutMs: number; maxSteps: number; maxOutputTokens: number; maxTotalOutputTokens: number };
+    usage?: { inputTokens: number; outputTokens: number; totalTokens: number; steps: number; usageIncomplete: boolean };
+  };
   summary: {
     total: number;
     passed: number;

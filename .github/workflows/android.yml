@@ -1,0 +1,32 @@
+name: Android
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['android/**', 'mobile/**', 'scripts/build-mobile.mjs', 'src/**', 'package*.json', '.github/workflows/android.yml']
+  pull_request:
+    paths: ['android/**', 'mobile/**', 'scripts/build-mobile.mjs', 'src/**', 'package*.json', '.github/workflows/android.yml']
+permissions:
+  contents: read
+jobs:
+  android-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 24, cache: npm}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: 21}
+      - uses: android-actions/setup-android@v3
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run mobile:build
+      - run: chmod +x android/gradlew
+      - run: cd android && ./gradlew --no-daemon assembleDebug lintDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PlumbCheck-Android-preview
+          path: |
+            android/app/build/outputs/apk/debug/*.apk
+            android/app/build/reports/lint-results-debug.html
+          if-no-files-found: error

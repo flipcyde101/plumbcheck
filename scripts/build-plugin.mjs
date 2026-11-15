@@ -1,0 +1,16 @@
+import { build } from 'esbuild';
+import { cp, mkdir, readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
+import { writeNotices } from './third-party-notices.mjs';
+const root = fileURLToPath(new URL('../', import.meta.url));
+const source = resolve(root, 'plugins/plumbcheck');
+const out = resolve(root, 'dist/plugin/plumbcheck');
+await mkdir(out, { recursive: true });
+await cp(source, out, { recursive: true });
+await build({ entryPoints: [resolve(root, 'bin/plumbcheck-control.js')], outfile: resolve(out, 'server/control.cjs'), bundle: true, platform: 'node', target: 'node22', format: 'cjs', legalComments: 'eof' });
+await cp(resolve(root, 'LICENSE'), resolve(out, 'LICENSE'));
+await writeNotices(resolve(out, 'THIRD_PARTY_NOTICES.txt'));
+const manifest = JSON.parse(await readFile(resolve(out, 'plugin.json'), 'utf8'));
+if (manifest.name !== 'plumbcheck' || manifest.extensions['com.openai'].interface.shortDescription.length > 30) throw new Error('Invalid plugin identity or listing.');
+console.log('Built the self-contained local plugin in dist/plugin/plumbcheck. It requires Node.js 22+; the Windows app can instead generate a bundled-runtime configuration.');

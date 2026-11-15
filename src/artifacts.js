@@ -48,6 +48,22 @@ export function createArtifactTools(mask, validateSuite) {
     check(typeof value.passed === 'boolean', 'Report passed must be a boolean.');
     check(Array.isArray(value.cases) && value.cases.length > 0 && value.cases.length <= 1000, 'Report must have 1–1000 cases.');
     check(object(value.summary), 'Report summary is required.');
+    if (own(value, 'execution')) {
+      const e = value.execution;
+      check(object(e) && e.runner === 'builtin-model' && value.mode === 'agent-replay', 'Unsupported execution metadata.');
+      check(['openai', 'anthropic', 'google', 'ollama', 'lmstudio', 'compatible'].includes(e.provider), 'Unsupported model provider metadata.');
+      text(e.model, 'Model ID', true); text(e.connectionName, 'Connection name', true);
+      check(e.model.length <= 200 && e.connectionName.length <= 200, 'Model metadata exceeds its text limit.');
+      count(e.contractRevision, 'Contract revision'); check(e.contractRevision > 0, 'Contract revision must be positive.');
+      check(typeof e.contractHash === 'string' && /^[a-f0-9]{64}$/.test(e.contractHash), 'Invalid contract hash.');
+      check(object(e.limits), 'Model execution limits are required.');
+      for (const key of ['timeoutMs', 'maxSteps', 'maxOutputTokens', 'maxTotalOutputTokens']) { count(e.limits[key], `Execution ${key}`); check(e.limits[key] > 0, 'Execution limits must be positive.'); }
+      if (own(e, 'usage')) {
+        check(object(e.usage) && typeof e.usage.usageIncomplete === 'boolean', 'Invalid usage metadata.');
+        for (const key of ['inputTokens', 'outputTokens', 'totalTokens', 'steps']) count(e.usage[key], `Usage ${key}`);
+        check(e.usage.totalTokens === e.usage.inputTokens + e.usage.outputTokens, 'Usage total does not match its token counts.');
+      }
+    }
     const names = new Set();
     const cases = value.cases.map(c => {
       check(object(c), 'Each report case must be an object.');

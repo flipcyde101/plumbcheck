@@ -10,10 +10,11 @@ export async function loadExamples() {
 }
 
 /** Local JSON-only runner: no command execution, uploads, telemetry, or live clients. */
-export async function startStudio({ port = 4173 } = {}) {
+export async function startStudio({ port = 4173, workspaceDirectory, vault, modelRunner, fetch: transport } = {}) {
   const examples = await loadExamples();
   const initial = await runSuite(examples.regression);
   const html = (await toHtml(initial)).replace('data-studio="false"', 'data-studio="true"');
+  const service = workspaceDirectory ? await (await import('./workspace-http.js')).workspaceService(workspaceDirectory, { vault, modelRunner, fetch: transport }) : null;
   const server = createServer(async (req, res) => {
     const address = server.address();
     const expectedHost = `127.0.0.1:${address.port}`;
@@ -30,6 +31,7 @@ export async function startStudio({ port = 4173 } = {}) {
       return json(403, { error: 'Studio accepts its own loopback origin only.' });
     }
     try {
+      if (service && await service.handle(req, res, json)) return;
       if (req.method === 'GET' && req.url === '/') {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         return res.end(html);
@@ -48,12 +50,18 @@ export async function startStudio({ port = 4173 } = {}) {
         return json(200, redact(await runSuite(suite)));
       }
       return json(404, { error: 'Not found.' });
-    } catch (error) { return json(400, { error: error.message }); }
+    } catch (error) { return json(error.status || 400, { error: error.message }); }
   });
   server.requestTimeout = 10_000;
-  await new Promise((resolve, reject) => {
+  try { await new Promise((resolve, reject) => {
     server.once('error', reject);
     server.listen(port, '127.0.0.1', resolve);
-  });
+  }); } catch (error) { await service?.close(); throw error; }
+  try { if (service) await service.listen(server.address().port); }
+  catch (error) { await service?.close(); await new Promise(resolve => server.close(resolve)); throw error; }
+  server.workspace = service?.workspace;
+  server.workspaceToken = service?.token;
+  server.uiURL = `http://127.0.0.1:${server.address().port}/${service ? `#auth=${service.token}` : ''}`;
+  server.shutdown = async () => { await service?.close(); await new Promise(resolve => server.close(resolve)); };
   return server;
 }

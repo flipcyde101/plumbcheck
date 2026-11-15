@@ -1,9 +1,11 @@
-const { app, BrowserWindow, dialog, ipcMain, Menu, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu, shell, safeStorage, net } = require('electron');
 const path = require('node:path');
 const { writeFile } = require('node:fs/promises');
 
 const args = process.argv.slice(app.isPackaged ? 1 : 2);
 let window, server, origin, creatingSetup = false;
+let quitting = false;
+app.setPath('userData', path.join(app.getPath('appData'), 'PlumbCheck'));
 
 function external(url) {
   try {
@@ -18,7 +20,9 @@ async function start() {
   await app.whenReady();
   const { startStudio } = await import('../../src/studio.js');
   const { makeMcpSetup, readDesktopContract } = await import('./config.mjs');
-  server = await startStudio({ port: 0 });
+  const { createVault } = require('./vault.cjs');
+  const directory = app.getPath('userData');
+  server = await startStudio({ port: 0, workspaceDirectory: directory, vault: await createVault(directory, safeStorage), fetch: (url, options) => net.fetch(url, { ...options, credentials: 'omit' }) });
   origin = `http://127.0.0.1:${server.address().port}`;
   window = new BrowserWindow({
     title: 'PlumbCheck', width: 1320, height: 940, minWidth: 420, minHeight: 620,
@@ -28,6 +32,15 @@ async function start() {
       devTools: !app.isPackaged, partition: 'plumbcheck-local' },
   });
   const session = window.webContents.session;
+  session.webRequest.onBeforeSendHeaders((details, callback) => {
+    const requestHeaders = { ...details.requestHeaders };
+    const url = new URL(details.url);
+    if (url.origin === origin && url.pathname.startsWith('/api/')) {
+      for (const key of Object.keys(requestHeaders)) if (key.toLowerCase() === 'authorization') delete requestHeaders[key];
+      requestHeaders.Authorization = `Bearer ${server.workspaceToken}`;
+    }
+    callback({ requestHeaders });
+  });
   session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
   session.setPermissionCheckHandler(() => false);
   session.webRequest.onBeforeRequest((details, callback) => {
@@ -39,6 +52,11 @@ async function start() {
   window.webContents.setWindowOpenHandler(({ url }) => { if (external(url)) shell.openExternal(url); return { action: 'deny' }; });
   window.webContents.on('will-navigate', (event, url) => { if (url !== `${origin}/`) { event.preventDefault(); if (external(url)) shell.openExternal(url); } });
   window.webContents.on('will-attach-webview', event => event.preventDefault());
+  ipcMain.handle('plumbcheck:control-setup', event => {
+    if (event.sender !== window.webContents || event.senderFrame !== window.webContents.mainFrame || event.senderFrame.url !== `${origin}/`) throw new Error('Invalid setup request.');
+    const runtime = path.join(app.isPackaged ? process.resourcesPath : path.dirname(app.getAppPath()), 'mcp-runtime');
+    return { mcpServers: { plumbcheck: { command: path.join(runtime, 'node.exe'), args: [path.join(runtime, 'bin', 'plumbcheck-control.js'), '--connect', path.join(directory, 'bridge.json')] } } };
+  });
   ipcMain.handle('plumbcheck:create-mcp-setup', async (event, request) => {
     if (event.sender !== window.webContents || event.senderFrame !== window.webContents.mainFrame || event.senderFrame.url !== `${origin}/`) throw new Error('Invalid setup request.');
     if (creatingSetup) throw new Error('Finish the current save dialog first.');
@@ -77,7 +95,9 @@ if (args[0] === '--mcp') { process.stderr.write('Use the MCP configuration gener
 else if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance', () => { if (window) { if (window.isMinimized()) window.restore(); window.focus(); } });
-  app.on('before-quit', () => { if (server) server.close(); });
+  app.on('before-quit', event => {
+    if (server && !quitting) { event.preventDefault(); quitting = true; server.shutdown().finally(() => app.quit()); }
+  });
   app.on('window-all-closed', () => app.quit());
   start().catch(error => { dialog.showErrorBox('PlumbCheck could not start', error.message); app.quit(); });
 }

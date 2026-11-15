@@ -1,0 +1,10 @@
+import { build } from 'esbuild';
+import { mkdir, cp } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
+const root = fileURLToPath(new URL('../', import.meta.url));
+const out = resolve(root, 'android/app/src/main/assets');
+await mkdir(out, { recursive: true });
+await cp(resolve(root, 'mobile/index.html'), resolve(out, 'index.html'));
+await build({ entryPoints: [resolve(root, 'mobile/entry.js')], bundle: true, outfile: resolve(out, 'app.js'), format: 'iife', platform: 'browser', target: 'chrome100', alias: { 'node:util': resolve(root, 'src/portable-util.js') }, legalComments: 'eof' });
+console.log('Built offline Android assets from the shared fixture engine.');

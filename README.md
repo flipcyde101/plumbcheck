@@ -4,30 +4,37 @@
 
 Local tool-call regression tests for AI agents and business automations. Catch a changed recipient, an unapproved send, a forbidden operation, or an unexpected response before deploying your automation.
 
-Built by [Plumbnote](https://plumbnote.com). MIT licensed. No account, API key, or telemetry. The core CLI has zero third-party runtime dependencies; the Windows application bundles its desktop runtime.
+Built by [Plumbnote](https://plumbnote.com). MIT licensed. Offline fixture checks need no account or API key. Optional model connections use your API account or a local server. No telemetry. The fixture engine uses Node built-ins; model and assistant integrations use pinned SDK dependencies bundled into the Windows app.
 
 Canonical commands: `plumbcheck` and `plumbcheck-mcp`. Earlier `plumcheck` / `plumcheck-mcp` aliases remain supported. TypeScript declarations ship with the package; see [typed usage and completed recording snapshots](docs/TYPESCRIPT.md).
 
 ![PlumbCheck local workbench](docs/images/workbench.jpg)
 
-**Status: early alpha.** Working contract runner, JavaScript adapter, fixture-only MCP stdio server, local workbench, and CI reports. See [the boundaries](#what-this-does-and-doesnt-guarantee) before connecting your own code.
+**Status: v0.2 preview, not a production release.** Windows application, saved projects, model-selected tool tests, run history, cancellation, comparison, Python/JavaScript adapters, fixture MCP and testing-control MCP, Android APK preview, and optional self-hosted snapshot sync. Qwen 3.5:4B has passed a real local tool test and a deliberate wrong-argument regression. [Release gates](release-readiness.json) record the remaining verification and distribution requirements.
 
 [![CI](https://github.com/stepan4002/plumbcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/stepan4002/plumbcheck/actions/workflows/ci.yml)
 
 ## Start in 30 seconds
 
-**Windows app:** download the artifact from a successful [Windows desktop build](https://github.com/stepan4002/plumbcheck/actions/workflows/windows-desktop.yml), extract it, and run the `.exe` installer. A portable ZIP is included too. No Node.js setup is needed. This unsigned alpha includes a native workbench and a bundled MCP fixture server. See [the Windows app guide](docs/WINDOWS_APP.md).
+**Windows app:** download the artifact from a successful [Windows desktop build](https://github.com/stepan4002/plumbcheck/actions/workflows/windows-desktop.yml), extract it, and run the `.exe` installer. A portable ZIP is included too. No Node.js setup is needed. This unsigned preview includes saved projects, model connections, run evidence, and bundled fixture/control MCP helpers. See [the Windows app guide](docs/WINDOWS_APP.md).
+
+**Android preview:** the [Android workflow](https://github.com/stepan4002/plumbcheck/actions/workflows/android.yml) builds a debug-signed APK. It runs fixture checks offline, saves a project, imports/exports JSON, and connects to an optional HTTPS snapshot relay. A locally built release-variant APK uses a private preview signing key. Real-device validation and a long-term distribution identity remain release gates. See [Android and sync](docs/ANDROID_AND_SYNC.md).
 
 **Source version:**
 
 Download this repository, open a terminal in its folder, and use **Node.js 22 or later**:
 
 ```sh
+npm ci
 npm test
 npm start
 ```
 
-Open **http://127.0.0.1:4173**. No installation step is needed: the project currently has zero third-party dependencies.
+The complete developer test suite also uses Python 3 for the optional Python adapter. Running the application itself needs Node.js, not Python.
+
+First run **`npm ci`** to install the locked development/integration dependencies, then run the commands above. Open the **private local launch link printed by Studio**. Source Studio stores projects in `~/.plumbcheck`; keys are session-only there. Windows uses its own app-data directory and OS-encrypted credential storage, and attaches its private connection token automatically.
+
+In **Workspace**, name your first project and save the included Contract draft. Run offline checks, or add an API/local-model connection and authorize a model run. History preserves the actual evidence across restarts. Direct model testing uses a built-in tool agent with your instructions; testing an existing framework agent requires the SDK/MCP integration described below. [Connections, limits, and supported modes](docs/APP_WORKSPACE.md).
 
 The workbench starts with six synthetic checks, including four deliberate regressions. Inspect the blocked email, then click **Try the fixed agent** to see the corrected contract pass. Edit the contract to experiment. Nothing is sent to an external service.
 
@@ -51,6 +58,8 @@ npm run demo:agent
 ```
 
 The demo uses planned tool calls to illustrate contract checking. The SDK example runs a JavaScript function against replayed responses. Neither example invokes an LLM.
+
+For an explicitly opted-in local-model check, start a tool-capable model server and run `npm run test:local-model`. The default verified target is `qwen3.5:4b` on Ollama; environment variables select another loopback endpoint/model. It runs a correct agent and a deliberately wrong argument, then saves actual HTML/JSON/JUnit evidence under `reports/local-model`. It never runs in account-free CI. [Live verification](docs/LIVE_MODEL_VERIFICATION.md).
 
 ## Test your actual agent function
 
@@ -129,6 +138,10 @@ client.verifyComplete();
 
 ## Use an MCP client directly
 
+To let an assistant **operate PlumbCheck**, use **Create assistant configuration** in the Windows Workspace. Its separate control service can list saved projects, validate contracts, start offline jobs, inspect evidence, compare runs, and cancel. It has no arbitrary shell tool and cannot spend model credits. The self-contained local plugin is built with `npm run plugin:build`. Host installation and ChatGPT web/mobile HTTPS integration need separate validation; a local stdio package does not enable a cloud connection automatically. [Assistant integration](docs/ASSISTANT_INTEGRATION.md).
+
+To test **an agent's own MCP calls**, use the fixture server below.
+
 ```sh
 node bin/plumbcheck-mcp.js examples/customer-support/safe.json "Read-only order lookup"
 ```
@@ -154,7 +167,7 @@ The included [CI workflow](.github/workflows/ci.yml) tests Node 22 and 24 on Lin
 
 ## Build with us
 
-Planned direction: a Windows `.exe`, an Android app with offline fixture checks, optional device sync, multiple model/framework adapters, and Claude/ChatGPT testing integrations. See [the phased platform roadmap](docs/PLATFORM_ROADMAP.md) for what remains to build and verify. These are planned capabilities, not current universal-agent compatibility.
+The Windows app and Android/snapshot-sync previews are implemented. Remaining direction includes phone-to-worker execution, authenticated remote assistant connections, additional framework adapters, official subscription login routes, and signed public distribution. See [the phased platform roadmap](docs/PLATFORM_ROADMAP.md) for the distinction between implemented features and verified host/device support. This is not universal-agent compatibility.
 
 Start with [CONTRIBUTING.md](CONTRIBUTING.md), [the roadmap](ROADMAP.md), and [the security policy](SECURITY.md). The [product brief](docs/PRODUCT_BRIEF.md) explains the differentiation, research, and validation still needed. The [build prompt](docs/BUILD_PROMPT.md) gives a reusable implementation brief for future coding sessions.
 

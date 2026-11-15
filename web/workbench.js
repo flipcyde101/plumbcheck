@@ -58,7 +58,10 @@ export function startWorkbench(artifacts, diffs) {
   }
   function showView(name) {
     activeView = name;
-    for (const view of ['overview', 'contract', 'guide']) $(view).hidden = view !== name;
+    document.querySelector('.hero').hidden = name === 'workspace';
+    document.querySelector('.hero-side').hidden = name === 'workspace';
+    document.querySelector('.artifact-bar').hidden = name === 'workspace';
+    for (const view of ['overview', 'contract', 'guide', 'workspace']) if ($(view)) $(view).hidden = view !== name;
     document.querySelectorAll('nav button').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.view === name)));
     updateControls();
   }
@@ -83,8 +86,8 @@ export function startWorkbench(artifacts, diffs) {
     updateControls();
     if (!report) { $('inspector').textContent = 'No report loaded. Open a report or run a contract to get started.'; return; }
     $('suite-name').textContent = report.name;
-    $('mode-label').textContent = report.mode === 'agent-replay' ? 'AGENT CODE / REPLAY' : report.mode === 'mcp-replay' ? 'MCP CLIENT / REPLAY' : 'FIXTURE REPLAY';
-    $('run-meta').textContent = `${report.passed ? 'PASSED' : 'FAILED'} · ${report.summary.total} check${report.summary.total === 1 ? '' : 's'} · ${report.durationMs} ms · ${new Date(report.createdAt).toLocaleString()}`;
+    $('mode-label').textContent = report.execution ? `MODEL / ${report.execution.provider} / ${report.execution.model}` : report.mode === 'agent-replay' ? 'AGENT CODE / REPLAY' : report.mode === 'mcp-replay' ? 'MCP CLIENT / REPLAY' : 'FIXTURE REPLAY';
+    $('run-meta').textContent = `${report.passed ? 'PASSED' : 'FAILED'} · ${report.summary.total} check${report.summary.total === 1 ? '' : 's'} · ${report.durationMs} ms · ${new Date(report.createdAt).toLocaleString()}${report.execution ? ` · contract revision ${report.execution.contractRevision}` : ''}`;
     $('passed-count').innerHTML = `${report.summary.passed}<small> / ${report.summary.total}</small>`;
     $('failed-count').textContent = report.summary.failed;
     $('failed-count').style.color = report.summary.failed ? 'var(--red)' : 'var(--ink)';
@@ -193,6 +196,10 @@ export function startWorkbench(artifacts, diffs) {
     finally { setBusy(false); }
   });
   $('export').addEventListener('click', () => download(JSON.stringify(report, null, 2), 'plumbcheck-report.json'));
+  document.addEventListener('plumbcheck:report', event => {
+    try { const checked = artifacts.open(JSON.stringify(event.detail)); report = checked.value; viewingSavedReport = true; sourceName = 'Saved workspace run'; resetSelection(); render(); showView('overview'); }
+    catch (error) { showError(error.message); }
+  });
   render();
   if (studio) {
     setBusy(true);

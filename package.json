@@ -1,30 +1,87 @@
 {
   "name": "plumbcheck",
-  "version": "0.1.0-alpha.1",
+  "version": "0.2.0-preview.1",
   "description": "Test what your AI automation does before it does it. Local tool-call contracts, fixture replay, and CI reports.",
   "type": "module",
   "license": "MIT",
   "author": "Plumbnote <hello@plumbnote.com>",
   "homepage": "https://github.com/stepan4002/plumbcheck#readme",
-  "repository": { "type": "git", "url": "git+https://github.com/stepan4002/plumbcheck.git" },
-  "bugs": { "url": "https://github.com/stepan4002/plumbcheck/issues" },
-  "engines": { "node": ">=22" },
-  "bin": { "plumbcheck": "bin/plumbcheck.js", "plumbcheck-mcp": "bin/plumbcheck-mcp.js", "plumcheck": "bin/plumcheck.js", "plumcheck-mcp": "bin/plumcheck-mcp.js" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stepan4002/plumbcheck.git"
+  },
+  "bugs": {
+    "url": "https://github.com/stepan4002/plumbcheck/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "plumbcheck": "bin/plumbcheck.js",
+    "plumbcheck-mcp": "bin/plumbcheck-mcp.js",
+    "plumbcheck-control": "bin/plumbcheck-control.js",
+    "plumbcheck-sync": "bin/plumbcheck-sync.js",
+    "plumcheck": "bin/plumcheck.js",
+    "plumcheck-mcp": "bin/plumcheck-mcp.js"
+  },
   "types": "./src/index.d.ts",
-  "exports": { ".": { "types": "./src/index.d.ts", "import": "./src/index.js", "default": "./src/index.js" } },
-  "files": ["bin", "src", "web", "examples", "docs", "ROADMAP.md", "CONTRIBUTING.md", "README.md", "LICENSE", "SECURITY.md"],
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    }
+  },
+  "files": [
+    "bin",
+    "src",
+    "web",
+    "examples",
+    "docs",
+    "ROADMAP.md",
+    "CONTRIBUTING.md",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md"
+  ],
   "scripts": {
     "test": "node --test",
     "test:mcp": "npm --prefix compat/mcp-sdk test",
     "test:types": "npm --prefix compat/typescript test",
+    "test:local-model": "node scripts/check-local-model.mjs",
     "demo": "node bin/plumbcheck.js demo",
     "start": "node bin/plumbcheck.js studio",
     "desktop:dev": "npm --prefix desktop start",
     "desktop:build": "npm --prefix desktop run build:win",
+    "mobile:build": "node scripts/build-mobile.mjs",
+    "mobile:preview": "node scripts/preview-mobile.mjs",
+    "plugin:build": "node scripts/build-plugin.mjs",
+    "release:check": "node scripts/release-check.mjs",
+    "sbom": "node scripts/build-sbom.mjs",
     "check": "node bin/plumbcheck.js run examples/customer-support/safe.json",
     "example:sdk": "node examples/customer-support/agent.js",
     "check:agent": "node bin/plumbcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/support-agent.js --out reports/agent",
     "demo:agent": "node bin/plumbcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/regressed-agent.js --out reports/regressed-agent"
   },
-  "keywords": ["ai", "agents", "mcp", "testing", "regression", "automation", "fixtures", "ci"]
+  "keywords": [
+    "ai",
+    "agents",
+    "mcp",
+    "testing",
+    "regression",
+    "automation",
+    "fixtures",
+    "ci"
+  ],
+  "dependencies": {
+    "@ai-sdk/anthropic": "4.0.105",
+    "@ai-sdk/google": "4.0.121",
+    "@ai-sdk/openai": "4.0.118",
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "ai": "7.0.173",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
 }

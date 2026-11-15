@@ -14,3 +14,15 @@ recordings/
 *.tgz
 .DS_Store
 Thumbs.db
+android/.gradle/
+android/build/
+android/app/build/
+android/app/src/main/assets/
+android/local.properties
+.tools/
+*.jks
+*.keystore
+__pycache__/
+*.pyc
+AGENTS.md
+CLAUDE.md

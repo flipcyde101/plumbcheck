@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { homedir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { runSuite } from '../src/runner.js';
 import { runAgentSuite } from '../src/agent-runner.js';
@@ -50,8 +51,9 @@ async function main() {
     if (options.out || options.json || options.agent) throw new Error('Studio accepts only --port.');
     const port = options.port === undefined ? 4173 : Number(options.port);
     if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error('Port must be an integer from 0 to 65535.');
-    const server = await startStudio({ port });
-    console.log(`\nPlumbCheck Studio → http://127.0.0.1:${server.address().port}\nLocal only · No API keys · Fixture replay\nPress Ctrl+C to stop.\n`);
+    const server = await startStudio({ port, workspaceDirectory: resolve(process.env.PLUMBCHECK_HOME || resolve(homedir(), '.plumbcheck')) });
+    for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => server.shutdown().then(() => process.exit(0)));
+    console.log(`\nPlumbCheck Studio private launch link → ${server.uiURL}\nKeep this local launch link private.\nLocal projects · Fixture and model testing · Keys are session-only in source Studio\nPress Ctrl+C to stop.\n`);
     return;
   }
   if (options.port) throw new Error('--port is only available for studio.');

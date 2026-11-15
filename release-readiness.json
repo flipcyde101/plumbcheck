@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "channel": "preview",
+  "required": [
+    { "id": "core-and-integrations", "status": "pending", "reason": "Complete final checks and record the exact commit." },
+    { "id": "windows-authenticode", "status": "pending", "reason": "A publisher signing identity is required for the production Windows installer." },
+    { "id": "windows-clean-machine", "status": "pending", "reason": "Verify native save dialogs, credential persistence, install/uninstall, and updates on a clean Windows account." },
+    { "id": "live-models", "status": "pending", "reason": "Ollama Qwen 3.5:4B has passed correct and deliberate-regression live tests with usage/evidence exports. A live cloud-provider account/model still needs authorized verification." },
+    { "id": "assistant-hosts", "status": "pending", "reason": "Walk through actual supported assistant hosts; official SDK tests alone do not prove Claude or ChatGPT host compatibility." },
+    { "id": "android-device", "status": "pending", "reason": "Verify a signed APK on real devices, including file pickers, Keystore persistence and HTTPS snapshot pairing." },
+    { "id": "remote-service", "status": "pending", "reason": "Provision reviewed HTTPS hosting and verify deployment, device revocation, backups, privacy and operational controls." },
+    { "id": "external-review", "status": "pending", "reason": "Complete independent security/accessibility/usability review and resolve findings." }
+  ]
+}

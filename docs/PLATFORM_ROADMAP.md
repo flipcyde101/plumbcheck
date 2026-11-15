@@ -1,6 +1,6 @@
 # PlumbCheck platform roadmap
 
-Updated 14 November 2026 from the founder's Windows, Android, sync, multi-agent, and AI integration requirements. This is the product direction and delivery plan. Unchecked items are planned capabilities, not compatibility claims or shipped features. Milestones have exit criteria rather than unverified release dates.
+Updated 15 November 2026 from the founder's Windows, Android, sync, multi-agent, and AI integration requirements. This is the product direction and delivery plan. Unchecked items are planned capabilities, not compatibility claims or shipped features. Milestones have exit criteria rather than unverified release dates.
 
 ## Product we are building
 
@@ -16,9 +16,9 @@ The local runner and useful offline functionality remain MIT licensed. Local tes
 
 ## Current evidence and the remaining gap
 
-The pushed alpha has exact fixture replay, a JavaScript agent runner, an explicit recorder, a minimal MCP 2025-11-25 fixture server, typed exports, a local workbench, report import/export, and verified Windows/Linux Node 22/24 CI. Field-level failure differences and a Windows executable are being developed in the current iteration.
+The 0.2 preview builds on exact fixture replay, a JavaScript agent runner, an explicit recorder, fixture MCP, typed exports, field differences, import/export, and Windows/Linux Node 22/24 CI. It adds saved app projects/jobs, model connections and usage/budgets, comparisons, a Python adapter, a separate local control MCP bridge/plugin, an Android APK preview, and optional snapshot sync.
 
-The existing MCP server exposes **fixture tools to an agent being tested**. It does not yet expose **PlumbCheck itself as a testing service**. The latter needs a separate control server. No Android app, device sync, direct model connector, or ChatGPT/Claude testing plugin has shipped yet. See [verification](VALIDATION.md) for checks actually run.
+The fixture server exposes **fixture tools to an agent being tested**. The new local control bridge exposes **saved offline PlumbCheck jobs** to an assistant. These have separate configurations and authority. Actual Qwen 3.5:4B decisions and an intentional regression have been checked; the packaged Windows interface also discovered and ran that model, inspected its report, and completed the native MCP save dialog. Android emulator checks exercised offline runs, native JSON export/import, and project retention across an APK update. Real-device/Keystore/HTTPS sync checks, actual assistant hosts, remote hosting, cloud API accounts, and signed public distribution remain open. See [verification](VALIDATION.md), [live evidence](LIVE_MODEL_VERIFICATION.md), and [release gates](../release-readiness.json).
 
 ## Connection types must stay separate
 
@@ -135,7 +135,7 @@ Use one versioned project model across devices: project ID, contract ID/revision
 
 ### M5 · Android app with useful independent operation
 
-Preferred starting direction: a React Native/Expo Android client sharing versioned schemas, API clients, and Plumbnote design tokens. Validate runtime and packaging constraints in a prototype before committing; reuse the testing semantics, not the desktop DOM or Node-only APIs.
+The current prototype is a native Android WebView host with bundled local assets, the shared fixture engine, Android file pickers, and Keystore-backed sync credentials. It has build/lint/signature and shared-engine parity evidence; actual-device verification remains open. Evaluate React Native/Expo if richer native workflows justify it rather than claiming the prototype proves every mobile requirement.
 
 - [ ] Extract a platform-neutral fixture/contract engine with parity tests against the Node runner. Keep file/process adapters outside that engine.
 - [ ] Offline on-phone contract validation, synthetic planned-call fixture tests, report viewing, editing, and scenario export/import.

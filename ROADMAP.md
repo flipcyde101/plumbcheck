@@ -26,6 +26,26 @@ The implementation sequence and acceptance criteria are in [the platform roadmap
 
 The detailed roadmap also includes AI-assisted test drafting, scenario packs, cost/token budgets, baseline review, multi-agent handoff assertions, path-based sanitization, failure simulation, self-hostable sync, and future iOS/macOS/Linux evaluation.
 
+## 0.2 preview — implemented progress
+
+- [x] Windows app workspace with persistent, versioned projects and run history
+- [x] Built-in model agent using pinned OpenAI/Anthropic/Google SDK adapters and local/compatible endpoints
+- [x] Live Ollama Qwen 3.5:4B pass and deliberate argument regression, with provider-reported usage
+- [x] Deadlines, per-case steps/tool calls, run-wide output budget, backend consent, cancellation, and idempotency
+- [x] Model execution provenance retained in exported reports; imported evidence remains unauthenticated
+- [x] Separate local MCP control bridge and a buildable local plugin, tested with the official SDK
+- [x] Standard-library Python MCP replay adapter with swallowed-failure checks
+- [x] Android preview build, offline shared-engine parity checks, import/export and Keystore-backed sync credential code
+- [x] Self-hosted immutable snapshot relay, expiring single-use pairing, scoped device tokens, revocation, and explicit upload consent
+- [x] Release-variant Android APK signed with a private local preview key; build/lint/signature verification
+- [ ] Actual Android device walkthrough and native file-picker/Keystore/HTTPS checks
+- [ ] Actual assistant-host walkthroughs and authenticated remote-host transport
+- [ ] Windows publisher signing, clean-machine checks, and reviewed updates
+- [ ] Phone-triggered Windows execution and automatic sync/conflict reconciliation
+- [ ] Live cloud-provider account verification, official subscription routes, and independent review
+
+These checks do not mark the full platform milestones complete. `npm run release:check` fails while production gates remain open.
+
 ## 0.1 alpha — current foundation
 
 - [x] Offline broken/fixed support-agent scenario

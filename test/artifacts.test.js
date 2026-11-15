@@ -10,6 +10,16 @@ import supportAgent from '../examples/customer-support/support-agent.js';
 const tools=createArtifactTools(redact,createContractValidator());
 const report=async()=>runSuite((await loadExamples()).regression);
 
+test('model report provenance round-trips without permitting inconsistent usage metadata', async () => {
+  const value = await report(); value.mode = 'agent-replay';
+  value.execution = { runner: 'builtin-model', provider: 'ollama', model: 'qwen3.5:4b', connectionName: 'Local', contractRevision: 1, contractHash: 'a'.repeat(64), limits: { timeoutMs: 60000, maxSteps: 8, maxOutputTokens: 2000, maxTotalOutputTokens: 10000 }, usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15, steps: 2, usageIncomplete: false } };
+  const opened = tools.open(JSON.stringify(value)); assert.deepEqual(opened.value.execution, value.execution);
+  value.execution.usage.totalTokens = 100;
+  assert.throws(() => tools.open(JSON.stringify(value)), /Usage total/);
+  value.execution.usage.totalTokens = 15; value.execution.model = '</script><img src=x onerror=alert(1)>';
+  const html = await toHtml(value); assert.ok(!html.includes('</script><img src=x'));
+});
+
 test('imports planned contracts without running or masking their fixture data',async()=>{
   const {safe}=await loadExamples();safe.cases[0].fixtures[0].arguments.token='raw-fixture';
   const opened=tools.open(JSON.stringify(safe));assert.equal(opened.kind,'contract');assert.equal(opened.runner,'planned');

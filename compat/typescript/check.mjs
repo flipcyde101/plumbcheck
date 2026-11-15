@@ -26,7 +26,9 @@ test('packed package exposes typed exports, working binaries, and strict consume
     await import('node:fs/promises').then(fs => fs.mkdir(consumer));
     await writeFile(join(consumer, 'package.json'), JSON.stringify({ name: 'actual-consumer', private: true, type: 'module' }));
     const archive = join(dir, packed.filename);
-    command(process.execPath, [npmCli, 'install', archive, '--offline', '--ignore-scripts', '--no-audit', '--no-fund'], consumer);
+    // A fresh consumer needs registry metadata for production dependencies;
+    // npm ci's tarball cache alone cannot satisfy an offline dependency resolve.
+    command(process.execPath, [npmCli, 'install', archive, '--prefer-offline', '--ignore-scripts', '--no-audit', '--no-fund'], consumer);
     await copyFile(join(here, 'consumer.ts'), join(consumer, 'consumer.ts'));
     for (const compiler of ['typescript', 'typescript-legacy']) {
       const packageDir = join(here, 'node_modules', compiler);

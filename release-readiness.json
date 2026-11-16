@@ -4,8 +4,8 @@
   "required": [
     {
       "id": "core-and-integrations",
-      "status": "pending",
-      "reason": "Preview.2 local checks passed (182 core tests, MCP, packed types, Android native/emulator model evidence and Windows packaging). Awaiting final source CI; see docs/VALIDATION.md."
+      "status": "verified",
+      "evidence": "5b137a9: all four Node 22/24 Windows/Linux CI jobs passed; Android unit/assembly/lint and Windows packaging/installed-helper workflows passed. Local checks: 182 tests, official MCP, packed TypeScript, Android Qwen pass/regression with native exports, signed preview APK, Windows helper checks, and 107-component SBOM. Exact run links are in docs/VALIDATION.md."
     },
     {
       "id": "windows-authenticode",
@@ -30,7 +30,7 @@
     {
       "id": "android-device",
       "status": "pending",
-      "reason": "Verify a signed APK on real devices, including file pickers, Keystore persistence and HTTPS snapshot pairing."
+      "reason": "Verify the signed APK on real devices, including native Ollama LAN access, file pickers, Keystore persistence and HTTPS snapshot pairing. Emulator model tests passed; the physical-phone network path remains unverified."
     },
     {
       "id": "remote-service",

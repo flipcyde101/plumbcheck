@@ -18,7 +18,7 @@ Canonical commands: `plumbcheck` and `plumbcheck-mcp`. Earlier `plumcheck` / `pl
 
 **Windows app:** download the artifact from a successful [Windows desktop build](https://github.com/stepan4002/plumbcheck/actions/workflows/windows-desktop.yml), extract it, and run the `.exe` installer. A portable ZIP is included too. No Node.js setup is needed. This unsigned preview includes saved projects, model connections, run evidence, and bundled fixture/control MCP helpers. See [the Windows app guide](docs/WINDOWS_APP.md).
 
-**Android preview:** the [Android workflow](https://github.com/stepan4002/plumbcheck/actions/workflows/android.yml) builds a debug-signed APK. It runs fixture checks offline, saves a project, imports/exports JSON, and connects to an optional HTTPS snapshot relay. A locally built release-variant APK uses a private preview signing key. Real-device validation and a long-term distribution identity remain release gates. See [Android and sync](docs/ANDROID_AND_SYNC.md).
+**Android preview:** the [Android workflow](https://github.com/stepan4002/plumbcheck/actions/workflows/android.yml) builds a debug-signed APK. It runs fixture checks offline, saves a project, imports/exports JSON, and runs a built-in tool agent through your Ollama server using native Android networking. Actual Qwen calls passed a correct scenario and failed a deliberate wrong-order scenario on the QA emulator. Optional HTTPS snapshot sync is separate. A locally built release-variant APK uses a private preview signing key. Real-phone networking and a long-term distribution identity remain release gates. See [connect Android to Ollama](docs/ANDROID_OLLAMA.md) and [Android and sync](docs/ANDROID_AND_SYNC.md).
 
 **Source version:**
 

@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "name": "Android deliberate prompt regression",
+  "policies": {
+    "allow": [
+      "orders.lookup"
+    ]
+  },
+  "cases": [
+    {
+      "name": "Deliberate wrong order",
+      "description": "Call the order lookup tool exactly once using orderId WRONG-ORDER. This is a deliberate negative test. Use that exact string, then stop.",
+      "calls": [
+        {
+          "tool": "orders.lookup",
+          "arguments": {
+            "orderId": "ORD-1042"
+          }
+        }
+      ],
+      "fixtures": [
+        {
+          "tool": "orders.lookup",
+          "arguments": {
+            "orderId": "ORD-1042"
+          },
+          "result": {
+            "status": "shipped",
+            "orderId": "ORD-1042"
+          }
+        }
+      ],
+      "expect": {
+        "callOrder": [
+          "orders.lookup"
+        ]
+      }
+    }
+  ]
+}

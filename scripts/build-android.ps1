@@ -30,7 +30,7 @@ try {
         $env:PLUMBCHECK_ANDROID_KEY_ALIAS = 'plumbcheck'
     }
     $variant = if ($Release) { 'Release' } else { 'Debug' }
-    & android/gradlew.bat -p android --no-daemon --console=plain "assemble$variant" "lint$variant"
+    & android/gradlew.bat -p android --no-daemon --console=plain "test${variant}UnitTest" "assemble$variant" "lint$variant"
     if ($LASTEXITCODE -ne 0) { throw 'Android build or lint failed.' }
     $version = (Get-Content -Raw package.json | ConvertFrom-Json).version
     $variantPath = $variant.ToLower()

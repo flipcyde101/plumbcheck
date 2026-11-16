@@ -9,7 +9,8 @@ import { isDeepStrictEqual } from '../src/portable-util.js';
 
 test('bundled Android engine matches the Node runner on the shipped regression corpus', async () => {
   const bundle = await build({ entryPoints: [fileURLToPath(new URL('../mobile/entry.js', import.meta.url))], bundle: true, write: false, format: 'iife', platform: 'browser', alias: { 'node:util': fileURLToPath(new URL('../src/portable-util.js', import.meta.url)) } });
-  const context = { window: {}, performance, structuredClone, console };
+  const context = { performance, structuredClone, console, TransformStream, ReadableStream, WritableStream, TextEncoder, TextDecoder, AbortController, AbortSignal, URL, URLSearchParams, Response, Request, Headers, crypto, setTimeout, clearTimeout, atob, btoa, DOMException };
+  context.window = context;
   runInNewContext(bundle.outputFiles[0].text, context);
   const normalize = report => { const r = JSON.parse(JSON.stringify(report)); delete r.createdAt; delete r.durationMs; r.cases.forEach(c => c.events.forEach(e => delete e.durationMs)); return r; };
   for (const suite of Object.values(await loadExamples())) {

@@ -1,10 +1,10 @@
 # Verification record
 
-Updated 15 November 2026 for **0.2.0-preview.1**, on Windows with Node.js 26.13.0 and npm 11.20.0. This is a preview validation record. `release-readiness.json` keeps unverified production gates open.
+Updated 16 November 2026 for **0.2.0-preview.2**, on Windows with Node.js 26.13.0 and npm 11.20.0. This is a preview validation record. `release-readiness.json` keeps unverified production gates open.
 
 ## Automated checks
 
-- `npm test`: **178 passed, 0 failed**. Covers replay, actual agent interception, policies, arguments/results/output, swallowed failures, fixture isolation, recording, artifact import/redaction, reports, CLI/HTTP boundaries, workspace revisions/recovery, request deduplication, credentials, model budgets, Python, control MCP, snapshot sync, and portable engine parity.
+- `npm test`: **182 passed, 0 failed**. Covers replay, actual agent interception, policies, arguments/results/output, swallowed failures, fixture isolation, recording, artifact import/redaction, reports, CLI/HTTP boundaries, workspace revisions/recovery, request deduplication, credentials, model budgets, Python, control MCP, snapshot sync, portable engine parity, Android address restrictions, native transport settlement/cancellation, discovery validation, and SDK model decisions through the mobile adapter.
 - `npm run test:mcp`: **7 passed, 0 failed**, using official MCP SDK **1.32.2**. Includes discovery, successful replay, denied approval, wrong arguments, generic JSON fixture envelopes, skipped fixtures, and recorded tool errors.
 - `npm run test:types`: **1 packed-consumer check passed**. Packs/installs the real archive, checks TypeScript **5.9.3** and **7.0.2** under NodeNext/Bundler, and exercises installed CLI commands and runtime exports.
 - `npm run plugin:build` and an official SDK check against its bundled control entry passed. The client controlled a real local Studio workspace. This is not an actual Claude or ChatGPT host walkthrough.
@@ -36,7 +36,7 @@ The installer is **unsigned**. Clean-account install/uninstall, credential persi
 
 ## Android and snapshot sync
 
-Debug and release-variant Android builds completed with lint. The local release-variant APK passed `apksigner verify`; its private preview key and DPAPI-protected password are outside Git. This is a local preview identity, not a verified publisher or Play release. On a separate Android 36.1 QA emulator, native controls ran the regression and corrected suites, saved a project, exported JSON through Android's document picker, and reopened that report without rerunning it. The exported report passed the Node artifact validator. A subsequent APK update retained the saved project, which again passed 2/2. System-bar overlap found during this check was fixed using [Android's inset guidance](https://developer.android.com/develop/ui/views/layout/edge-to-edge). Real-device and HTTPS/Keystore walkthroughs remain open.
+Debug and release-variant Android builds completed with lint and three native address/origin unit tests. The local release-variant APK passed `apksigner verify`; its private preview key and DPAPI-protected password are outside Git. This is a local preview identity, not a verified publisher or Play release. On a separate Android 36.1 QA emulator, native controls ran the regression and corrected suites, saved a project, exported JSON through Android's document picker, and reopened that report without rerunning it. The exported report passed the Node artifact validator. A subsequent APK update retained the saved project, which again passed 2/2. System-bar overlap found during this check was fixed using [Android's inset guidance](https://developer.android.com/develop/ui/views/layout/edge-to-edge). Real-device and HTTPS/Keystore walkthroughs remain open.
 
 Relay integration checks covered unauthorized requests, single-use pairing, upload consent, immutable snapshots, import without overwriting edits, a second device, hashed tokens, and revocation. They do not prove a deployed HTTPS service, phone-to-desktop pairing, Keystore recovery, or background execution. No remote service was deployed. Phone-triggered Windows jobs and automatic conflict reconciliation remain roadmap work.
 
@@ -46,10 +46,16 @@ Workbench checks exercised fixed/regression switching, argument/result/output di
 
 Masking is key-based and cannot identify every secret in arbitrary text. Raw fixtures require review before export/sync. The relay stores fixture JSON and is not end-to-end encrypted. The app does not sandbox imported agent code or certify a real business system's safety.
 
-## Source and CI scope
+## Previous increment: source and CI scope
 
 GitNexus impact checks covered shared rendering/control paths and workspace/model/control modules before edits. The final staged scope check succeeded: 147 changed indexed symbols and 23 affected flows, with CRITICAL overall risk from the broad/shared paths. Source review matched the expected workspace, model, import/report, mobile, and sync scope. Shared workbench functions were flagged HIGH/CRITICAL; affected imports, fixture runs, and saved reports received checks. Some earlier impact traversals were partial and ambiguous symbols required direct source review. Final CI results are recorded with the completed increment.
 
 The functional increment is `5a85667`, followed by CI configuration/consumer-check fixes in `109a697`. All four Windows/Linux Node 22/24 jobs passed in [core CI](https://github.com/stepan4002/plumbcheck/actions/runs/43768448717). The unchanged Windows application source passed packaging, bundled-helper checks, silent NSIS installation, installed-helper checks, SBOM generation, and artifact upload in [the Windows run](https://github.com/stepan4002/plumbcheck/actions/runs/43768119177). Android debug assembly, lint, and artifact upload passed in [the Android run](https://github.com/stepan4002/plumbcheck/actions/runs/43768448720). The first CI attempts exposed an obsolete Android SDK package default and an invalid cache-only consumer-install assumption; both were corrected before these successful runs.
+
+## Current increment
+
+The Android connector shares the portable ToolLoopAgent with Windows and uses a native origin-locked transport. Local checks passed: 182 core tests, seven official MCP checks, the packed TypeScript consumer check, plugin build, Android debug/release unit/assembly/lint checks, release APK signature verification, and Windows packaging plus its positive/negative MCP helper checks. The regenerated SBOM inventories 107 components. New GitHub workflow results will be recorded after this source increment is pushed.
+
+Native Android QA discovered the actual installed models, ran Qwen through the PC LAN address, and exported both reports through the document picker. The correct order passed (741 input / 181 output tokens); the deliberate wrong order failed with `ARGUMENT_MISMATCH` (761 input / 271 output tokens). Both took two steps, used zero live business tools, and passed the Node artifact validator with distinct saved revisions/hashes. [Android evidence](images/android-ollama-pass.jpg). This is emulator evidence. The physical phone connection remains unverified after prior browser failures; no claim is made that its network path is fixed.
 
 The repo remains private. No npm publication, public GitHub release, store submission, assistant account installation, or remote deployment was performed. Production gates remain open for publisher signing, clean-account upgrades, live cloud/assistant hosts, real devices and HTTPS pairing, hosted operations, and independent review. `npm run release:check` intentionally fails while these are unverified.

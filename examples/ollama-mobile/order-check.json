@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "name": "Android Ollama order check",
+  "policies": {
+    "allow": [
+      "orders.lookup"
+    ]
+  },
+  "cases": [
+    {
+      "name": "Read order ORD-1042",
+      "description": "Look up order ORD-1042 exactly once and return its status.",
+      "calls": [
+        {
+          "tool": "orders.lookup",
+          "arguments": {
+            "orderId": "ORD-1042"
+          }
+        }
+      ],
+      "fixtures": [
+        {
+          "tool": "orders.lookup",
+          "arguments": {
+            "orderId": "ORD-1042"
+          },
+          "result": {
+            "status": "shipped",
+            "orderId": "ORD-1042"
+          }
+        }
+      ],
+      "expect": {
+        "callOrder": [
+          "orders.lookup"
+        ]
+      }
+    }
+  ]
+}

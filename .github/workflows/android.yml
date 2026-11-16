@@ -25,7 +25,7 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm run mobile:build
       - run: chmod +x android/gradlew
-      - run: cd android && ./gradlew --no-daemon assembleDebug lintDebug
+      - run: cd android && ./gradlew --no-daemon testDebugUnitTest assembleDebug lintDebug
       - uses: actions/upload-artifact@v4
         with:
           name: PlumbCheck-Android-preview

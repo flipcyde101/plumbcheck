@@ -30,6 +30,7 @@ public final class MainActivity extends Activity {
     private WebView web;
     private ValueCallback<Uri[]> chooser;
     private String pendingExport;
+    private OllamaBridge ollama;
     private static final String ORIGIN = "https://appassets.androidplatform.net";
 
     @Override public void onCreate(Bundle state) {
@@ -54,9 +55,9 @@ public final class MainActivity extends Activity {
         web.setWebViewClient(new WebViewClient() {
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
-                String file = url.equals(ORIGIN + "/index.html") ? "index.html" : url.equals(ORIGIN + "/app.js") ? "app.js" : null;
+                String file = url.equals(ORIGIN + "/index.html") ? "index.html" : url.equals(ORIGIN + "/app.js") ? "app.js" : url.equals(ORIGIN + "/LICENSE.txt") ? "LICENSE.txt" : url.equals(ORIGIN + "/THIRD_PARTY_NOTICES.txt") ? "THIRD_PARTY_NOTICES.txt" : null;
                 try {
-                    if (file != null) return new WebResourceResponse(file.endsWith(".js") ? "application/javascript" : "text/html", "UTF-8", getAssets().open(file));
+                    if (file != null) return new WebResourceResponse(file.endsWith(".js") ? "application/javascript" : file.endsWith(".txt") ? "text/plain" : "text/html", "UTF-8", getAssets().open(file));
                 } catch (IOException ignored) { }
                 if (!request.isForMainFrame() && "https".equals(request.getUrl().getScheme()) && !"appassets.androidplatform.net".equals(request.getUrl().getHost())) return null;
                 return new WebResourceResponse("text/plain", "UTF-8", new ByteArrayInputStream(new byte[0]));
@@ -75,6 +76,8 @@ public final class MainActivity extends Activity {
             }
         });
         web.addJavascriptInterface(new ExportBridge(), "AndroidApp");
+        ollama = new OllamaBridge(web);
+        web.addJavascriptInterface(ollama, "OllamaNative");
         content.addView(web, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(content); content.requestApplyInsets(); web.loadUrl(ORIGIN + "/index.html");
     }
@@ -127,5 +130,6 @@ public final class MainActivity extends Activity {
             }
         }
     }
-    @Override protected void onDestroy() { if (chooser != null) chooser.onReceiveValue(null); web.removeJavascriptInterface("AndroidApp"); web.destroy(); super.onDestroy(); }
+    @Override protected void onStop() { if (web != null) web.evaluateJavascript("window.dispatchEvent(new Event('plumbcheck:model-interrupted'));", null); if (ollama != null) ollama.interrupt(); super.onStop(); }
+    @Override protected void onDestroy() { if (chooser != null) chooser.onReceiveValue(null); if (ollama != null) ollama.close(); if (web != null) { web.removeJavascriptInterface("OllamaNative"); web.removeJavascriptInterface("AndroidApp"); web.destroy(); } super.onDestroy(); }
 }

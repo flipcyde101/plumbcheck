@@ -25,3 +25,16 @@ The default is `qwen3.5:4b` at `http://127.0.0.1:11434/v1`. `PLUMBCHECK_LOCAL_MO
 Outputs include `verification.json`, separate correct/regression HTML/JSON/JUnit evidence, and a private test workspace under `reports/local-model`. The regression is an expected failure; the script itself succeeds only if the correct execution passes and the negative execution records an argument mismatch. Reports use synthetic order data and are ignored by Git by default.
 
 OpenAI, Anthropic, Google, LM Studio, other models, and actual assistant hosts still require their own live validation. They are not certified by this Ollama check.
+
+## Android native connector, 16 November 2026
+
+The 0.2.0-preview.2 APK ran on an Android 36.1 QA emulator, connecting through native Android networking to the actual PC Ollama server. Model discovery returned the installed exact IDs. With `qwen3.5:4b`, the default task and a synthetic one-case contract produced these observed results:
+
+| Scenario | Actual tool decision | Outcome | Reported usage |
+| --- | --- | --- | --- |
+| Correct order | `orders.lookup`, `orderId: ORD-1042` | Passed, saved revision 1 | 741 input / 181 output tokens, 2 steps |
+| Deliberate prompt regression | `orders.lookup`, `orderId: WRONG-ORDER` | `ARGUMENT_MISMATCH`, saved revision 2 | 761 input / 271 output tokens, 2 steps |
+
+Both reports were saved with Android's document picker, copied back as developer QA artifacts, and validated by the Node artifact importer. Their contract hashes differed, their provider/model and limits were retained, and both recorded zero live business-tool calls. Inference took approximately 36 and 32 seconds respectively. These are individual synthetic observations. [Android pass screenshot](images/android-ollama-pass.jpg). Reproduce with [the Android guide](ANDROID_OLLAMA.md) and its two example contracts.
+
+The actual physical phone has not yet passed this walkthrough. Emulator success does not resolve its earlier browser connection failure. Other providers, models, agent frameworks, and assistant hosts require separate verification.

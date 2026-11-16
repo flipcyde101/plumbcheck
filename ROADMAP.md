@@ -36,6 +36,7 @@ The detailed roadmap also includes AI-assisted test drafting, scenario packs, co
 - [x] Separate local MCP control bridge and a buildable local plugin, tested with the official SDK
 - [x] Standard-library Python MCP replay adapter with swallowed-failure checks
 - [x] Android preview build, offline shared-engine parity checks, import/export and Keystore-backed sync credential code
+- [x] Android native Ollama discovery and bounded model runs; emulator Qwen pass and deliberate argument regression, with validated exports
 - [x] Self-hosted immutable snapshot relay, expiring single-use pairing, scoped device tokens, revocation, and explicit upload consent
 - [x] Release-variant Android APK signed with a private local preview key; build/lint/signature verification
 - [ ] Actual Android device walkthrough and native file-picker/Keystore/HTTPS checks

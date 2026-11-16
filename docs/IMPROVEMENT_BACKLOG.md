@@ -4,7 +4,7 @@ Updated 16 November 2026. This backlog tracks the continuing application-quality
 
 | Priority | Work | Evidence / acceptance | State |
 | --- | --- | --- | --- |
-| P1 | Preserve cross-device execution evidence | Android uploads its actual saved revision and optionally its report; Windows imports contract and report atomically, labels imported provenance, survives restart, and never silently overwrites local edits | Implemented in preview.3; seven new checks pass, native evidence viewing/upgrade checked, final workflow verification in progress |
+| P1 | Preserve cross-device execution evidence | Android uploads its actual saved revision and optionally its report; Windows imports contract and report atomically, labels imported provenance, survives restart, and never silently overwrites local edits | Verified in preview.3 (`04907ed`): 189 tests, full CI matrix, both app builds, native imported-evidence viewing and Android upgrade/persistence/refused-upload checks |
 | P1 | Preserve historical project contracts | Store immutable contract/task revisions, inspect and restore earlier versions as a new revision, retain exact run inputs, and migrate existing workspaces without inventing lost history | Open: current project revisions count saves but replace earlier contract contents |
 | P1 | Make sync setup and recovery usable | Owner pairing/device management, local unpair, clear credential-loss and revoked-device behavior, explicit conflict handling; verify HTTPS Windows/Android round trip | Snapshot relay exists; deployed HTTPS and physical-device checks remain open |
 | P1 | Guide a first useful agent test | Create and validate a scenario without authoring a complete JSON document; show a real failure, its fix, evidence and adapter requirements | Open: existing interfaces primarily require JSON editing |
@@ -15,3 +15,5 @@ Updated 16 November 2026. This backlog tracks the continuing application-quality
 | P2 | Improve history, performance and accessibility | Per-project filters/baselines, bounded long histories, keyboard/screen-reader workflows, measured large-suite behavior | Audit and implement after integrity issues |
 
 The 0.2.0-preview.2 baseline has 182 passing local tests, green Windows/Linux CI and Android/Windows builds, and actual Qwen pass/regression evidence on Windows and an Android emulator. The physical-phone LAN connection remains unverified. See [validation](VALIDATION.md), [platform roadmap](PLATFORM_ROADMAP.md), and [release gates](../release-readiness.json).
+
+Latest completed increment: preview.3 preserves cross-device evidence, protects local edits on retry, and labels original report context. The next code priority is immutable historical project revisions; it remains open. Production gates and physical-phone/HTTPS networking remain open.

@@ -4,8 +4,8 @@
   "required": [
     {
       "id": "core-and-integrations",
-      "status": "pending",
-      "reason": "Preview.3 sync evidence changes pass 189 local tests, MCP/types compatibility and both app builds. Native interface and final source CI verification are in progress; previous preview evidence is retained in docs/VALIDATION.md."
+      "status": "verified",
+      "evidence": "04907ed: 189 tests; all four Node 22/24 Windows/Linux CI jobs, Android native unit/assembly/lint and Windows packaging/installed-helper workflows passed. HTTP snapshot import/retry/restart, stale context, failed-storage atomicity and mobile evidence migration verified; native Windows/Android evidence viewing, Android new-run persistence and refused-upload feedback checked. Exact run links and boundaries are in docs/VALIDATION.md."
     },
     {
       "id": "windows-authenticode",

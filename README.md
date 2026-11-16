@@ -22,13 +22,15 @@ The next milestone is a complete first-use journey: **install Windows → find O
 | --- | --- | --- |
 | 1 | Guided agent/model connection | Implemented for local Ollama: find the server, select a returned model ID, save and select the connection, then separately authorize a real tool-use test. Local recovery messages and pasted model-list URLs are supported. Existing external MCP agents still need manual host setup and verification. |
 | 2 | Create tests without JSON | Implemented on Windows and Android for one-tool scenarios: order/ticket templates, editable tasks, nested typed argument/response fields, expected vs planned values and trusted test-approval fixtures. Advanced multi-tool editing remains JSON-based. |
-| 3 | A convincing first test and clear results | Implemented builder walkthrough: change a planned argument to produce a failure, correct it and rerun the same case without changing its expected values. Windows saves updates as revisions while the builder project stays open. Cross-panel feedback and cancellation notices were corrected after external QA; native visual retesting remains pending. |
+| 3 | A convincing first test and clear results | Implemented builder walkthrough: change a planned argument to produce a failure, correct it and rerun the same case without changing its expected values. Windows saves updates as revisions while the builder project stays open. The downloaded Windows app passed the basic native failure/fix/model walkthrough; broader native/Android acceptance remains open. |
 | 4 | Reproducible history | Retain immutable contracts and instructions for every revision, inspect exact run inputs and restore an older version as a new revision. Current save counters do not preserve all earlier contract contents. |
 | 5 | Phone connection and usable sync | Verify physical-phone Ollama access, simplify secure pairing/recovery, and verify HTTPS Windows/Android exchange. Current sync is manual snapshot exchange through a self-hosted relay. Phone-triggered Windows execution is planned. |
 | 6 | Verified assistant/provider routes | Complete real Claude/ChatGPT host walkthroughs and live cloud-provider checks. MCP control exists; host support and API access must be verified separately. Subscription sign-in is not implemented and requires an officially supported route. |
 | 7 | Dependable distribution | Windows publisher signing, update delivery, clean-machine install/upgrade/uninstall, physical Android checks and independent security/accessibility/usability review remain release work. |
 
 The Windows `.exe` and Android APK are applications with bundled interfaces. The source browser Studio is a development option. See [the detailed backlog](docs/IMPROVEMENT_BACKLOG.md), [platform roadmap](docs/PLATFORM_ROADMAP.md), [external QA results](docs/EXTERNAL_QA.md), and [release gates](release-readiness.json). Planned features are not included merely because they appear here.
+
+Follow [the tested Windows walkthrough with screenshots](docs/NATIVE_WALKTHROUGH.md) to create a failure, correct it and run the same scenario with a local model.
 
 ## Install and start
 

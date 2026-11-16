@@ -5,7 +5,7 @@
     {
       "id": "core-and-integrations",
       "status": "verified",
-      "evidence": "04907ed: 189 tests; all four Node 22/24 Windows/Linux CI jobs, Android native unit/assembly/lint and Windows packaging/installed-helper workflows passed. HTTP snapshot import/retry/restart, stale context, failed-storage atomicity and mobile evidence migration verified; native Windows/Android evidence viewing, Android new-run persistence and refused-upload feedback checked. Exact run links and boundaries are in docs/VALIDATION.md."
+      "evidence": "656e986: 196 core tests, seven MCP checks and packed TypeScript consumer check passed; all four Node 22/24 Windows/Linux CI jobs, Android unit/assembly/lint and Windows packaging/installed-helper workflows passed. Seven generated-page DOM checks cover draft protection, session rotation and error feedback. The external tester independently passed 196 tests; final preview.4 browser/native-dialog confirmation remains pending. Prior preview.3 native evidence remains separately documented. Exact run links and boundaries are in docs/VALIDATION.md."
     },
     {
       "id": "windows-authenticode",

@@ -14,7 +14,23 @@ Canonical commands: `plumbcheck` and `plumbcheck-mcp`. Earlier `plumcheck` / `pl
 
 [![CI](https://github.com/stepan4002/plumbcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/stepan4002/plumbcheck/actions/workflows/ci.yml)
 
-## Start in 30 seconds
+## Usability work and release plan
+
+The next milestone is a complete first-use journey: **install Windows → find Ollama → create a test without JSON → run → understand a failure → fix it → rerun the same scenarios**. Passing engine tests and building installers are separate from verifying this entire experience with a new user.
+
+| Priority | Work | Current state / completion requirement |
+| --- | --- | --- |
+| 1 | Guided agent/model connection | Implemented for local Ollama: find the server, select a returned model ID, save and select the connection, then separately authorize a real tool-use test. Local recovery messages and pasted model-list URLs are supported. Existing external MCP agents still need manual host setup and verification. |
+| 2 | Create tests without JSON | Implemented on Windows and Android for one-tool scenarios: order/ticket templates, editable tasks, nested typed argument/response fields, expected vs planned values and trusted test-approval fixtures. Advanced multi-tool editing remains JSON-based. |
+| 3 | A convincing first test and clear results | Implemented builder walkthrough: change a planned argument to produce a failure, correct it and rerun the same case without changing its expected values. Windows saves updates as revisions while the builder project stays open. Cross-panel feedback and cancellation notices were corrected after external QA; native visual retesting remains pending. |
+| 4 | Reproducible history | Retain immutable contracts and instructions for every revision, inspect exact run inputs and restore an older version as a new revision. Current save counters do not preserve all earlier contract contents. |
+| 5 | Phone connection and usable sync | Verify physical-phone Ollama access, simplify secure pairing/recovery, and verify HTTPS Windows/Android exchange. Current sync is manual snapshot exchange through a self-hosted relay. Phone-triggered Windows execution is planned. |
+| 6 | Verified assistant/provider routes | Complete real Claude/ChatGPT host walkthroughs and live cloud-provider checks. MCP control exists; host support and API access must be verified separately. Subscription sign-in is not implemented and requires an officially supported route. |
+| 7 | Dependable distribution | Windows publisher signing, update delivery, clean-machine install/upgrade/uninstall, physical Android checks and independent security/accessibility/usability review remain release work. |
+
+The Windows `.exe` and Android APK are applications with bundled interfaces. The source browser Studio is a development option. See [the detailed backlog](docs/IMPROVEMENT_BACKLOG.md), [platform roadmap](docs/PLATFORM_ROADMAP.md), [external QA results](docs/EXTERNAL_QA.md), and [release gates](release-readiness.json). Planned features are not included merely because they appear here.
+
+## Install and start
 
 **Windows app:** download the artifact from a successful [Windows desktop build](https://github.com/stepan4002/plumbcheck/actions/workflows/windows-desktop.yml), extract it, and run the `.exe` installer. A portable ZIP is included too. No Node.js setup is needed. This unsigned preview includes saved projects, model connections, run evidence, and bundled fixture/control MCP helpers. See [the Windows app guide](docs/WINDOWS_APP.md).
 
@@ -34,9 +50,11 @@ The complete developer test suite also uses Python 3 for the optional Python ada
 
 First run **`npm ci`** to install the locked development/integration dependencies, then run the commands above. Open the **private local launch link printed by Studio**. Source Studio stores projects in `~/.plumbcheck`; keys are session-only there. Windows uses its own app-data directory and OS-encrypted credential storage, and attaches its private connection token automatically.
 
-In **Workspace**, name your first project and save the included Contract draft. Run offline checks, or add an API/local-model connection and authorize a model run. History preserves the actual evidence across restarts. Direct model testing uses a built-in tool agent with your instructions; testing an existing framework agent requires the SDK/MCP integration described below. [Connections, limits, and supported modes](docs/APP_WORKSPACE.md).
+In **Workspace**, open **Start here / Build your first test**. Review the order-lookup template, enter a project name and task, and choose **Save this test**. Run **Offline fixture checks**, then inspect its result in History. To demonstrate a failure, set the builder's planned order ID to `WRONG-ORDER`, save and run; restore it to `ORD-1042`, save and rerun. The same case and expected values remain. Android provides the same builder above its project controls.
 
-The workbench starts with six synthetic checks, including four deliberate regressions. Inspect the blocked email, then click **Try the fixed agent** to see the corrected contract pass. Edit the contract to experiment. Nothing is sent to an external service.
+For an actual model test on Windows, choose **Find Ollama on this PC**, select an installed model, and save the connection. Review the saved test and separately authorize the model run. Discovery confirms access; a real scenario checks tool use. The app does not install models or change network/security settings. Direct model testing uses a built-in tool agent with your instructions; testing an existing framework agent requires the SDK/MCP integration described below. [Connections, limits, and supported modes](docs/APP_WORKSPACE.md).
+
+The separate built-in workbench demonstration starts with six synthetic checks, including four deliberate regressions. Its **smaller passing example** contains two scenarios; comparisons deliberately show the other four as removed. Use the builder walkthrough above to demonstrate failure and correction with unchanged scenario coverage. Offline examples send nothing to an external service.
 
 Use **Open JSON** to import your own contract or saved execution report by file or paste. Edit and download contracts, undo a contract import, or inspect a report with its **not rerun** source label. See [the workbench guide](docs/WORKBENCH.md) for import limits and sharing precautions.
 

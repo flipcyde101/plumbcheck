@@ -12,13 +12,16 @@ export function startWorkbench(artifacts, diffs) {
   let currentSuite = null;
   let busy = false;
   let viewingSavedReport = !studio;
+  let localExample = studio;
   let sourceName = studio ? 'Local checks' : 'Saved report';
   let previousDraft = null;
   let activeView = 'overview';
 
-  function showError(message) { $('announcement').textContent = ''; $('error').textContent = message; $('error').hidden = false; }
+  const feedback = () => document.dispatchEvent(new CustomEvent('plumbcheck:feedback', { detail: { source: 'workbench' } }));
+  document.addEventListener('plumbcheck:feedback', event => { if (event.detail?.source !== 'workbench') { clearError(); $('announcement').textContent = ''; } });
+  function showError(message) { feedback(); $('announcement').textContent = ''; $('error').textContent = message; $('error').hidden = false; }
   function clearError() { $('error').hidden = true; }
-  function announce(message) { $('announcement').textContent = message; }
+  function announce(message) { feedback(); $('announcement').textContent = message; }
   function draftInfo() {
     try { return artifacts.contract(artifacts.parse($('editor').value)); }
     catch { return null; }
@@ -44,7 +47,7 @@ export function startWorkbench(artifacts, diffs) {
     if (draft?.value.cases.some(c => c.name === caseName)) $('mcp-case').value = caseName;
     $('mcp-case').disabled = busy || !draft || agent;
     $('create-mcp').disabled = busy || !draft || agent;
-    $('artifact-source').textContent = activeView === 'contract' ? `CONTRACT DRAFT / ${agent ? 'AGENT CODE · CLI RUNNER' : 'PLANNED TOOL CALLS'}` : viewingSavedReport ? `${sourceName} / READ ONLY · NOT RERUN` : 'LOCAL CHECKS / FIXTURE REPLAY';
+    $('artifact-source').textContent = activeView === 'contract' ? `CONTRACT DRAFT / ${agent ? 'AGENT CODE · CLI RUNNER' : 'PLANNED TOOL CALLS'}` : viewingSavedReport ? `${sourceName} / READ ONLY · NOT RERUN` : localExample ? 'BUILT-IN EXAMPLE / Illustrative fixture result. Run your saved project to create your own evidence.' : 'LOCAL CHECKS / FIXTURE REPLAY';
     $('artifact-source').classList.toggle('saved-report', viewingSavedReport && activeView !== 'contract');
   }
   function setBusy(value) { busy = value; updateControls(); }
@@ -120,11 +123,11 @@ export function startWorkbench(artifacts, diffs) {
       const response = await fetch('/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(suite) });
       const value = await response.json();
       if (!response.ok) throw new Error(value.error || 'The suite could not run.');
-      viewingSavedReport = false; sourceName = 'Local checks';
+      viewingSavedReport = false; sourceName = 'Local checks'; localExample = false;
       syncEditor(suite); report = value; lastLocalReport = value;
       resetSelection(); render(); showView('overview');
       announce(`${report.summary.passed} of ${report.summary.total} checks passed. ${report.summary.failed} failed. Zero live tool calls through replay.`);
-      $('fix').textContent = JSON.stringify(currentSuite) === JSON.stringify(examples?.safe) ? 'Try the regression ↗' : 'Try the fixed agent ↗';
+      $('fix').textContent = JSON.stringify(currentSuite) === JSON.stringify(examples?.safe) ? 'Try the regression ↗' : 'Try the smaller passing example ↗';
     } catch (error) { showError(error.message); announce('Contract could not run. Fix the error and retry.'); }
     finally { setBusy(false); }
   }

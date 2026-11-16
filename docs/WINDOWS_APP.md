@@ -4,7 +4,7 @@ The Windows x64 build includes an `.exe` installer and a portable ZIP with its o
 
 ## Get and use the app
 
-Download the **PlumbCheck-Windows-x64** artifact from a successful [Windows desktop workflow](https://github.com/stepan4002/plumbcheck/actions/workflows/windows-desktop.yml). Extract the downloaded artifact, then open `PlumbCheck-0.2.0-preview.4-Windows-x64-Setup.exe` to install the app for your user account. Alternatively, extract the included Windows ZIP into a permanent folder and run its `PlumbCheck.exe`; keep its supporting files together. `SHA256SUMS.txt` identifies the files produced by that run. GitHub artifact access follows the repository's visibility and account permissions; artifacts are retained for 30 days.
+Download the **PlumbCheck-Windows-x64** artifact from a successful [Windows desktop workflow](https://github.com/stepan4002/plumbcheck/actions/workflows/windows-desktop.yml). Extract the downloaded artifact, then open `PlumbCheck-0.2.0-preview.5-Windows-x64-Setup.exe` to install the app for your user account. Alternatively, extract the included Windows ZIP into a permanent folder and run its `PlumbCheck.exe`; keep its supporting files together. `SHA256SUMS.txt` identifies the files produced by that run. GitHub artifact access follows the repository's visibility and account permissions; artifacts are retained for 30 days.
 
 This is an **unsigned preview**, not a signed public release. Publisher code signing, clean-machine validation, and an update channel are still release gates. Do not bypass an operating-system security block; inspect the source/build provenance or use a reviewed build.
 

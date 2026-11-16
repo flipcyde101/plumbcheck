@@ -1,6 +1,8 @@
 # Local workbench
 
-Run `npm start` from the downloaded repository with Node.js 22 or later, then open **http://127.0.0.1:4173**. The workbench uses Plumbnote's cream, ink, blue, pink, and lime visual language. It needs no account, model API key, or third-party runtime dependencies.
+Run `npm ci` and `npm start` from the downloaded repository with Node.js 22 or later, then open the **private launch link printed by Studio**. The Windows application bundles this interface and its runtime. Offline checks need no account or model API key; the complete application uses the pinned dependencies installed by `npm ci`.
+
+Workspace includes a form-based one-tool scenario builder and guided local Ollama discovery. See [the first-test walkthrough](APP_WORKSPACE.md). The Contract tab retains advanced JSON editing. Initial Results are explicitly labeled as a built-in example until you run or open evidence.
 
 ## Open a contract or a saved report
 

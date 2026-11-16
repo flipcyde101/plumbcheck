@@ -1,6 +1,6 @@
 {
   "name": "plumbcheck",
-  "version": "0.2.0-preview.4",
+  "version": "0.2.0-preview.5",
   "description": "Test what your AI automation does before it does it. Local tool-call contracts, fixture replay, and CI reports.",
   "type": "module",
   "license": "MIT",

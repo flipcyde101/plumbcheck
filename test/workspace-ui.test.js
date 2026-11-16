@@ -16,12 +16,12 @@ const until = async predicate => {
 
 // Execute the actual generated, inlined application in a DOM against a real
 // isolated Studio server. No user workspace, credentials or model calls are used.
-async function fixture(t, intercept) {
+async function fixture(t, intercept, empty = false) {
   const directory = await mkdtemp(join(tmpdir(), 'plumbcheck-ui-'));
   let server = await startStudio({ port: 0, workspaceDirectory: directory });
   const examples = await loadExamples();
-  const p = await server.workspace.saveProject({ name: 'Saved regression', task: 'Original instructions', contract: examples.regression });
-  const q = await server.workspace.saveProject({ name: 'Other project', task: 'Other instructions', contract: examples.safe });
+  const p = empty ? null : await server.workspace.saveProject({ name: 'Saved regression', task: 'Original instructions', contract: examples.regression });
+  const q = empty ? null : await server.workspace.saveProject({ name: 'Other project', task: 'Other instructions', contract: examples.safe });
   const origin = new URL(server.uiURL).origin;
   const errors = [];
   const console = new VirtualConsole();
@@ -44,7 +44,7 @@ async function fixture(t, intercept) {
   });
   const $ = id => dom.window.document.getElementById(id);
   t.after(async () => { dom.window.close(); await server.shutdown(); await rm(directory, { recursive: true, force: true }); assert.deepEqual(errors, []); });
-  await until(() => $('editor').value && dom.window.document.querySelector(`[data-project="${p.id}"]`));
+  await until(() => $('editor').value && (empty ? !dom.window.document.querySelector('[data-view="workspace"]').hidden : dom.window.document.querySelector(`[data-project="${p.id}"]`)));
   const open = id => dom.window.document.querySelector(`[data-project="${id}"]`).click();
   const save = () => $('project-form').dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }));
   return { dom, $, p, q, examples, open, save, dialogs, replies, directory, get server() { return server; },
@@ -112,7 +112,7 @@ test('new edits during project loading are retained; older loads cannot replace 
   f.open(f.p.id);
   f.$('project-task').value = 'Edited while loading';
   held[2]();
-  await until(() => f.dialogs.length || f.$('project-name').value === f.p.name);
+  await until(() => /edited while it was loading/.test(f.$('workspace-message').textContent));
   assert.equal(f.$('project-task').value, 'Edited while loading');
 });
 
@@ -195,4 +195,122 @@ test('file-import and asynchronous runner errors replace previous success messag
   await until(() => /File was not opened/.test(f.$('announcement').textContent));
   assert.equal(f.$('editor').value, before);
   assert.equal(f.$('error').hidden, false);
+});
+
+test('workspace exports and workbench errors share feedback; later successful saves clear the old error', async t => {
+  const f = await fixture(t);
+  f.open(f.p.id); await until(() => f.$('project-name').value === f.p.name);
+  f.$('export-project').click();
+  assert.match(f.$('workspace-message').textContent, /Contract exported/);
+  f.$('import-text').value = 'not json'; f.$('open-pasted').click();
+  assert.equal(f.$('error').hidden, false);
+  assert.doesNotMatch(f.$('workspace-message').textContent, /Contract exported/);
+  f.save(); await until(() => /Project saved/.test(f.$('workspace-message').textContent));
+  assert.equal(f.$('error').hidden, true);
+  assert.equal(f.$('announcement').textContent, '');
+  f.$('project-name').value = 'Edited name'; f.$('new-project').click();
+  assert.match(f.$('workspace-message').textContent, /New project canceled/);
+  f.$('export-project').click();
+  Object.defineProperty(f.$('artifact-file'), 'files', { value: [{ name: 'malformed.json', size: 8, text: async () => 'not json' }] });
+  f.$('artifact-file').dispatchEvent(new f.dom.window.Event('change'));
+  await until(() => /File was not opened/.test(f.$('announcement').textContent));
+  assert.doesNotMatch(f.$('workspace-message').textContent, /Contract exported/);
+  f.save(); await until(() => /Project saved/.test(f.$('workspace-message').textContent));
+  assert.equal(f.$('error').hidden, true);
+});
+
+test('no-JSON builder saves, exposes a real failure, fixes the same scenario and preserves it after restart', async t => {
+  const f = await fixture(t);
+  const root = f.$('scenario-builder'), field = selector => root.querySelector(selector);
+  field('[data-name]').value = 'Builder regression';
+  field('[data-planned]').value = 'WRONG-ORDER';
+  field('form').dispatchEvent(new f.dom.window.Event('submit', { bubbles: true, cancelable: true }));
+  await until(() => /Saved revision 1/.test(field('[data-message]').textContent));
+  const created = f.server.workspace.summary().projects.find(p => p.name === 'Builder regression');
+  assert.ok(created);
+  assert.equal(f.$('project-name').value, created.name);
+  f.$('run-project').click();
+  await until(() => f.server.workspace.summary().runs.some(r => r.projectId === created.id && r.status === 'failed'));
+  const first = f.server.workspace.summary().runs.find(r => r.projectId === created.id);
+  assert.ok(f.server.workspace.run(first.id).report.cases[0].failures.some(f => f.code === 'ARGUMENT_MISMATCH'));
+  field('[data-planned]').value = 'ORD-1042';
+  field('form').dispatchEvent(new f.dom.window.Event('submit', { bubbles: true, cancelable: true }));
+  await until(() => /Saved revision 2/.test(field('[data-message]').textContent));
+  assert.equal(f.server.workspace.summary().projects.filter(p => p.name === 'Builder regression').length, 1);
+  f.$('run-project').click();
+  await until(() => f.server.workspace.summary().runs.some(r => r.projectId === created.id && r.status === 'passed'));
+  const second = f.server.workspace.summary().runs.find(r => r.projectId === created.id && r.status === 'passed');
+  const comparison = f.server.workspace.compare(first.id, second.id);
+  assert.equal(comparison.changes.length, 1);
+  assert.equal(comparison.changes[0].before, false);
+  assert.equal(comparison.changes[0].after, true);
+  await f.restart();
+  assert.equal(f.server.workspace.project(created.id).revision, 2);
+  assert.equal(f.server.workspace.run(second.id).report.passed, true);
+});
+
+test('builder validation and cancellation preserve the existing project and render hostile-looking names as text', async t => {
+  const f = await fixture(t);
+  f.open(f.p.id); await until(() => f.$('project-name').value === f.p.name);
+  const root = f.$('scenario-builder'), field = selector => root.querySelector(selector);
+  field('[data-path]').value = '__proto__.polluted';
+  field('form').dispatchEvent(new f.dom.window.Event('submit', { bubbles: true, cancelable: true }));
+  assert.match(field('[data-message]').textContent, /Reserved/);
+  assert.equal(f.server.workspace.summary().projects.length, 2);
+  field('[data-path]').value = 'orderId';
+  field('[data-name]').value = '<img src=x onerror=alert(1)>';
+  f.$('project-task').value = 'Keep this draft';
+  field('form').dispatchEvent(new f.dom.window.Event('submit', { bubbles: true, cancelable: true }));
+  await until(() => /Creation canceled/.test(field('[data-message]').textContent));
+  assert.equal(f.$('project-task').value, 'Keep this draft');
+  f.replies.push(true);
+  field('form').dispatchEvent(new f.dom.window.Event('submit', { bubbles: true, cancelable: true }));
+  await until(() => /Saved revision 1/.test(field('[data-message]').textContent));
+  assert.ok(f.$('project-list').textContent.includes('<img src=x onerror=alert(1)>'));
+  assert.equal(f.$('project-list').querySelector('img'), null);
+});
+
+test('guided Ollama setup lists actual returned models, saves selection and requires separate model-run consent', async t => {
+  const requests = [];
+  const f = await fixture(t, (path, perform) => {
+    if (path === '/api/discover-models') { requests.push(path); return Promise.resolve(Response.json({ models: ['model-one', 'model-two'], note: 'Server reached.' })); }
+    return perform();
+  });
+  f.$('detect-ollama').click();
+  await until(() => !f.$('discovered-models').hidden);
+  assert.equal(requests.length, 1);
+  assert.equal(f.$('connection-provider').value, 'ollama');
+  assert.equal(f.$('connection-key').required, false);
+  f.$('discovered-models').value = 'model-two';
+  f.$('discovered-models').dispatchEvent(new f.dom.window.Event('change'));
+  f.$('connection-form').dispatchEvent(new f.dom.window.Event('submit', { bubbles: true, cancelable: true }));
+  await until(() => f.server.workspace.summary().connections.length === 1 && /Connection saved/.test(f.$('workspace-message').textContent));
+  assert.equal(f.server.workspace.summary().connections[0].model, 'model-two');
+  assert.equal(f.$('run-mode').value, 'model');
+  assert.equal(f.$('model-consent').checked, false);
+  assert.equal(f.server.workspace.summary().runs.length, 0);
+});
+
+test('model discovery cannot populate a changed destination with stale model IDs', async t => {
+  let release;
+  const f = await fixture(t, (path, perform) => path === '/api/discover-models' ? new Promise(resolve => { release = () => resolve(Response.json({ models: ['old-destination-model'], note: 'Server reached.' })); }) : perform());
+  f.$('detect-ollama').click(); await until(() => release);
+  f.$('connection-provider').value = 'lmstudio'; f.$('connection-provider').onchange();
+  release();
+  await until(() => /details changed/.test(f.$('workspace-message').textContent));
+  assert.equal(f.$('connection-model').value, '');
+  assert.equal(f.$('discovered-models').hidden, true);
+  assert.equal(f.$('model-options').children.length, 0);
+});
+
+test('a fresh workspace opens the builder and saves the first test without a misleading unsaved-example prompt', async t => {
+  const f = await fixture(t, null, true);
+  assert.equal(f.$('scenario-builder').closest('details').open, true);
+  const root = f.$('scenario-builder');
+  root.querySelector('form').dispatchEvent(new f.dom.window.Event('submit', { bubbles: true, cancelable: true }));
+  await until(() => /Saved revision 1/.test(root.querySelector('[data-message]').textContent));
+  assert.equal(f.dialogs.length, 0);
+  assert.equal(f.server.workspace.summary().projects.length, 1);
+  f.dom.window.document.querySelector('[data-view="overview"]').click();
+  assert.match(f.$('artifact-source').textContent, /BUILT-IN EXAMPLE/);
 });

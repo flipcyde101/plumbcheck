@@ -25,6 +25,10 @@ export function connectionConfig(input) {
     const loopback = ['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname);
     if (url.username || url.password || url.search || url.hash || (url.protocol !== 'https:' && !(url.protocol === 'http:' && loopback))) fail('Use HTTPS, or HTTP on localhost. Do not put credentials in the URL.');
     if (local && !loopback) fail('Local model connections must use localhost.');
+    if (local && ['', '/', '/api/tags', '/v1', '/v1/', '/v1/models'].includes(url.pathname)) {
+      if (value.provider === 'ollama' && url.protocol === 'http:' && !url.port) url.port = '11434';
+      url.pathname = '/v1';
+    }
     value.baseURL = url.href.replace(/\/$/, '');
   }
   return value;

@@ -1,4 +1,4 @@
-export function startMobile({ runSuite, redact, safe, regression, artifacts, snapshots, evidenceStore, syncRequest, model }) {
+export function startMobile({ runSuite, redact, safe, regression, artifacts, snapshots, evidenceStore, syncRequest, model, scenarios, mountScenarioBuilder }) {
   const $ = id => document.getElementById(id);
   let current = regression, report = null;
   let reportContext = null, reportOrigin = null;
@@ -21,6 +21,20 @@ export function startMobile({ runSuite, redact, safe, regression, artifacts, sna
     localStorage.setItem('plumbcheck-project', JSON.stringify(next)); task = next.task; return next;
   }
   $('save').onclick = () => { try { saveProject(); say('Saved on this phone.'); } catch (e) { say(e.message); } };
+  let lastBuilderDraft = null;
+  mountScenarioBuilder({ root: $('scenario-builder'), scenarios, onCreate: input => {
+    if (activeModel || connecting) throw new Error('Wait for the current model connection or run.');
+    const previous = { name: $('name').value, task: $('model-task').value, contract: $('contract').value, example: $('example').value };
+    const stored = saved();
+    const sameBuilder = JSON.stringify(previous) === lastBuilderDraft;
+    const pristine = !stored && !previous.name && previous.task === task && previous.contract === JSON.stringify(regression, null, 2);
+    if (!sameBuilder && !pristine && !confirm('Save this new test in place of the current phone project and draft? Export the current contract first if needed.')) return false;
+    try {
+      $('name').value = input.name; $('model-task').value = input.task; $('contract').value = JSON.stringify(input.contract, null, 2); $('example').value = 'custom';
+      const saved = saveProject(); lastBuilderDraft = JSON.stringify({ name: $('name').value, task: $('model-task').value, contract: $('contract').value, example: $('example').value });
+      say(`Builder test saved as revision ${saved.revision}. Run offline or authorize an Ollama run. Earlier displayed evidence has not been rerun.`);
+    } catch (error) { $('name').value = previous.name; $('model-task').value = previous.task; $('contract').value = previous.contract; $('example').value = previous.example; throw error; }
+  } });
   const contractHash = async contract => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(contract)))), b => b.toString(16).padStart(2, '0')).join('');
   function showEvidence(value) {
     report = value.report; reportContext = value.context; reportOrigin = value.origin;

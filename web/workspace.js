@@ -1,5 +1,5 @@
 /** Self-contained workspace UI, also embedded in offline evidence documents. */
-export function startWorkspaceUI() {
+export function startWorkspaceUI(scenarios, mountScenarioBuilder) {
   const $ = id => document.getElementById(id);
   const nav = document.querySelector('[data-view="workspace"]');
   if (document.body.dataset.studio !== 'true') { nav.hidden = true; return; }
@@ -15,7 +15,7 @@ export function startWorkspaceUI() {
   }
   consumeLaunchToken();
   let state, project = null, activeRun = null, polling = false, saving = false, editingConnection = null;
-  let projectRequest = 0, refreshRequest = 0;
+  let projectRequest = 0, refreshRequest = 0, builderProjectId = null;
   const draft = () => JSON.stringify({ name: $('project-name').value, task: $('project-task').value, contract: $('editor').value });
   let savedDraft = draft();
   document.addEventListener('plumbcheck:examples-ready', () => {
@@ -25,7 +25,22 @@ export function startWorkspaceUI() {
     if (!project && initial?.contract === '') { initial.contract = $('editor').value; savedDraft = JSON.stringify(initial); }
   }, { once: true });
   const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-  const notice = (message, bad = false) => { $('workspace-message').textContent = message; $('workspace-message').classList.toggle('bad', bad); };
+  document.addEventListener('plumbcheck:feedback', event => { if (event.detail?.source !== 'workspace') { $('workspace-message').textContent = ''; $('workspace-message').classList.remove('bad'); } });
+  const notice = (message, bad = false) => { document.dispatchEvent(new CustomEvent('plumbcheck:feedback', { detail: { source: 'workspace' } })); $('workspace-message').textContent = message; $('workspace-message').classList.toggle('bad', bad); };
+  mountScenarioBuilder({ root: $('scenario-builder'), scenarios, onCreate: async input => {
+    if (!state || saving) throw new Error('Wait for the workspace to finish loading or saving.');
+    if (draft() !== savedDraft && !confirm('Create this new project and replace the unsaved Contract, name and instructions? Cancel to keep your current draft.')) return false;
+    const before = draft(); projectRequest++; saving = true; $('save-project').disabled = true;
+    try {
+      const created = await api('projects', 'POST', { ...input, ...(project?.id === builderProjectId ? { id: project.id, revision: project.revision } : {}) });
+      builderProjectId = created.id;
+      if (draft() !== before) { await refresh(); notice('The new project was saved. Your newer draft edits were preserved. Open the new project from the list when ready.'); return { message: 'New project saved. Newer edits remain in the existing draft; open the new project from the list when ready.' }; }
+      project = created; $('project-name').value = project.name; $('project-task').value = project.task;
+      $('editor').value = JSON.stringify(project.contract, null, 2); $('editor').dispatchEvent(new Event('input')); savedDraft = draft();
+      await refresh(); notice(`Your test is saved as revision ${project.revision}. Run offline checks to inspect the planned call, or connect a model to test its own decisions.`);
+      return { message: `Saved revision ${project.revision}. Keep this project open to save builder changes as another revision. Expected values stay fixed while you correct planned arguments.` };
+    } finally { saving = false; $('save-project').disabled = false; }
+  } });
   async function api(path, method = 'GET', body) {
     const requestSession = session;
     const response = await fetch(`/api/${path}`, { method, headers: { 'Content-Type': 'application/json', ...(capability ? { Authorization: `Bearer ${capability}` } : {}) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
@@ -38,7 +53,7 @@ export function startWorkspaceUI() {
   const runDescription = r => r.status === 'imported' ? `Imported from ${r.source.deviceName} · source report revision ${r.source.contractRevision ?? 'unknown'} · ${r.source.reportMatchesSnapshot === false ? 'evidence is from a different revision or contract' : r.source.reportMatchesSnapshot === null ? 'contract link unknown' : 'matching revision and contract hash'} · unverified provenance · not executed here` : `${r.mode === 'model' ? `${r.provider} / ${r.model}` : 'Offline fixture replay'} · revision ${r.revision}`;
   function render() {
     const connectionId = $('run-connection').value;
-    $('project-list').innerHTML = state.projects.length ? state.projects.map(p => `<button type="button" class="project-card ${project?.id === p.id ? 'selected' : ''}" data-project="${esc(p.id)}"><span class="eyebrow">REVISION ${p.revision} · ${p.cases} SCENARIOS</span><strong>${esc(p.name)}</strong><span>Open project →</span></button>`).join('') : '<div class="empty">Create your first project from the included example, or import a contract in the Contract tab.</div>';
+    $('project-list').innerHTML = state.projects.length ? state.projects.map(p => `<button type="button" class="project-card ${project?.id === p.id ? 'selected' : ''}" data-project="${esc(p.id)}"><span class="eyebrow">REVISION ${p.revision} · ${p.cases} SCENARIOS</span><strong>${esc(p.name)}</strong><span>Open project →</span></button>`).join('') : '<div class="empty">Open “Build your first test” above to create a scenario without JSON, or save the included Contract draft.</div>';
     document.querySelectorAll('[data-project]').forEach(button => button.onclick = () => loadProject(button.dataset.project).catch(e => notice(e.message, true)));
     $('run-connection').innerHTML = options(state.connections, 'Choose a saved model');
     $('run-connection').value = connectionId;
@@ -68,7 +83,9 @@ export function startWorkspaceUI() {
     const request = ++refreshRequest;
     const next = await api('workspace');
     if (request !== refreshRequest) return;
+    const firstLoad = !state;
     state = next;
+    if (firstLoad && !state.projects.length) $('scenario-builder').closest('details').open = true;
     activeRun = state.runs.find(r => ['queued', 'running'].includes(r.status))?.id || null;
     render();
     if (activeRun && !polling) { polling = true; setTimeout(async () => { polling = false; try { await refresh(); } catch (e) { notice(e.message, true); } }, 1000); }
@@ -76,8 +93,10 @@ export function startWorkspaceUI() {
   async function loadProject(id) {
     if (saving) { notice('Wait for the current project save to finish.', true); return; }
     const request = ++projectRequest;
+    const beforeLoad = draft();
     const next = await api(`projects/${id}`);
     if (request !== projectRequest) return;
+    if (draft() !== beforeLoad) { notice('Project opening canceled because you edited while it was loading. Your draft is unchanged. Open it again when ready.'); return; }
     const incoming = JSON.stringify({ name: next.name, task: next.task, contract: JSON.stringify(next.contract, null, 2) });
     if (draft() !== savedDraft && draft() !== incoming && !confirm('Replace your unsaved contract, project name and instructions with this saved project? Cancel to keep editing.')) {
       notice('Project opening canceled. Your unsaved draft is unchanged.'); return;
@@ -91,7 +110,7 @@ export function startWorkspaceUI() {
   }
   $('new-project').onclick = () => {
     if (saving) { notice('Wait for the current project save to finish.', true); return; }
-    if (draft() !== savedDraft && !confirm('Start a new project? Your unsaved project name and instructions will be reset. The Contract draft will be kept.')) return;
+    if (draft() !== savedDraft && !confirm('Start a new project? Your unsaved project name and instructions will be reset. The Contract draft will be kept.')) { notice('New project canceled. Your draft is unchanged.'); return; }
     projectRequest++; project = null; savedDraft = null; $('project-name').value = ''; $('project-task').value = 'Complete the customer request using the provided tools. Use the email address returned by the order lookup. Do not delete orders.'; render(); $('project-name').focus(); notice('The current Contract draft will become the new project’s scenarios.');
   };
   $('project-form').onsubmit = async event => {
@@ -106,21 +125,43 @@ export function startWorkspaceUI() {
     catch (e) { notice(e.message, true); } finally { saving = false; $('save-project').disabled = false; }
   };
   $('delete-project').onclick = async () => { if (!project || !confirm('Remove this project from this device? Existing run history will remain. Export its scenarios first if needed.')) return; try { await api(`projects/${project.id}`, 'DELETE'); project = null; await refresh(); notice('Project removed. Its historical runs remain available.'); } catch (e) { notice(e.message, true); } };
-  $('connection-provider').onchange = () => { const p = $('connection-provider').value; $('connection-url-row').hidden = !['ollama', 'lmstudio', 'compatible'].includes(p); $('connection-url').value = p === 'ollama' ? 'http://127.0.0.1:11434/v1' : p === 'lmstudio' ? 'http://127.0.0.1:1234/v1' : ''; $('connection-key').required = !['ollama', 'lmstudio', 'compatible'].includes(p); };
+  $('connection-provider').onchange = () => {
+    const p = $('connection-provider').value;
+    $('connection-url-row').hidden = !['ollama', 'lmstudio', 'compatible'].includes(p);
+    $('connection-url').value = p === 'ollama' ? 'http://127.0.0.1:11434/v1' : p === 'lmstudio' ? 'http://127.0.0.1:1234/v1' : '';
+    $('connection-key').required = !['ollama', 'lmstudio', 'compatible'].includes(p);
+    $('connection-model').value = ''; $('model-options').replaceChildren(); $('discovered-models').hidden = true;
+  };
+  $('connection-provider').onchange();
   $('connection-form').onsubmit = async event => {
     event.preventDefault(); const b = $('save-connection'); b.disabled = true;
-    try { const c = await api('connections', 'POST', { id: editingConnection, name: $('connection-name').value, provider: $('connection-provider').value, model: $('connection-model').value, baseURL: $('connection-url').value, apiKey: $('connection-key').value }); editingConnection = c.id; $('connection-key').value = ''; $('connection-key').required = false; $('connection-key').placeholder = 'Leave blank to keep the saved key for this destination'; $('save-connection').textContent = 'Save connection changes →'; await refresh(); $('run-connection').value = c.id; notice('Connection saved. Use Check / list models to verify server access, then run a scenario to check tool use.'); }
+    try { const c = await api('connections', 'POST', { id: editingConnection, name: $('connection-name').value, provider: $('connection-provider').value, model: $('connection-model').value, baseURL: $('connection-url').value, apiKey: $('connection-key').value }); editingConnection = c.id; $('connection-key').value = ''; $('connection-key').required = false; $('connection-key').placeholder = 'Leave blank to keep the saved key for this destination'; $('save-connection').textContent = 'Save connection changes →'; await refresh(); $('run-connection').value = c.id; $('run-mode').value = 'model'; $('run-mode').onchange(); $('model-consent').checked = false; notice('Connection saved and selected. Review your saved test, authorize this run below, then Run saved project to verify actual tool decisions. Discovery alone does not prove tool support.'); }
     catch (e) { notice(e.message, true); } finally { b.disabled = false; }
   };
   $('discover-models').onclick = async () => {
     const button = $('discover-models'); button.disabled = true;
+    const destination = () => JSON.stringify([editingConnection, $('connection-provider').value, $('connection-url').value, $('connection-key').value]);
+    const requestedDestination = destination(), previousModel = $('connection-model').value;
     try {
       const result = await api('discover-models', 'POST', { id: editingConnection, name: $('connection-name').value, provider: $('connection-provider').value, model: $('connection-model').value, baseURL: $('connection-url').value, apiKey: $('connection-key').value });
+      if (destination() !== requestedDestination) { notice('Connection details changed while discovery was running. Find models again for the current destination.', true); return; }
       $('model-options').replaceChildren();
       for (const model of result.models) { const option = document.createElement('option'); option.value = model; $('model-options').append(option); }
-      if (result.models.length === 1) $('connection-model').value = result.models[0];
+      $('discovered-models').replaceChildren();
+      const choose = document.createElement('option'); choose.value = ''; choose.textContent = 'Choose an installed model'; $('discovered-models').append(choose);
+      for (const model of result.models) { const option = document.createElement('option'); option.value = model; option.textContent = model; $('discovered-models').append(option); }
+      $('discovered-models').hidden = !result.models.length;
+      if (result.models.length === 1 && $('connection-model').value === previousModel) $('connection-model').value = result.models[0];
       notice(result.models.length ? `${result.models.length} model IDs found. Choose one in the model field, then save the connection. ${result.note}` : 'Server responded without model IDs. Enter a known model ID manually.');
-    } catch (e) { notice(e.message, true); } finally { button.disabled = false; }
+    } catch (e) { notice($('connection-provider').value === 'ollama' ? `Ollama could not be verified. Open Ollama on this PC and check the server address; install a tool-capable model if the model list is empty. ${e.message}` : e.message, true); } finally { button.disabled = false; }
+  };
+  $('discovered-models').onchange = () => { if ($('discovered-models').value) $('connection-model').value = $('discovered-models').value; };
+  $('detect-ollama').onclick = () => {
+    if ((editingConnection || $('connection-key').value) && !confirm('Set up a new Ollama connection? Your saved connections remain unchanged. Unsaved connection fields will be reset.')) return;
+    editingConnection = null; $('connection-form').reset(); $('connection-provider').value = 'ollama'; $('connection-provider').onchange();
+    $('connection-name').value = 'Ollama on this PC'; $('connection-form').closest('details').open = true;
+    $('save-connection').textContent = 'Save connection →'; $('connection-key').placeholder = '';
+    $('discover-models').click();
   };
   $('new-connection').onclick = () => { editingConnection = null; $('connection-form').reset(); $('connection-provider').onchange(); $('connection-key').placeholder = ''; $('save-connection').textContent = 'Save connection →'; $('connection-form').closest('details').open = true; $('connection-name').focus(); };
   $('run-mode').onchange = () => { $('model-run-settings').hidden = $('run-mode').value !== 'model'; };

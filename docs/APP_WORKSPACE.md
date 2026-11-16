@@ -1,15 +1,19 @@
 # Application workspace
 
-Updated 15 November 2026. Current channel: 0.2 preview.
+Updated 16 November 2026. Current channel: 0.2 preview.
 
 The Windows app is an installed Electron application with its runtime included. Its interface is served on a random loopback port inside its own window. The browser Studio is also available for source development. End users do not need a web server, browser, npm, or Node.js installation.
 
 ## First useful test
 
-1. Open Workspace. Name a project and save the current Contract draft. The included regression contract has six scenarios and four deliberate failures.
-2. Run **Offline fixture checks**. Open the completed run in History and inspect its intercepted calls and field differences.
-3. Use the corrected example in Contract, return to Workspace, and save a new revision. Run it and compare completed versions. Removed test cases are visible in comparisons.
-4. For a model-selected execution, add a connection, select **Model chooses tools**, authorize sending the scenario to that destination, and run the saved project. The model chooses calls; PlumbCheck supplies simulated tool responses and evaluates what happened.
+1. Open Workspace → **Start here / Build your first test**. Review the order or ticket template, name the project and describe the task. Enter tool arguments and simulated response fields using text, number or boolean values. Dots create nested fields. Save with **Save this test**.
+2. Run **Offline fixture checks**. Open the completed run in History and inspect its intercepted calls and field differences. The planned call is authored by you; this mode does not invoke a model.
+3. In the builder, change a planned argument to `WRONG-ORDER` while leaving the expected value unchanged. Save and run to see `ARGUMENT_MISMATCH`. Restore the correct planned value, save and rerun. While that builder project stays open, these saves update the same project revision; comparison shows failure → pass for the same case.
+4. Choose **Find Ollama on this PC**, select an installed model and save its connection. This only checks the server and lists models; it does not download models or prove tool support. Separately authorize sending your saved scenario to the selected model, then run it. The model chooses calls; PlumbCheck supplies simulated tool responses and evaluates what happened. You can also configure a provider API through the connection form.
+
+The builder currently handles one-tool scenarios with up to 20 argument and 20 response fields, eight nested field levels and a 1 MB generated-contract limit. A checked approval option supplies a trusted *test fixture* approval; it does not approve any real-world action. Advanced multi-tool/agent contracts remain available through the Contract editor and SDK. Starting a different builder project replaces the draft only after confirmation when needed. Android has the same builder, but currently retains one phone project rather than the Windows project's full collection.
+
+The separate legacy six-scenario demonstration has four deliberate failures. Its smaller passing example contains two scenarios; comparison correctly reports removed coverage. It is labeled as a built-in example rather than your saved agent's execution.
 
 Saving a project captures its contract and instructions together. Running uses the saved revision, not unsaved editor text. A revision check prevents stale saves/runs. Model mode removes the planned `calls` list before execution; those calls are not supplied to the model as expected answers.
 

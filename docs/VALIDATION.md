@@ -1,5 +1,17 @@
 # Verification record
 
+## 0.2.0-preview.5 first-use workflow
+
+The README now contains all seven usability/release work areas and distinguishes implemented features from planned or unverified work. The first implementation increment adds a shared Windows/Android form builder for one-tool scenarios, nested text/number/boolean argument and response fields, order/ticket templates, expected versus planned arguments and a bounded generated contract. Windows builder saves update the same active project, so a wrong planned value can fail and be corrected without removing cases or changing expected values. Android preserves the draft on cancellation/storage failure and restores saved evidence without rerunning it.
+
+Windows adds **Find Ollama on this PC**, explicit selection from discovered model IDs, normalization of copied local model-list URLs, actionable connection feedback and selection of the saved connection for a separately authorized model run. A delayed discovery result cannot populate a changed destination. The built-in example is labeled explicitly and its smaller passing example is named accordingly. Grok's residual cross-panel export/import feedback defect and missing cancellation notice are covered by new regressions; a draft change during a pending project open cancels that open.
+
+Local checks passed: **208/208 core tests**, **7/7 MCP integration checks**, **1/1 packed TypeScript consumer check**, plugin generation, and Android release-variant unit tests, assembly and lint. Tests execute both the generated Windows interface and the actual bundled Android JavaScript in a DOM; these are automated interface checks, not native visual/physical-device verification.
+
+The installed **Ollama / qwen3.5:4b** ran the builder-generated contract with fixture tools. The correct task passed one case with one intercepted tool call, using 786 input / 153 output tokens across two model steps. A deliberate wrong-order task on revision 2 failed with `ARGUMENT_MISMATCH`; the model retried within four steps, using 1,858 input / 1,171 output tokens. JSON/HTML/JUnit and usage evidence are retained locally under ignored `reports/preview5-builder-live`. No paid API or real business tool was used. This verifies this synthetic builder/model path, not general model reliability or external MCP host compatibility.
+
+Windows packaging/CI and distribution checks are recorded after completion. Native visual walkthroughs, real-phone connectivity, HTTPS pairing, assistant hosts, publisher signing, updates and independent review remain open. Immutable historical project contents are still separate work; the builder does not imply that old revision inputs are retained.
+
 ## 0.2.0-preview.4 external-QA fixes
 
 The founder's existing software-testing bot ran the exact `674b866` source archive on a separate Debian computer and returned redacted logs, eight screenshots and reproducible defects. See [external QA results and boundaries](EXTERNAL_QA.md). Its baseline passed 189 core tests, seven official MCP checks, one packed-consumer check and the assigned Studio/snapshot workflows, with two client defects reproduced locally.
@@ -14,7 +26,7 @@ The local Windows installer and portable ZIP built successfully, and their bundl
 
 The final Windows installer, ZIP, SBOM and checksum manifest in `dist/windows` were then downloaded from the successful `656e986` Windows CI run. All three artifact checksums matched. Six affected source files matched byte-for-byte in both the CI ASAR and its bundled helper; JSDOM was absent from both. The extracted CI helper passed the positive and wrong-recipient checks locally. This final CI distribution has Electron 45.3.2, Node.js 24.22.2 and a 104-component SBOM. The earlier local build used Node.js 26.13.0; its SBOM is retained separately in ignored reports. The release-variant Android APK passed unit tests, lint, assembly, signature and checksum checks, using the existing private preview signing identity.
 
-The external tester confirmed receipt of the exact `656e986` source archive and independently passed fresh setup and **196/196 tests** on Debian. Its real-browser retest began, but the final browser result has not been collected. Computer Use became unavailable before that result or a new native preview.4 dialog walkthrough could be observed; neither is claimed as verified. Earlier native preview.3 checks remain separate evidence. Physical-phone networking and deployed HTTPS sync remain unverified.
+The external tester confirmed receipt of the exact `656e986` source archive and independently passed fresh setup and **196/196 tests** on Debian. Computer Use became unavailable before its final browser result was collected directly. The founder later supplied that final response: both major browser fixes passed; residual feedback issues and testing caveats are recorded in [external QA](EXTERNAL_QA.md). A new native preview.4 dialog walkthrough was not observed. Earlier native preview.3 checks remain separate evidence. Physical-phone networking and deployed HTTPS sync remain unverified.
 
 The following baseline record was updated 16 November 2026 for **0.2.0-preview.3**, on Windows with Node.js 26.13.0 and npm 11.20.0. This is a preview validation record. `release-readiness.json` keeps unverified production gates open.
 

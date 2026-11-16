@@ -16,7 +16,7 @@ export function startWorkbench(artifacts, diffs) {
   let previousDraft = null;
   let activeView = 'overview';
 
-  function showError(message) { $('error').textContent = message; $('error').hidden = false; }
+  function showError(message) { $('announcement').textContent = ''; $('error').textContent = message; $('error').hidden = false; }
   function clearError() { $('error').hidden = true; }
   function announce(message) { $('announcement').textContent = message; }
   function draftInfo() {
@@ -205,6 +205,7 @@ export function startWorkbench(artifacts, diffs) {
     setBusy(true);
     fetch('/api/examples').then(async response => { if (!response.ok) throw new Error('Could not load examples.'); return response.json(); }).then(value => {
       examples = value; syncEditor(examples.regression); setBusy(false);
+      document.dispatchEvent(new Event('plumbcheck:examples-ready'));
     }).catch(error => { setBusy(false); showError(error.message); });
   } else {
     document.querySelector('[data-view="contract"]').hidden = true;

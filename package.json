@@ -1,6 +1,6 @@
 {
   "name": "plumbcheck",
-  "version": "0.2.0-preview.3",
+  "version": "0.2.0-preview.4",
   "description": "Test what your AI automation does before it does it. Local tool-call contracts, fixture replay, and CI reports.",
   "type": "module",
   "license": "MIT",
@@ -82,6 +82,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
-    "esbuild": "0.28.2"
+    "esbuild": "0.28.2",
+    "jsdom": "26.1.0"
   }
 }

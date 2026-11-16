@@ -11,7 +11,9 @@ for (const name of ['src', 'web', 'examples', 'LICENSE', 'README.md', 'SECURITY.
   await cp(join(root, name), join(app, name), { recursive: true });
 }
 for (const name of ['runtime', 'assets']) await cp(join(root, 'desktop', name), join(app, 'desktop', name), { recursive: true });
-await cp(join(root, 'node_modules'), join(app, 'node_modules'), { recursive: true, filter: source => !source.includes(`${process.platform === 'win32' ? '\\' : '/'}esbuild`) && !source.includes('@esbuild') && !source.endsWith('.bin') });
+const lock = JSON.parse(await readFile(join(root, 'package-lock.json'), 'utf8'));
+const developmentOnly = new Set(Object.entries(lock.packages).filter(([, info]) => info.dev).map(([path]) => resolve(root, path)));
+await cp(join(root, 'node_modules'), join(app, 'node_modules'), { recursive: true, filter: source => !developmentOnly.has(source) && !source.endsWith('.bin') });
 const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
 await writeFile(join(app, 'package.json'), JSON.stringify({
   name: 'plumbcheck-desktop', productName: 'PlumbCheck', version: pkg.version,

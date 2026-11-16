@@ -3,18 +3,34 @@ export function startWorkspaceUI() {
   const $ = id => document.getElementById(id);
   const nav = document.querySelector('[data-view="workspace"]');
   if (document.body.dataset.studio !== 'true') { nav.hidden = true; return; }
-  const launchToken = new URLSearchParams(location.hash.slice(1)).get('auth');
-  if (launchToken && /^[a-f0-9]{64}$/.test(launchToken)) {
-    sessionStorage.setItem('plumbcheck-workspace-token', launchToken);
+  let capability = null, session = 0;
+  try { capability = sessionStorage.getItem('plumbcheck-workspace-token'); } catch { /* Memory-only authorization still works. */ }
+  function consumeLaunchToken() {
+    const token = new URLSearchParams(location.hash.slice(1)).get('auth');
+    if (!token || !/^[a-f0-9]{64}$/.test(token)) return false;
     history.replaceState(null, '', location.pathname + location.search);
+    capability = token; session++;
+    try { sessionStorage.setItem('plumbcheck-workspace-token', token); } catch { /* Keep the capability in memory. */ }
+    return true;
   }
-  const capability = sessionStorage.getItem('plumbcheck-workspace-token');
+  consumeLaunchToken();
   let state, project = null, activeRun = null, polling = false, saving = false, editingConnection = null;
+  let projectRequest = 0, refreshRequest = 0;
+  const draft = () => JSON.stringify({ name: $('project-name').value, task: $('project-task').value, contract: $('editor').value });
+  let savedDraft = draft();
+  document.addEventListener('plumbcheck:examples-ready', () => {
+    // The included example is the starting point, not a user edit. Preserve any
+    // name or instructions typed while examples were loading.
+    const initial = JSON.parse(savedDraft);
+    if (!project && initial?.contract === '') { initial.contract = $('editor').value; savedDraft = JSON.stringify(initial); }
+  }, { once: true });
   const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const notice = (message, bad = false) => { $('workspace-message').textContent = message; $('workspace-message').classList.toggle('bad', bad); };
   async function api(path, method = 'GET', body) {
+    const requestSession = session;
     const response = await fetch(`/api/${path}`, { method, headers: { 'Content-Type': 'application/json', ...(capability ? { Authorization: `Bearer ${capability}` } : {}) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
     const value = await response.json();
+    if (requestSession !== session) throw new Error('The application session changed. Please retry the action.');
     if (!response.ok) throw new Error(value.error || 'Request failed.');
     return value;
   }
@@ -49,22 +65,44 @@ export function startWorkspaceUI() {
     $('compare-runs').disabled = completed.length < 2;
   }
   async function refresh() {
-    state = await api('workspace');
+    const request = ++refreshRequest;
+    const next = await api('workspace');
+    if (request !== refreshRequest) return;
+    state = next;
     activeRun = state.runs.find(r => ['queued', 'running'].includes(r.status))?.id || null;
     render();
     if (activeRun && !polling) { polling = true; setTimeout(async () => { polling = false; try { await refresh(); } catch (e) { notice(e.message, true); } }, 1000); }
   }
   async function loadProject(id) {
-    project = await api(`projects/${id}`);
+    if (saving) { notice('Wait for the current project save to finish.', true); return; }
+    const request = ++projectRequest;
+    const next = await api(`projects/${id}`);
+    if (request !== projectRequest) return;
+    const incoming = JSON.stringify({ name: next.name, task: next.task, contract: JSON.stringify(next.contract, null, 2) });
+    if (draft() !== savedDraft && draft() !== incoming && !confirm('Replace your unsaved contract, project name and instructions with this saved project? Cancel to keep editing.')) {
+      notice('Project opening canceled. Your unsaved draft is unchanged.'); return;
+    }
+    project = next;
     $('project-name').value = project.name; $('project-task').value = project.task;
     $('editor').value = JSON.stringify(project.contract, null, 2);
     $('editor').dispatchEvent(new Event('input'));
+    savedDraft = draft();
     render(); notice('Project opened. Run its saved revision, or edit the Contract tab and save a new revision.');
   }
-  $('new-project').onclick = () => { project = null; $('project-name').value = ''; $('project-task').value = 'Complete the customer request using the provided tools. Use the email address returned by the order lookup. Do not delete orders.'; render(); $('project-name').focus(); notice('The current Contract draft will become the new project’s scenarios.'); };
+  $('new-project').onclick = () => {
+    if (saving) { notice('Wait for the current project save to finish.', true); return; }
+    if (draft() !== savedDraft && !confirm('Start a new project? Your unsaved project name and instructions will be reset. The Contract draft will be kept.')) return;
+    projectRequest++; project = null; savedDraft = null; $('project-name').value = ''; $('project-task').value = 'Complete the customer request using the provided tools. Use the email address returned by the order lookup. Do not delete orders.'; render(); $('project-name').focus(); notice('The current Contract draft will become the new project’s scenarios.');
+  };
   $('project-form').onsubmit = async event => {
     event.preventDefault(); if (saving) return; saving = true; $('save-project').disabled = true;
-    try { project = await api('projects', 'POST', { id: project?.id, revision: project?.revision, name: $('project-name').value, task: $('project-task').value, contract: JSON.parse($('editor').value) }); await refresh(); notice('Project saved on this device. The run button uses this saved revision.'); }
+    try {
+      projectRequest++;
+      const submitted = draft(), values = JSON.parse(submitted);
+      project = await api('projects', 'POST', { id: project?.id, revision: project?.revision, name: values.name, task: values.task, contract: JSON.parse(values.contract) });
+      savedDraft = submitted;
+      await refresh(); notice(draft() === savedDraft ? 'Project saved on this device. The run button uses this saved revision.' : 'Project saved on this device. Newer edits remain in your draft; save again to include them.');
+    }
     catch (e) { notice(e.message, true); } finally { saving = false; $('save-project').disabled = false; }
   };
   $('delete-project').onclick = async () => { if (!project || !confirm('Remove this project from this device? Existing run history will remain. Export its scenarios first if needed.')) return; try { await api(`projects/${project.id}`, 'DELETE'); project = null; await refresh(); notice('Project removed. Its historical runs remain available.'); } catch (e) { notice(e.message, true); } };
@@ -111,5 +149,29 @@ export function startWorkspaceUI() {
     $('control-setup').hidden = false;
     $('control-setup').onclick = async () => { try { $('control-config').textContent = JSON.stringify(await window.plumbcheckDesktop.controlSetup(), null, 2); notice('Copy this configuration into a compatible MCP desktop client. Keep PlumbCheck open while using it.'); } catch (e) { notice(e.message, true); } };
   }
-  refresh().then(() => { nav.hidden = false; $('local-note').textContent = 'On this device · Model calls are opt-in.'; nav.click(); notice('Start with the included contract: name your project, save it, and run offline checks. Add a model when you’re ready to test its decisions.'); }).catch(() => { nav.hidden = true; $('local-note').textContent = 'For saved projects, open the private launch link printed by Studio. This page can still run the offline demo.'; });
+  async function connect(initial = false) {
+    const requestSession = session;
+    const previousNotice = $('workspace-message').textContent;
+    try {
+      await refresh(); if (requestSession !== session) return;
+      nav.hidden = false; $('local-note').textContent = 'On this device · Model calls are opt-in.';
+      if (initial) nav.click();
+      if ($('workspace-message').textContent === previousNotice) notice(initial ? 'Start with the included contract: name your project, save it, and run offline checks. Add a model when you’re ready to test its decisions.' : 'Application session refreshed. Your contract and project draft were preserved. Open a saved project when ready.');
+    } catch (error) {
+      if (requestSession !== session) return;
+      nav.hidden = true; $('local-note').textContent = 'For saved projects, open the private launch link printed by Studio. This page can still run the offline demo.';
+      notice(error.message, true);
+    }
+  }
+  window.addEventListener('hashchange', () => {
+    if (!consumeLaunchToken()) return;
+    projectRequest++; refreshRequest++; project = null; activeRun = null; editingConnection = null; savedDraft = null;
+    state = { projects: [], connections: [], runs: [], persistentSecrets: false }; render();
+    $('sync-snapshots').replaceChildren(); $('comparison-result').textContent = ''; $('control-config').textContent = '';
+    $('connection-form').reset(); $('connection-key').value = ''; $('connection-provider').onchange();
+    $('save-connection').textContent = 'Save connection →'; $('connection-key').placeholder = '';
+    notice('Refreshing the application session. Your draft is unchanged.');
+    connect();
+  });
+  connect(true);
 }

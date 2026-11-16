@@ -17,7 +17,7 @@ Source Studio can use:
 node bin/plumbcheck-control.js --connect /absolute/path/to/.plumbcheck/bridge.json
 ```
 
-The descriptor contains a rotating local capability token and loopback URL. Keep it private; do not paste its contents into a prompt, commit it, sync it, or expose Studio to the network. The generated client configuration contains its file path, not its token. The helper reloads it per call so an app restart can rotate the port/token.
+The descriptor exists only while the app or Studio is running; a clean shutdown removes it. It contains a rotating local capability token and loopback URL. Keep it private; do not paste its contents into a prompt, commit it, sync it, or expose Studio to the network. The generated client configuration contains its file path, not its token. The helper reloads it per call so an app restart can rotate the port/token.
 
 | Tool | Capability |
 | --- | --- |

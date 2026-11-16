@@ -1,5 +1,13 @@
 # Verification record
 
+## 0.2.0-preview.4 external-QA fixes
+
+The founder's existing software-testing bot ran the exact `674b866` source archive on a separate Debian computer and returned redacted logs, eight screenshots and reproducible defects. See [external QA results and boundaries](EXTERNAL_QA.md). Its baseline passed 189 core tests, seven official MCP checks, one packed-consumer check and the assigned Studio/snapshot workflows, with two client defects reproduced locally.
+
+Opening a saved project now confirms replacement of unsaved contract/name/instructions. Cancellation preserves all inputs; stale project loads cannot replace newer choices, and saving retains edits made while the request is in flight. A new launch link in the same tab consumes refreshed authorization, removes the fragment, clears stale session selections and refreshes workspace metadata without replacing the draft. Responses from an older session cannot overwrite the current session. Shared error rendering clears stale success messages.
+
+Local verification: **196/196 core tests**, **7/7 MCP integration tests**, and **1/1 packed TypeScript consumer check** passed. Seven new DOM workflow tests execute the generated inlined application against an isolated real Studio server; they cover the reported defects, metadata edits, response ordering, save races, session rotation and import/export/run failure feedback. JSDOM is a development-only dependency; desktop staging excludes development-only packages using the lockfile. Plugin/mobile bundle generation passed. Windows/Android packaging and focused external confirmation are being checked separately; the seven production gates remain open.
+
 Updated 16 November 2026 for **0.2.0-preview.3**, on Windows with Node.js 26.13.0 and npm 11.20.0. This is a preview validation record. `release-readiness.json` keeps unverified production gates open.
 
 ## Automated checks
@@ -47,6 +55,8 @@ Workbench checks exercised fixed/regression switching, argument/result/output di
 Masking is key-based and cannot identify every secret in arbitrary text. Raw fixtures require review before export/sync. The relay stores fixture JSON and is not end-to-end encrypted. The app does not sandbox imported agent code or certify a real business system's safety.
 
 ## 0.2.0-preview.3 sync evidence increment
+
+The documentation follow-up `63fa113` exposed a CI harness limit: one Windows/Node 22 fresh consumer install exceeded its 60-second subprocess deadline, and the harness reported `null !== 0`. Commit `674b866` gives registry setup a separate 180-second allowance, reports subprocess errors/signals explicitly, retains the compiler/runtime assertions, and bounds CI jobs to 15 minutes. A fresh isolated npm-cache consumer run passed locally, and all four jobs passed in [follow-up CI](https://github.com/stepan4002/plumbcheck/actions/runs/43879995620). Application binaries and runtime source are unchanged by that harness fix.
 
 A regression test reproduced the dropped-report defect before implementation. Windows now commits imported projects and reports atomically, uses an explicit imported status, retains source context, rejects changed immutable snapshot content, and reuses an existing import without overwriting edits. Android uploads its actual saved revision and optionally its report. Evidence, context and source share one atomic local-storage value; the earlier standalone report storage remains readable. Snapshot validation is shared by the relay, desktop importer and Android.
 

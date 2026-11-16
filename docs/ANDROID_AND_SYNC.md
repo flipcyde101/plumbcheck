@@ -1,6 +1,6 @@
 # Android and snapshot sync
 
-Updated 16 November 2026 for 0.2.0-preview.3. Android is a preview, not a verified production mobile release.
+Updated 16 November 2026 for 0.2.0-preview.4. Android is a preview, not a verified production mobile release.
 
 ## Android application
 

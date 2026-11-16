@@ -1,6 +1,7 @@
-export function startMobile({ runSuite, redact, safe, regression, artifacts, syncRequest, model }) {
+export function startMobile({ runSuite, redact, safe, regression, artifacts, snapshots, evidenceStore, syncRequest, model }) {
   const $ = id => document.getElementById(id);
   let current = regression, report = null;
+  let reportContext = null, reportOrigin = null;
   let task = 'Complete the scenario using the provided tools.';
   let syncSettings = null;
   try { syncSettings = JSON.parse(window.AndroidApp?.getSyncSettings() || 'null'); } catch { /* Pair explicitly when a credential is unavailable. */ }
@@ -20,14 +21,23 @@ export function startMobile({ runSuite, redact, safe, regression, artifacts, syn
     localStorage.setItem('plumbcheck-project', JSON.stringify(next)); task = next.task; return next;
   }
   $('save').onclick = () => { try { saveProject(); say('Saved on this phone.'); } catch (e) { say(e.message); } };
+  const contractHash = async contract => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(contract)))), b => b.toString(16).padStart(2, '0')).join('');
+  function showEvidence(value) {
+    report = value.report; reportContext = value.context; reportOrigin = value.origin;
+    render();
+    const match = reportContext && reportOrigin?.snapshotContractHash ? reportContext.contractHash === reportOrigin.snapshotContractHash && reportContext.contractRevision === reportOrigin.snapshotRevision : null;
+    $('evidence-source').textContent = !report ? '' : reportOrigin?.kind === 'sync' ? `Imported from ${reportOrigin.deviceName}, snapshot revision ${reportOrigin.snapshotRevision}, report revision ${reportContext?.contractRevision ?? 'unknown'}. ${match === false ? 'Evidence is from a different revision or contract.' : match === null ? 'Contract link is unknown.' : 'Revision and contract hash match.'} Not executed on this device. Report provenance is unverified.` : reportOrigin?.kind === 'local' ? `Executed on this device, saved revision ${reportContext?.contractRevision ?? 'unknown'}.` : 'Opened saved evidence. Not rerun on this device. Report provenance is unverified.';
+  }
+  const saveEvidence = value => showEvidence(evidenceStore.write(value));
   $('run').onclick = async () => {
     $('run').disabled = true;
     try {
       const source = $('contract').value; if (new TextEncoder().encode(source).length > 1_000_000) throw new Error('Contract exceeds 1 MB.');
       const value = JSON.parse(source);
       if (value.cases?.some(c => !Array.isArray(c.calls))) throw new Error('This contract needs an agent runner. Phone offline mode checks planned tool calls.');
-      report = redact(await runSuite(value)); localStorage.setItem('plumbcheck-report', JSON.stringify(report));
-      render(); say(`${report.summary.passed}/${report.summary.total} passed. Executed offline on this phone.`);
+      const snapshot = saveProject(), result = redact(await runSuite(snapshot.contract));
+      saveEvidence({ report: result, context: { contractRevision: snapshot.revision, contractHash: await contractHash(snapshot.contract) }, origin: { kind: 'local' } });
+      say(`${report.summary.passed}/${report.summary.total} passed. Executed offline on this phone. Saved revision ${snapshot.revision}.`);
     } catch (e) { say(e.message); } finally { $('run').disabled = false; }
   };
   function render() {
@@ -84,25 +94,25 @@ export function startMobile({ runSuite, redact, safe, regression, artifacts, syn
       modelNotice(`Running ${selected}. Keep this app open; leaving it cancels the model connection. Tool responses are simulated.`);
       let usage;
       const result = await model.runOllama({ contract: snapshot.contract, task: snapshot.task, model: selected, server, transport, signal: controller.signal, limits, onUsage: value => { usage = value; modelNotice(`${selected}: ${value.steps} model steps · ${value.inputTokens} input / ${value.outputTokens} output tokens`); } });
-      const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(snapshot.contract)))), b => b.toString(16).padStart(2, '0')).join('');
+      const hash = await contractHash(snapshot.contract);
       result.execution = { runner: 'builtin-model', provider: 'ollama', model: selected, connectionName: 'Android Ollama', contractRevision: snapshot.revision, contractHash: hash, limits, ...(usage ? { usage } : {}) };
       controller.signal.throwIfAborted();
       const masked = redact(result); artifacts.report(masked);
       if (new TextEncoder().encode(JSON.stringify(masked)).length > 1000000) throw new Error('Report exceeds the 1 MB export limit. Reduce the scenario size.');
-      localStorage.setItem('plumbcheck-report', JSON.stringify(masked)); report = masked; render(); localStorage.setItem('plumbcheck-model-status', result.passed ? 'passed' : 'failed');
+      saveEvidence({ report: masked, origin: { kind: 'local' } }); localStorage.setItem('plumbcheck-model-status', result.passed ? 'passed' : 'failed');
       modelNotice(`${result.summary.passed}/${result.summary.total} passed on ${selected}. Saved revision ${snapshot.revision}. This was an actual model run with fixture tools.`);
     } catch (e) { localStorage.setItem('plumbcheck-model-status', controller?.signal.aborted ? 'cancelled' : 'failed'); modelNotice(controller?.signal.aborted ? 'Model run cancelled or interrupted. No new passing report was saved.' : e.message); }
     finally { clearTimeout(timer); activeModel = null; busyModel(false); }
   };
   if (localStorage.getItem('plumbcheck-model-status') === 'running') { localStorage.setItem('plumbcheck-model-status', 'interrupted'); modelNotice('The previous model run was interrupted. Any displayed evidence is from an earlier completed run.'); }
-  $('import').onchange = async () => { try { const f = $('import').files[0]; if (!f) return; if (f.size > 1_000_000) throw new Error('File exceeds 1 MB.'); const opened = artifacts.open(await f.text()); if (opened.kind === 'report') { report = opened.value; render(); say('Opened saved evidence. It was not rerun on this phone.'); } else { $('contract').value = JSON.stringify(opened.value, null, 2); $('example').value = 'custom'; say('Contract imported. Review before running.'); } } catch (e) { say(e.message); } finally { $('import').value = ''; } };
+  $('import').onchange = async () => { try { const f = $('import').files[0]; if (!f) return; if (f.size > 1_000_000) throw new Error('File exceeds 1 MB.'); const opened = artifacts.open(await f.text()); if (opened.kind === 'report') { saveEvidence({ report: opened.value, origin: { kind: 'file' } }); say('Opened saved evidence. It was not rerun on this phone.'); } else { $('contract').value = JSON.stringify(opened.value, null, 2); $('example').value = 'custom'; say('Contract imported. Review before running.'); } } catch (e) { say(e.message); } finally { $('import').value = ''; } };
   function exportJson(value, filename) {
     if (window.AndroidApp?.exportJson) { window.AndroidApp.exportJson(filename, JSON.stringify(value, null, 2)); say('Choose where to save the JSON file.'); }
     else { const a = document.createElement('a'), url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' })); a.href = url; a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
   }
   $('export-contract').onclick = () => { try { exportJson(JSON.parse($('contract').value), 'plumbcheck-contract.json'); } catch (e) { say(e.message); } };
   $('export-report').onclick = () => { if (report) exportJson(report, 'plumbcheck-report.json'); else say('Run or import a report first.'); };
-  const action = (id, run) => { $(id).onclick = async () => { $(id).disabled = true; try { await run(); } catch (e) { say(e.message); } finally { $(id).disabled = false; } }; };
+  const action = (id, run) => { $(id).onclick = async () => { $(id).disabled = true; $('sync-message').textContent = 'Working…'; try { await run(); } catch (e) { say(e.message); } finally { $('sync-message').textContent = $('message').textContent; $(id).disabled = false; } }; };
   const settings = () => { if (!syncSettings) throw new Error('Pair this phone first.'); return syncSettings; };
   action('pair', async () => {
     const url = $('relay-url').value.replace(/\/$/, '');
@@ -121,21 +131,20 @@ export function startMobile({ runSuite, redact, safe, regression, artifacts, syn
   action('pull', async () => {
     const config = settings(), id = $('snapshot-list').value;
     if (!/^[a-f0-9-]{36}$/.test(id)) throw new Error('Choose a snapshot.');
-    const snapshot = await syncRequest(config.url, `/v1/snapshots/${id}`, config);
-    const checked = artifacts.open(JSON.stringify(snapshot.project.contract));
-    if (checked.kind !== 'contract') throw new Error('Snapshot does not contain a contract.');
-    sessionStorage.setItem('plumbcheck-before-sync', JSON.stringify({ contract: $('contract').value, name: $('name').value, task: $('model-task').value }));
-    $('contract').value = JSON.stringify(checked.value, null, 2); $('example').value = 'custom'; $('name').value = snapshot.project.name; task = snapshot.project.task; $('model-task').value = task;
-    if (snapshot.report) { const opened = artifacts.open(JSON.stringify(snapshot.report)); if (opened.kind === 'report') { report = opened.value; render(); } }
+    const snapshot = snapshots.snapshot(await syncRequest(config.url, `/v1/snapshots/${id}`, config));
+    sessionStorage.setItem('plumbcheck-before-sync', JSON.stringify({ contract: $('contract').value, name: $('name').value, task: $('model-task').value, evidence: { report, context: reportContext, origin: reportOrigin } }));
+    saveEvidence(snapshot.report ? { report: snapshot.report, context: snapshot.reportContext, origin: { kind: 'sync', deviceName: snapshot.sourceDevice, snapshotRevision: snapshot.project.revision, snapshotContractHash: await contractHash(snapshot.project.contract) } } : null);
+    $('contract').value = JSON.stringify(snapshot.project.contract, null, 2); $('example').value = 'custom'; $('name').value = snapshot.project.name; task = snapshot.project.task; $('model-task').value = task;
     say('Snapshot opened. Review and save it on this phone. Imported evidence was not rerun.');
   });
   action('push', async () => {
     if (!$('sync-consent').checked) throw new Error('Review and authorize uploading this project’s fixture data.');
-    const config = settings(), checked = artifacts.open($('contract').value);
-    if (checked.kind !== 'contract') throw new Error('Choose a contract.');
-    await syncRequest(config.url, '/v1/snapshots', { ...config, method: 'POST', body: { project: { name: $('name').value || checked.value.name, task: $('model-task').value, revision: 1, contract: checked.value } } });
-    say('New immutable project snapshot uploaded. Other device versions were preserved.');
+    const config = settings(), project = saveProject();
+    const include = $('sync-report').checked;
+    if (include && !report) throw new Error('Run or import evidence before including a report.');
+    const result = await syncRequest(config.url, '/v1/snapshots', { ...config, method: 'POST', body: { project, ...(include ? { report, ...(reportContext ? { reportContext } : {}) } : {}) } });
+    say(`Saved revision ${project.revision} and uploaded snapshot ${result.id}.${include ? ' Included the reviewed report with its original contract context.' : ' No report was uploaded.'} Other device versions were preserved.`);
   });
-  $('undo-sync').onclick = () => { const source = sessionStorage.getItem('plumbcheck-before-sync'); if (!source) { say('No imported draft to undo.'); return; } const previous = JSON.parse(source); $('contract').value = previous.contract; $('example').value = 'custom'; $('name').value = previous.name; task = previous.task; $('model-task').value = task; sessionStorage.removeItem('plumbcheck-before-sync'); say('Restored the draft from before sync import.'); };
-  try { const raw = localStorage.getItem('plumbcheck-report'); if (raw) { const opened = artifacts.open(raw); if (opened.kind === 'report') report = opened.value; } render(); if (restore?.contract) say(`Restored your saved project.${report ? ' Last evidence was reopened without rerunning it.' : ' Ready for offline checks.'}`); } catch { say('Saved evidence could not be opened. Import a reviewed copy.'); }
+  $('undo-sync').onclick = () => { try { const source = sessionStorage.getItem('plumbcheck-before-sync'); if (!source) { say('No imported draft to undo.'); return; } const previous = JSON.parse(source); saveEvidence(previous.evidence); $('contract').value = previous.contract; $('example').value = 'custom'; $('name').value = previous.name; task = previous.task; $('model-task').value = task; sessionStorage.removeItem('plumbcheck-before-sync'); say('Restored the draft and evidence from before sync import.'); } catch (e) { say(e.message); } };
+  try { showEvidence(evidenceStore.read()); if (restore?.contract) say(`Restored your saved project.${report ? ' Last evidence was reopened without rerunning it.' : ' Ready for offline checks.'}`); } catch { say('Saved evidence could not be opened. Import a reviewed copy.'); }
 }

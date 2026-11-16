@@ -6,6 +6,7 @@ import { jsonBody } from './workspace-http.js';
 import { validateSuite } from './validation.js';
 import { redact } from './redact.js';
 import { createArtifactTools } from './artifacts.js';
+import { createSnapshotTools } from './snapshot.js';
 
 const hash = token => createHash('sha256').update(token).digest('hex');
 const random = () => randomBytes(32).toString('hex');
@@ -22,6 +23,7 @@ export async function startSyncRelay({ directory, port = 4181, ownerToken } = {}
   let devices;
   try { devices = JSON.parse(await readFile(devicesFile, 'utf8')); } catch (e) { if (e.code !== 'ENOENT') throw e; devices = {}; }
   const pairings = new Map(), attempts = new Map();
+  const snapshots = createSnapshotTools(createArtifactTools(redact, validateSuite));
   let queue = Promise.resolve();
   async function saveDevices(update) {
     const operation = queue.then(async () => {
@@ -80,12 +82,7 @@ export async function startSyncRelay({ directory, port = 4181, ownerToken } = {}
       if (req.method === 'POST' && req.url === '/v1/snapshots') {
         if ((await readdir(directory)).filter(f => /^[a-f0-9-]{36}\.json$/.test(f)).length >= 250) bad('Snapshot capacity reached. Owner must archive the relay before adding more.', 413);
         const input = await jsonBody(req, 2_000_000);
-        const p = input.project;
-        if (!p || typeof p.name !== 'string' || p.name.length > 200 || typeof p.task !== 'string' || p.task.length > 12000 || !Number.isInteger(p.revision) || p.revision < 1) bad('Invalid project snapshot.');
-        const contract = validateSuite(p.contract, { mode: p.contract?.cases?.every(c => !Object.hasOwn(c, 'calls')) ? 'agent' : 'planned' });
-        let report;
-        if (input.report) { const opened = createArtifactTools(redact, validateSuite).open(JSON.stringify(input.report)); if (opened.kind !== 'report') bad('Execution evidence must be a report.'); report = opened.value; }
-        const value = { version: 1, id: randomUUID(), createdAt: new Date().toISOString(), sourceDevice: owner ? 'Owner' : device.name, project: { name: p.name, task: p.task, revision: p.revision, contract }, ...(report ? { report } : {}) };
+        const value = snapshots.snapshot({ version: 1, id: randomUUID(), createdAt: new Date().toISOString(), sourceDevice: owner ? 'Owner' : device.name, project: input.project, ...(input.report !== undefined ? { report: input.report } : {}), ...(input.reportContext !== undefined ? { reportContext: input.reportContext } : {}) });
         await writeFile(join(directory, `${value.id}.json`), JSON.stringify(value), { flag: 'wx', mode: 0o600 });
         return json(201, { id: value.id, createdAt: value.createdAt });
       }

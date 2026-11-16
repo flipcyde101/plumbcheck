@@ -1,6 +1,6 @@
 # Android and snapshot sync
 
-Updated 16 November 2026 for 0.2.0-preview.2. Android is a preview, not a verified production mobile release.
+Updated 16 November 2026 for 0.2.0-preview.3. Android is a preview, not a verified production mobile release.
 
 ## Android application
 
@@ -37,7 +37,11 @@ Using a private owner-side client, authorize `POST /v1/pairings` with the owner 
 
 1. On Windows, save a project, review its raw fixture content, and explicitly authorize uploading a snapshot. Including the latest masked report is optional.
 2. On Android, pair, refresh snapshots, and open a version. Review/save it locally and run its fixture tests independently.
-3. Upload a new phone snapshot when ready; refresh/import it on Windows as a new local project.
+3. Upload a new phone snapshot when ready. The app saves the current draft and sends its actual local revision. Report inclusion is a separate, unchecked-by-default option. Refresh/import it on Windows as a new local project.
+
+When a snapshot includes a report, Windows imports the project and evidence in one atomic workspace transaction. History labels the result **IMPORTED**, retains the source device/revision and original model metadata, and never executes an agent during import. Reimporting the same immutable snapshot reopens its existing local copy and preserves edits. A changed payload under the same snapshot identity is rejected.
+
+Reports may describe an older revision. The original report context is preserved; a differing revision or contract hash is labeled explicitly. Legacy reports with no context retain an unknown link. These fields are descriptive and do not authenticate the source. On Android, opening a snapshot without evidence clears the previous report; Undo import restores both the preceding draft and its evidence. Saved evidence/context/source are committed together in one local-storage value, with earlier preview reports still readable.
 
 Uploads preserve earlier versions. Imports create a local copy; simultaneous edits are retained as separate snapshots instead of silently overwriting each other. Android can undo the draft replaced by a sync import. This is explicit snapshot exchange, not automatic background reconciliation.
 

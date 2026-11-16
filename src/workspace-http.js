@@ -47,14 +47,16 @@ export async function workspaceService(directory, options = {}) {
         if (url.pathname === '/api/sync/upload') {
           if (body.consent !== true) throw new WorkspaceError('Review and authorize uploading fixture data first.');
           const p = workspace.project(body.projectId);
-          const report = body.includeReport === true ? workspace.state.runs.find(r => r.projectId === p.id && r.report)?.report : undefined;
-          json(200, await syncRequest(settings.url, '/v1/snapshots', { ...settings, method: 'POST', body: { project: p, ...(report ? { report } : {}) } })); return true;
+          const run = body.includeReport === true ? workspace.state.runs.find(r => r.projectId === p.id && r.report) : undefined;
+          const revision = run?.mode === 'imported' ? run.source?.contractRevision : run?.revision;
+          const context = revision && run.contractHash ? { contractRevision: revision, contractHash: run.contractHash } : null;
+          json(200, await syncRequest(settings.url, '/v1/snapshots', { ...settings, method: 'POST', body: { project: p, ...(run ? { report: run.report, ...(context ? { reportContext: context } : {}) } : {}) } })); return true;
         }
         if (url.pathname === '/api/sync/import') {
           if (!/^[a-f0-9-]{36}$/.test(body.snapshotId)) throw new WorkspaceError('Invalid snapshot ID.');
           const snapshot = await syncRequest(settings.url, `/v1/snapshots/${body.snapshotId}`, settings);
-          const imported = await workspace.saveProject({ name: `${snapshot.project.name} (synced)`.slice(0, 200), task: snapshot.project.task, contract: snapshot.project.contract });
-          json(200, { project: imported, note: 'Imported as a new local project. Existing edits and previous runs were preserved.' }); return true;
+          const imported = await workspace.importSnapshot(snapshot, settings.url);
+          json(200, { ...imported, note: imported.reportRestored ? 'Restored the removed imported report without executing it. Local project edits were preserved.' : imported.reused ? 'Already imported. Local edits and saved evidence were preserved.' : `Imported as a new local project.${imported.run ? ' Its report is in History as imported evidence; it was not executed here.' : ''} Existing edits and previous runs were preserved.` }); return true;
         }
         throw new WorkspaceError('Unknown sync action.', 404);
       }

@@ -4,6 +4,9 @@ import { randomUUID, createHash } from 'node:crypto';
 import { validateSuite } from './validation.js';
 import { runSuite } from './runner.js';
 import { redact } from './redact.js';
+import { createArtifactTools } from './artifacts.js';
+import { createSnapshotTools } from './snapshot.js';
+import { syncURL } from './sync-client.js';
 
 export class WorkspaceError extends Error {
   constructor(message, status = 400) { super(message); this.status = status; }
@@ -129,6 +132,30 @@ export class Workspace {
     }); } catch (error) { if (apiKey) await this.vault.delete(credentialId); throw error; }
     if (old && (old.credentialId || id) !== credentialId) await this.vault.delete(old.credentialId || id);
     return { ...config, id, credentialAvailable: Boolean(await this.vault.get(credentialId)) };
+  }
+  async importSnapshot(input, relay) {
+    const snapshot = createSnapshotTools(createArtifactTools(redact, validateSuite)).snapshot(input);
+    const relayURL = syncURL(relay), snapshotHash = hash(snapshot), receivedAt = new Date().toISOString();
+    return this.commit(s => {
+      const existing = s.projects.find(p => p.source?.relay === relayURL && p.source?.snapshotId === snapshot.id);
+      const retainedRun = existing && s.runs.find(r => r.projectId === existing.id && r.source?.snapshotId === snapshot.id);
+      if (existing) {
+        if (existing.source.snapshotHash !== snapshotHash) fail('This immutable snapshot changed on the relay. The local import was preserved.', 409);
+        if (retainedRun || !snapshot.report) return { project: existing, run: retainedRun || null, reused: true };
+      }
+      if (!existing && s.projects.length >= 100) fail('Maximum 100 projects.');
+      if (snapshot.report && s.runs.length >= 500) fail('Run history is full. Export and remove older runs.');
+      const source = { relay: relayURL, snapshotId: snapshot.id, snapshotHash, deviceName: snapshot.sourceDevice, snapshotRevision: snapshot.project.revision, snapshotCreatedAt: snapshot.createdAt, receivedAt };
+      const project = existing || { id: randomUUID(), name: `${snapshot.project.name} (synced)`.slice(0, 200), task: snapshot.project.task, contract: snapshot.project.contract, contractHash: hash(snapshot.project.contract), revision: 1, updatedAt: receivedAt, source };
+      let run = null;
+      if (snapshot.report) {
+        const e = snapshot.report.execution, context = snapshot.reportContext;
+        run = { id: randomUUID(), projectId: project.id, projectName: project.name, revision: null, contractHash: context?.contractHash || null, mode: 'imported', status: 'imported', connectionId: null, provider: e?.provider || null, model: e?.model || null, createdAt: snapshot.report.createdAt, finishedAt: receivedAt, summary: snapshot.report.summary, report: snapshot.report, ...(e?.usage ? { usage: e.usage } : {}), source: { ...source, contractRevision: context?.contractRevision || null, reportMatchesSnapshot: context ? context.contractHash === hash(snapshot.project.contract) && context.contractRevision === snapshot.project.revision : null } };
+        s.runs.unshift(run);
+      }
+      if (!existing) s.projects.push(project);
+      return { project, run, reused: Boolean(existing), reportRestored: Boolean(existing && run) };
+    });
   }
   async remove(kind, id) {
     if (!['projects', 'connections', 'runs'].includes(kind)) fail('Invalid collection.');

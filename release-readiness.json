@@ -4,8 +4,8 @@
   "required": [
     {
       "id": "core-and-integrations",
-      "status": "verified",
-      "evidence": "5b137a9: all four Node 22/24 Windows/Linux CI jobs passed; Android unit/assembly/lint and Windows packaging/installed-helper workflows passed. Local checks: 182 tests, official MCP, packed TypeScript, Android Qwen pass/regression with native exports, signed preview APK, Windows helper checks, and 107-component SBOM. Exact run links are in docs/VALIDATION.md."
+      "status": "pending",
+      "reason": "Preview.3 sync evidence changes pass 189 local tests, MCP/types compatibility and both app builds. Native interface and final source CI verification are in progress; previous preview evidence is retained in docs/VALIDATION.md."
     },
     {
       "id": "windows-authenticode",

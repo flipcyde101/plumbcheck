@@ -18,7 +18,7 @@ Canonical commands: `plumbcheck` and `plumbcheck-mcp`. Earlier `plumcheck` / `pl
 
 **Windows app:** download the artifact from a successful [Windows desktop build](https://github.com/stepan4002/plumbcheck/actions/workflows/windows-desktop.yml), extract it, and run the `.exe` installer. A portable ZIP is included too. No Node.js setup is needed. This unsigned preview includes saved projects, model connections, run evidence, and bundled fixture/control MCP helpers. See [the Windows app guide](docs/WINDOWS_APP.md).
 
-**Android preview:** the [Android workflow](https://github.com/stepan4002/plumbcheck/actions/workflows/android.yml) builds a debug-signed APK. It runs fixture checks offline, saves a project, imports/exports JSON, and runs a built-in tool agent through your Ollama server using native Android networking. Actual Qwen calls passed a correct scenario and failed a deliberate wrong-order scenario on the QA emulator. Optional HTTPS snapshot sync is separate. A locally built release-variant APK uses a private preview signing key. Real-phone networking and a long-term distribution identity remain release gates. See [connect Android to Ollama](docs/ANDROID_OLLAMA.md) and [Android and sync](docs/ANDROID_AND_SYNC.md).
+**Android preview:** the [Android workflow](https://github.com/stepan4002/plumbcheck/actions/workflows/android.yml) builds a debug-signed APK. It runs fixture checks offline, saves a project, imports/exports JSON, and runs a built-in tool agent through your Ollama server using native Android networking. Actual Qwen calls passed a correct scenario and failed a deliberate wrong-order scenario on the QA emulator. Optional HTTPS snapshot sync is separate. Imported snapshots retain their reports in Windows History with source/revision labels; report upload from Android is explicit. A locally built release-variant APK uses a private preview signing key. Real-phone networking and a long-term distribution identity remain release gates. See [connect Android to Ollama](docs/ANDROID_OLLAMA.md) and [Android and sync](docs/ANDROID_AND_SYNC.md).
 
 **Source version:**
 
@@ -167,7 +167,7 @@ The included [CI workflow](.github/workflows/ci.yml) tests Node 22 and 24 on Lin
 
 ## Build with us
 
-The Windows app and Android/snapshot-sync previews are implemented. Remaining direction includes phone-to-worker execution, authenticated remote assistant connections, additional framework adapters, official subscription login routes, and signed public distribution. See [the phased platform roadmap](docs/PLATFORM_ROADMAP.md) for the distinction between implemented features and verified host/device support. This is not universal-agent compatibility.
+The Windows app and Android/snapshot-sync previews are implemented. Remaining direction includes phone-to-worker execution, authenticated remote assistant connections, additional framework adapters, official subscription login routes, and signed public distribution. See [the prioritised improvement backlog](docs/IMPROVEMENT_BACKLOG.md) and [the phased platform roadmap](docs/PLATFORM_ROADMAP.md) for the distinction between implemented features and verified host/device support. This is not universal-agent compatibility.
 
 Start with [CONTRIBUTING.md](CONTRIBUTING.md), [the roadmap](ROADMAP.md), and [the security policy](SECURITY.md). The [product brief](docs/PRODUCT_BRIEF.md) explains the differentiation, research, and validation still needed. The [build prompt](docs/BUILD_PROMPT.md) gives a reusable implementation brief for future coding sessions.
 

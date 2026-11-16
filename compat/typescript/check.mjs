@@ -10,13 +10,15 @@ const root = fileURLToPath(new URL('../../', import.meta.url));
 const here = fileURLToPath(new URL('.', import.meta.url));
 const npmCli = process.env.npm_execpath;
 
-function command(program, args, cwd) {
-  const result = spawnSync(program, args, { cwd, encoding: 'utf8', timeout: 60000, shell: false });
-  assert.equal(result.status, 0, `${program} ${args.join(' ')}\n${result.stdout}\n${result.stderr}`);
+function command(program, args, cwd, timeout = 60000) {
+  const result = spawnSync(program, args, { cwd, encoding: 'utf8', timeout, shell: false, windowsHide: true });
+  const detail = `${program} ${args.join(' ')}\nDeadline: ${timeout} ms; signal: ${result.signal || 'none'}\n${result.stdout || ''}\n${result.stderr || ''}`;
+  if (result.error) throw new Error(`Consumer check could not finish: ${result.error.code || result.error.message}\n${detail}`, { cause: result.error });
+  assert.equal(result.status, 0, detail);
   return result.stdout;
 }
 
-test('packed package exposes typed exports, working binaries, and strict consumer types', { timeout: 180000 }, async () => {
+test('packed package exposes typed exports, working binaries, and strict consumer types', { timeout: 360000 }, async () => {
   assert.ok(npmCli, 'Run this check through npm run test:types.');
   const dir = await mkdtemp(join(tmpdir(), 'plumbcheck-types-'));
   try {
@@ -28,7 +30,8 @@ test('packed package exposes typed exports, working binaries, and strict consume
     const archive = join(dir, packed.filename);
     // A fresh consumer needs registry metadata for production dependencies;
     // npm ci's tarball cache alone cannot satisfy an offline dependency resolve.
-    command(process.execPath, [npmCli, 'install', archive, '--prefer-offline', '--ignore-scripts', '--no-audit', '--no-fund'], consumer);
+    console.log('Installing the packed archive into a fresh consumer (registry setup deadline: 180 seconds).');
+    command(process.execPath, [npmCli, 'install', archive, '--prefer-offline', '--ignore-scripts', '--no-audit', '--no-fund'], consumer, 180000);
     await copyFile(join(here, 'consumer.ts'), join(consumer, 'consumer.ts'));
     for (const compiler of ['typescript', 'typescript-legacy']) {
       const packageDir = join(here, 'node_modules', compiler);

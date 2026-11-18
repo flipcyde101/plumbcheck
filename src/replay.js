@@ -1,5 +1,8 @@
-import { object, same } from './validation.js';
+import { object } from './validation.js';
 import { copyJson } from './json-data.js';
+import { createMatchers } from './matchers.js';
+
+const matchers = createMatchers();
 
 export class ContractError extends Error {
   constructor(code, message) {
@@ -38,8 +41,10 @@ export class ReplaySession {
       const fixture = this.fixtures[this.cursor];
       if (!fixture) throw new ContractError('FIXTURE_MISSING', `No fixture remains for "${name}". No live call was made.`);
       if (fixture.tool !== name) throw new ContractError('CALL_ORDER', `Expected "${fixture.tool}" before "${name}".`);
-      if (!same(fixture.arguments, request.arguments ?? {})) {
+      // Exact comparison, except where the fixture uses an explicit $plumb matcher.
+      if (!matchers.matchValue(fixture.arguments, request.arguments ?? {})) {
         event.expectedArguments = structuredClone(fixture.arguments);
+        event.diffExpected = matchers.diffExpected(fixture.arguments, request.arguments ?? {});
         throw new ContractError('ARGUMENT_MISMATCH', `Arguments for "${name}" differ from fixture ${this.cursor + 1}.`);
       }
       this.cursor++;

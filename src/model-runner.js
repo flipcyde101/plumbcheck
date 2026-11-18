@@ -25,8 +25,8 @@ export async function runModelProject({ project, connection, apiKey, limits, sig
     const executed = new Set();
     const invalidCalls = [];
     let invalidToolCall = false, providerExceededBudget = false, toolBudgetExceeded = false;
-    const tools = Object.fromEntries(surface.map(({ name, inputSchema }, i) => [providerNames[i], tool({
-      description: `Tool "${name}".`,
+    const tools = Object.fromEntries(surface.map(({ name, description, inputSchema }, i) => [providerNames[i], tool({
+      description: description ?? `Tool "${name}".`,
       inputSchema: jsonSchema(inputSchema),
       execute: async (arguments_, { toolCallId }) => {
         signal?.throwIfAborted();

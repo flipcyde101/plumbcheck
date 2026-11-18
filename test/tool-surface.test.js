@@ -50,3 +50,14 @@ test('provider tool names are sanitized and unique', () => {
   const names = providerToolNames(['orders.lookup', 'orders_lookup']);
   assert.notEqual(names[0], names[1]);
 });
+
+test('declared tool descriptions and schemas reach the model and replace inferred shapes', async () => {
+  const contract = suite(); contract.tools = { 'orders.lookup': { description: 'Find one order by ID.', inputSchema: { type: 'object', properties: { orderId: { type: 'string', description: 'Order ID' } }, required: ['orderId'] } }, 'refunds.issue': { description: 'Refund money.' } };
+  const m = new MockLanguageModelV4({ doGenerate: [response([{ type: 'text', text: 'done' }])] });
+  await runModelProject({ project: { contract, task: 'Read.' }, model: m, limits });
+  const offered = Object.fromEntries(m.doGenerateCalls[0].tools.map(t => [t.name, t]));
+  assert.equal(offered.orders_lookup.description, 'Find one order by ID.');
+  assert.equal(offered.orders_lookup.inputSchema.properties.orderId.description, 'Order ID');
+  assert.equal(offered.refunds_issue.description, 'Refund money.', 'declared tools join the surface even without a policy');
+  assert.equal(offered.email_send.description, 'Tool "email.send".');
+});

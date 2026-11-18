@@ -97,23 +97,26 @@ PlumbCheck has three ways to run a contract. Only the last two execute something
 
 | Mode | What runs | What a failure means |
 | --- | --- | --- |
-| **Planned-call check** (`plumbcheck run suite.json`, builder default) | Nothing. The `calls` you wrote are compared with the `fixtures` you wrote. | Your contract is internally inconsistent. Useful for authoring and demos, **not evidence about an agent**. |
+| **Planned-call check** (`plumbcheck run suite.json`, builder default until a model is connected) | Nothing. The `calls` you wrote are compared with the `fixtures` you wrote. | Your contract is internally inconsistent. Useful for authoring and demos, **not evidence about an agent**. |
 | **Agent replay** (`--agent`, SDK `ReplaySession`, MCP fixture server) | Your real agent code / MCP client against replayed tool responses. | Your agent made a call the contract does not allow. |
-| **Real model test** (Workspace model run, Android, `npm run test:local-model`) | A real LLM with your instructions chooses tools. | The model made a call the contract does not allow. |
+| **Real model test** (Workspace model run, Android, `npm run test:probe`, `npm run test:local-model`) | A real LLM with your instructions chooses tools. | The model made a call the contract does not allow. |
 
-In agent and model modes the agent is offered **every tool the contract names**: fixture tools plus `policies.allow`, `deny`, `requireApproval` and `expect.never`. A real attempt to use a dangerous tool is therefore observed and blocked instead of being impossible.
+In agent and model modes the agent is offered **every tool the contract names**: fixture tools plus `policies.allow`, `deny`, `requireApproval`, `expect.never` and declared `tools` (with their real descriptions and schemas). A real attempt to use a dangerous tool is therefore observed and blocked instead of being impossible.
 
 | Regression | Check |
 | --- | --- |
 | Agent sends email without approval | `requireApproval` plus trusted test context → `APPROVAL_REQUIRED` |
-| Agent chooses a different recipient | Exact nested argument comparison → `ARGUMENT_MISMATCH` |
+| Agent chooses a different recipient | Nested argument comparison, exact unless a `$plumb` matcher allows variation → `ARGUMENT_MISMATCH` |
 | Agent deletes an order | Deny policy and `never` assertion → `DENIED_TOOL`, `FORBIDDEN_CALL` |
 | Agent calls an unknown tool | Explicit allowlist; absent means denied → `UNLISTED_TOOL` |
 | Agent adds, skips, or reorders a call | Ordered fixture consumption and completeness check |
 | Tool returns a recorded error | MCP-shaped `isError: true` becomes a failed check, even if the agent catches it |
-| JS agent returns the wrong value | `expect.output` exact equality (agent replay) |
+| Agent or model gives the wrong final answer | `expect.outputChecks` (contains / notContains / matches / JSON path) → `OUTPUT_ASSERTION`; `expect.output` for exact values |
+| Agent follows an instruction hidden in a tool response | Deny/`never` on the tool the injection asks for, with the tool exposed to the agent |
 
-Known limits: arguments are compared exactly, so free-text arguments written by an LLM (an email body) rarely match. A model's free-text final answer is only checked with exact `expect.output`, which suits JSON answers, not prose. `expect.results` assertions read the replayed fixture, so in replay they confirm your fixture data rather than a live integration; they cannot detect a changed external API.
+Use `$plumb` matchers for argument values an LLM legitimately varies, such as an email body ([argument matchers](docs/CONTRACTS.md#argument-matchers)), and `outputChecks` for prose answers ([final output checks](docs/CONTRACTS.md#final-output-checks)). Output checks need a final answer, so planned-call checks and the MCP fixture server report them as skipped, never as passed. `expect.results` assertions read the replayed fixture, so in replay they confirm your fixture data rather than a live integration; they cannot detect a changed external API.
+
+**How to plug in your agent** (JS function, MCP client, Python, or a model plus instructions), what kinds of agents work and where they can be hosted: see [Connect your agent](docs/CONNECT_YOUR_AGENT.md).
 
 ## A contract you can commit
 

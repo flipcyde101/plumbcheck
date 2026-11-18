@@ -32,7 +32,12 @@ export function startMobile({ runSuite, redact, safe, regression, artifacts, sna
     try {
       $('name').value = input.name; $('model-task').value = input.task; $('contract').value = JSON.stringify(input.contract, null, 2); $('example').value = 'custom';
       const saved = saveProject(); lastBuilderDraft = JSON.stringify({ name: $('name').value, task: $('model-task').value, contract: $('contract').value, example: $('example').value });
-      say(`Builder test saved as revision ${saved.revision}. Run offline or authorize an Ollama run. Earlier displayed evidence has not been rerun.`);
+      // With a saved Ollama connection the real model run is the meaningful next step.
+      let hasModel = false; try { hasModel = Boolean(localStorage.getItem('plumbcheck-ollama')); } catch { /* storage unavailable */ }
+      say(hasModel
+        ? `Builder test saved as revision ${saved.revision}. Recommended: authorize the Ollama run below to see what the agent actually does. The offline check only verifies the draft. Earlier displayed evidence has not been rerun.`
+        : `Builder test saved as revision ${saved.revision}. The offline check verifies the draft without running an agent; connect Ollama to test real behaviour. Earlier displayed evidence has not been rerun.`);
+      if (hasModel) $('model-run')?.focus();
     } catch (error) { $('name').value = previous.name; $('model-task').value = previous.task; $('contract').value = previous.contract; $('example').value = previous.example; throw error; }
   } });
   const contractHash = async contract => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(contract)))), b => b.toString(16).padStart(2, '0')).join('');
@@ -61,6 +66,7 @@ export function startMobile({ runSuite, redact, safe, regression, artifacts, sna
       const card = document.createElement('article');
       const heading = document.createElement('h3'); heading.textContent = `${c.passed ? '✓ PASS' : '× FAIL'} / ${c.name}`; card.append(heading);
       for (const f of c.failures) { const p = document.createElement('p'); p.textContent = `${f.code}: ${f.message}`; card.append(p); }
+      if (Number.isInteger(c.skippedOutputChecks) && c.skippedOutputChecks > 0) { const p = document.createElement('p'); p.textContent = `${c.skippedOutputChecks} final-output check(s) not evaluated offline. Run the Ollama test to check the final answer.`; card.append(p); }
       const details = document.createElement('details'), summary = document.createElement('summary'), pre = document.createElement('pre');
       summary.textContent = 'Execution evidence'; pre.textContent = JSON.stringify(c, null, 2); details.append(summary, pre); card.append(details); $('results').append(card);
     }

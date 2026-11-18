@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 const cwd = fileURLToPath(new URL('..', import.meta.url));
 const rpc = (id, method, params) => ({ jsonrpc: '2.0', id, method, params });
 const initialize = (id = 0) => rpc(id,'initialize',{protocolVersion:'2025-11-25',capabilities:{},clientInfo:{name:'plumcheck-raw-test',version:'1.0.0'}});
@@ -44,4 +47,14 @@ test('MCP discovery lists denied tools so an agent attempt is observable', () =>
   const names=r.responses[1].result.tools.map(t=>t.name);
   assert.ok(names.includes('orders.delete'),names.join());
   assert.ok(!JSON.stringify(r.responses[1].result).includes('ORD-1042'));
+});
+test('MCP serves agent-mode contracts, lists declared descriptions and reports skipped output checks', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'plumbcheck-mcp-'));
+  const file = join(dir, 'agent.json');
+  writeFileSync(file, JSON.stringify({ version: 1, name: 'Agent MCP', tools: { 'orders.lookup': { description: 'Find one order.' } }, policies: { allow: ['orders.lookup'] }, cases: [{ name: 'Lookup', input: { orderId: 'A' }, fixtures: [{ tool: 'orders.lookup', arguments: { orderId: 'A' }, result: { status: 'shipped' } }], expect: { outputChecks: [{ contains: 'shipped' }] } }] }));
+  const r = spawnSync(process.execPath, ['bin/plumcheck-mcp.js', file, 'Lookup'], { cwd, encoding: 'utf8', input: [initialize(1), rpc(2, 'tools/list'), rpc(3, 'tools/call', { name: 'orders.lookup', arguments: { orderId: 'A' } })].map(m => JSON.stringify(m)).join('\n') + '\n', timeout: 10_000 });
+  const responses = r.stdout.trim().split('\n').map(line => JSON.parse(line));
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(responses[1].result.tools[0].description, 'Find one order.');
+  assert.match(r.stderr, /OUTPUT_CHECKS_SKIPPED: 1/);
 });

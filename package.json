@@ -61,7 +61,8 @@
     "check": "node bin/plumbcheck.js run examples/customer-support/safe.json",
     "example:sdk": "node examples/customer-support/agent.js",
     "check:agent": "node bin/plumbcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/support-agent.js --out reports/agent",
-    "demo:agent": "node bin/plumbcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/regressed-agent.js --out reports/regressed-agent"
+    "demo:agent": "node bin/plumbcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/regressed-agent.js --out reports/regressed-agent",
+    "test:probe": "node scripts/probe-model.mjs"
   },
   "keywords": [
     "ai",

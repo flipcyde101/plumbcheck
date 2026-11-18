@@ -1,4 +1,10 @@
 import { own, same, readPath } from './validation.js';
+import { createMatchers } from './matchers.js';
+
+const matchers = createMatchers();
+
+/** Output checks need an agent's final output; planned and MCP runs report them as skipped. */
+export const skippedOutputChecks = (expect) => (expect?.outputChecks?.length ?? 0) + (expect && own(expect, 'output') ? 1 : 0);
 
 // Keep original sensitive keys around assertion values so delivery redaction can
 // still mask a failure at a path such as structuredContent.access_token.
@@ -25,6 +31,19 @@ export function evaluateSession(session, expect = {}, { agent = false, output } 
   if (agent && own(expect, 'output') && !same(output, expect.output)) {
     failures.push({ code: 'OUTPUT_MISMATCH', message: 'The agent returned a different output than the contract expected.', expected: expect.output,
       ...(output === undefined ? { actualMissing: true } : { actual: output }) });
+  }
+  if (agent) {
+    (expect.outputChecks ?? []).forEach((check, index) => {
+      const result = matchers.checkOutput(check, output);
+      if (result.passed) return;
+      const path = check.path || '';
+      // Only `equals` has a comparable expected value; other operators keep the
+      // check itself as evidence so the diff view does not show a fake type change.
+      const values = result.op === 'equals'
+        ? { expected: atPath(check.equals, path), ...(result.found ? { actual: atPath(result.value, path) } : { actualMissing: true }) }
+        : (result.found ? {} : { actualMissing: true });
+      failures.push({ code: 'OUTPUT_ASSERTION', message: `Final output check ${index + 1} (${result.op} at "${path || '(root)'}") failed${result.reason ? `: ${result.reason}` : ''}.`, check: structuredClone(check), ...values });
+    });
   }
   if (!failures.length) {
     try { session.verifyComplete(); } catch (error) { failures.push({ code: error.code, message: error.message }); }

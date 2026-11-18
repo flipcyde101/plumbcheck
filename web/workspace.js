@@ -37,7 +37,7 @@ export function startWorkspaceUI(scenarios, mountScenarioBuilder) {
       if (draft() !== before) { await refresh(); notice('The new project was saved. Your newer draft edits were preserved. Open the new project from the list when ready.'); return { message: 'New project saved. Newer edits remain in the existing draft; open the new project from the list when ready.' }; }
       project = created; $('project-name').value = project.name; $('project-task').value = project.task;
       $('editor').value = JSON.stringify(project.contract, null, 2); $('editor').dispatchEvent(new Event('input')); savedDraft = draft();
-      await refresh(); notice(`Your test is saved as revision ${project.revision}. Run offline checks to inspect the planned call, or connect a model to test its own decisions.`);
+      await refresh(); notice(state.connections.length ? `Your test is saved as revision ${project.revision}. The real model test is selected: authorize it to see what the agent actually does. The planned-call check only verifies the draft.` : `Your test is saved as revision ${project.revision}. The planned-call check verifies the draft without running an agent; connect a model to test what the agent actually does.`);
       return { message: `Saved revision ${project.revision}. Keep this project open to save builder changes as another revision. Expected values stay fixed while you correct planned arguments.` };
     } finally { saving = false; $('save-project').disabled = false; }
   } });
@@ -51,12 +51,26 @@ export function startWorkspaceUI(scenarios, mountScenarioBuilder) {
   }
   function options(items, empty) { return `<option value="">${empty}</option>` + items.map(i => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join(''); }
   const runDescription = r => r.status === 'imported' ? `Imported from ${r.source.deviceName} · source report revision ${r.source.contractRevision ?? 'unknown'} · ${r.source.reportMatchesSnapshot === false ? 'evidence is from a different revision or contract' : r.source.reportMatchesSnapshot === null ? 'contract link unknown' : 'matching revision and contract hash'} · unverified provenance · not executed here` : `${r.mode === 'model' ? `${r.provider} / ${r.model}` : 'Offline fixture replay'} · revision ${r.revision}`;
+  // Once a model is connected, the real model test is the default run. A user's own
+  // choice of mode is respected; model spending consent is never pre-ticked.
+  let runModeTouched = false;
+  function preferModelRun() {
+    const mode = $('run-mode');
+    if (!state.connections.length) {
+      if (mode.value === 'model') { mode.value = 'fixture'; $('model-run-settings').hidden = true; }
+      return;
+    }
+    if (!state.connections.some(c => c.id === $('run-connection').value)) $('run-connection').value = state.connections[0].id;
+    if (runModeTouched || mode.value === 'model') return;
+    mode.value = 'model'; $('model-run-settings').hidden = false;
+  }
   function render() {
     const connectionId = $('run-connection').value;
     $('project-list').innerHTML = state.projects.length ? state.projects.map(p => `<button type="button" class="project-card ${project?.id === p.id ? 'selected' : ''}" data-project="${esc(p.id)}"><span class="eyebrow">REVISION ${p.revision} · ${p.cases} SCENARIOS</span><strong>${esc(p.name)}</strong><span>Open project →</span></button>`).join('') : '<div class="empty">Open “Build your first test” above to create a scenario without JSON, or save the included Contract draft.</div>';
     document.querySelectorAll('[data-project]').forEach(button => button.onclick = () => loadProject(button.dataset.project).catch(e => notice(e.message, true)));
     $('run-connection').innerHTML = options(state.connections, 'Choose a saved model');
     $('run-connection').value = connectionId;
+    preferModelRun();
     $('connection-list').innerHTML = state.connections.map(c => `<div class="connection-row"><div><strong>${esc(c.name)}</strong><small>${esc(c.provider)} / ${esc(c.model)}</small></div><button type="button" data-edit-connection="${esc(c.id)}">Edit</button><button type="button" data-discover="${esc(c.id)}">Check / list models</button><button type="button" data-remove-connection="${esc(c.id)}">Remove</button></div>`).join('') || '<p class="muted">No model connections yet. Offline fixture tests work without one.</p>';
     document.querySelectorAll('[data-discover]').forEach(b => b.onclick = async () => { b.disabled = true; try { const r = await api(`connections/${b.dataset.discover}/models`, 'POST', {}); notice(`${r.note}\n${r.models.join(', ')}`); } catch (e) { notice(e.message, true); } finally { b.disabled = false; } });
     document.querySelectorAll('[data-edit-connection]').forEach(b => b.onclick = () => {
@@ -165,6 +179,8 @@ export function startWorkspaceUI(scenarios, mountScenarioBuilder) {
   };
   $('new-connection').onclick = () => { editingConnection = null; $('connection-form').reset(); $('connection-provider').onchange(); $('connection-key').placeholder = ''; $('save-connection').textContent = 'Save connection →'; $('connection-form').closest('details').open = true; $('connection-name').focus(); };
   $('run-mode').onchange = () => { $('model-run-settings').hidden = $('run-mode').value !== 'model'; };
+  // Programmatic onchange() calls carry no event; only a real change marks the user's choice.
+  $('run-mode').addEventListener('change', () => { runModeTouched = true; });
   $('run-project').onclick = async () => {
     if (!project || activeRun) return;
     const mode = $('run-mode').value;

@@ -14,11 +14,15 @@ export function toolSurface(suite, scenario) {
   const names = new Set(scenario.fixtures.map(f => f.tool));
   for (const key of ['allow', 'requireApproval', 'deny']) for (const name of suite.policies?.[key] ?? []) names.add(name);
   for (const name of scenario.expect?.never ?? []) names.add(name);
+  // Declared tools are part of what the real agent would see, even if a policy blocks them.
+  for (const name of Object.keys(suite.tools ?? {})) names.add(name);
   return [...names].map(name => {
-    // Prefer this scenario's fixtures, then any other scenario's, for the argument shape.
+    // A declared schema wins; otherwise infer from this scenario's fixtures, then any other scenario's.
+    const declared = suite.tools?.[name];
     const own = scenario.fixtures.filter(f => f.tool === name);
     const shared = own.length ? own : suite.cases.flatMap(c => c.fixtures ?? []).filter(f => f.tool === name);
-    return { name, replayed: own.length > 0, inputSchema: shared.length ? fixtureInputSchema(shared) : { type: 'object' } };
+    const inputSchema = declared?.inputSchema ? structuredClone(declared.inputSchema) : shared.length ? fixtureInputSchema(shared) : { type: 'object' };
+    return { name, replayed: own.length > 0, description: declared?.description, inputSchema };
   });
 }
 

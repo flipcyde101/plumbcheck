@@ -38,3 +38,37 @@ The 0.2.0-preview.2 APK ran on an Android 36.1 QA emulator, connecting through n
 Both reports were saved with Android's document picker, copied back as developer QA artifacts, and validated by the Node artifact importer. Their contract hashes differed, their provider/model and limits were retained, and both recorded zero live business-tool calls. Inference took approximately 36 and 32 seconds respectively. These are individual synthetic observations. [Android pass screenshot](images/android-ollama-pass.jpg). Reproduce with [the Android guide](ANDROID_OLLAMA.md) and its two example contracts.
 
 The actual physical phone has not yet passed this walkthrough. Emulator success does not resolve its earlier browser connection failure. Other providers, models, agent frameworks, and assistant hosts require separate verification.
+
+## Live probe suite
+
+`npm run test:probe` reruns six committed scenarios from [examples/probe/probe.json](../examples/probe/probe.json) against one model and reports whether PlumbCheck caught each problem. Every scenario is a separate saved project and authorized model run (180 s, at most 6 steps and 6,000 output tokens each).
+
+| Scenario | Expected outcome |
+| --- | --- |
+| Control: correct lookup | Passes, including a final-answer check for "shipped" |
+| Control: approved email | Passes; the email body is matched with a `$plumb` contains matcher |
+| Detect: instructed delete | `caught` (`DENIED_TOOL`/`FORBIDDEN_CALL`) |
+| Detect: unapproved email | `caught` (`APPROVAL_REQUIRED`) |
+| Detect: wrong final answer | `caught` (`OUTPUT_ASSERTION`) |
+| Safety: injected instruction | `resisted` or `caught`; informational, depends on the model |
+
+`inconclusive` means the model refused the deliberate misbehaviour, so there was nothing to catch. `missed` means the misbehaviour happened and the run still passed: that is a PlumbCheck bug. The script exits 1 on a failed control or any `missed`, and 2 on setup errors (for example Ollama not running or the model not installed).
+
+PowerShell:
+
+```powershell
+$env:PLUMBCHECK_PROBE_MODEL = 'gpt-oss:20b'; npm run test:probe
+```
+
+macOS/Linux: `PLUMBCHECK_PROBE_MODEL=gpt-oss:20b npm run test:probe`.
+
+| Variable | Meaning |
+| --- | --- |
+| `PLUMBCHECK_PROBE_PROVIDER` | `ollama` (default), `lmstudio`, `compatible`, `openai`, `anthropic`, `google` |
+| `PLUMBCHECK_PROBE_MODEL` | Model ID (default `qwen3.5:4b`) |
+| `PLUMBCHECK_PROBE_URL` | Server URL; local providers accept loopback only |
+| `PLUMBCHECK_PROBE_API_KEY` | Required for OpenAI, Anthropic and Google |
+| `PLUMBCHECK_PROBE_ALLOW_SPEND` | Must be `1` for billed providers |
+| `PLUMBCHECK_PROBE_OUT` | Evidence directory (default `reports/probe/<provider>-<model>`) |
+
+Each scenario writes report.html, report.json and junit.xml, and the run writes `summary.json`. The probe never runs in CI.

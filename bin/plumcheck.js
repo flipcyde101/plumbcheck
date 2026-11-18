@@ -85,6 +85,7 @@ async function main() {
         const detail = diffs.forFailure(c, failure);
         if (detail) console.log(diffs.format(detail).split('\n').map(line => `        ${line}`).join('\n'));
       }
+      if (c.skippedOutputChecks) console.log(`      NOTE: ${c.skippedOutputChecks} final-output check(s) not evaluated: this mode runs no agent. Use --agent or a model run.`);
     }
     console.log(`\n${report.summary.passed}/${report.summary.total} passed · ${report.summary.blocked} blocked calls · 0 live tool calls through replay\n`);
   }

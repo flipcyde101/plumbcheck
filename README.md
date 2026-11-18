@@ -181,7 +181,7 @@ To test **an agent's own MCP calls**, use the fixture server below.
 node bin/plumbcheck-mcp.js examples/customer-support/safe.json "Read-only order lookup"
 ```
 
-Configure that command as a stdio server in your MCP client, using absolute paths when necessary. It exposes the selected case's fixture tools with parameter shapes and consumes responses in order. Literal argument values are not exposed in discovery schemas. The session is single use; restart it to reset. JSON-RPC goes to stdout and masked audit events to stderr.
+Configure that command as a stdio server in your MCP client, using absolute paths when necessary. It exposes every tool the contract names (fixture tools, policy tools, `never` tools and declared `tools`) with parameter shapes and consumes responses in order. Literal argument values are not exposed in discovery schemas. The session is single use; restart it to reset. JSON-RPC goes to stdout and masked audit events to stderr.
 
 Add `--out reports/mcp` to write HTML, JSON, and JUnit evidence when the client closes its input stream. The server evaluates the **observed calls**, including `expect` assertions, at EOF and exits nonzero on a failed contract. Some clients ignore server exit codes; their test harness should inspect `report.passed` as well.
 

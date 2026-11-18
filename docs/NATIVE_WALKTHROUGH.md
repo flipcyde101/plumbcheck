@@ -35,6 +35,6 @@ PlumbCheck checks attempted tool calls against a test you define. You supply a t
 
 ![Observed native Qwen pass with attempted arguments and fixture response](images/windows-preview5-qwen.png)
 
-Changing a planned offline value does not force a model to make that call. Model mode uses your task and available fixture tools; it does not receive the planned call as an expected answer. Discovery confirms server access, while a scenario verifies actual tool use.
+Changing a planned offline value does not force a model to make that call. Model mode uses your task and every tool the contract names; it does not receive the planned call as an expected answer. Discovery confirms server access, while a scenario verifies actual tool use.
 
 This is a basic native first-use check, not a full platform certification. It did not test a fresh-account installation, upgrade/uninstall, physical Android, remote HTTPS sync, actual external assistant hosts or the full accessibility/security surface. Existing external agents use the separate MCP/SDK routes described in [the workspace guide](APP_WORKSPACE.md).

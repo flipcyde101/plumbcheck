@@ -42,7 +42,11 @@ export function evaluateSession(session, expect = {}, { agent = false, output } 
       const values = result.op === 'equals'
         ? { expected: atPath(check.equals, path), ...(result.found ? { actual: atPath(result.value, path) } : { actualMissing: true }) }
         : (result.found ? {} : { actualMissing: true });
-      failures.push({ code: 'OUTPUT_ASSERTION', message: `Final output check ${index + 1} (${result.op} at "${path || '(root)'}") failed${result.reason ? `: ${result.reason}` : ''}.`, check: structuredClone(check), ...values });
+      // Operands are wrapped under their path (atPath) so key-based redaction still
+      // masks a check on a field such as access_token.
+      failures.push({ code: 'OUTPUT_ASSERTION', message: `Final output check ${index + 1} (${result.op} at "${path || '(root)'}") failed${result.reason ? `: ${result.reason}` : ''}.`,
+        check: { operator: result.op, path, ...(check.ignoreCase ? { ignoreCase: true } : {}) },
+        ...(result.op === 'equals' ? {} : { operand: atPath(check[result.op], path) }), ...values });
     });
   }
   if (!failures.length) {

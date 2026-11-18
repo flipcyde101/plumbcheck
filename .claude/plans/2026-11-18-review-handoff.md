@@ -1,26 +1,28 @@
-# Ultra-review handoff (2026-11-18) — branch fix/real-agent-tool-surface @ 55b2507
+# Ultra-review result (2026-11-18) — branch fix/real-agent-tool-surface
 
-Review interrupted by usage limit during verification. Nothing below is fixed yet.
+7 finders, 18 deduped candidates. Verification: 2 by verifier agents (consent, regex), the rest reproduced with a
+script before and after each fix. 15 confirmed and fixed, 1 refuted, 2 judged not a defect.
 
-## CONFIRMED (verifier traced, or measured by 5 independent finders)
-1. [MAJOR] ReDoS: `pattern()` guard in src/contract.js is bypassable — `(a|a)*b` 27 chars 11.8 s, `((a+))+$`, `\w*\w*\w*$` 500 chars 33 s (no groups at all). Synchronous; freezes Workspace/Android. **Fix:** replace RegExp with linear-time engine — draft in `.claude/plans/safe-pattern-draft.js` (Thompson NFA, untested). Put `compilePattern` inside createContractValidator, expose as `validateSuite.compilePattern`, use it from src/matchers.js (import contract.js; it has no imports). Remove the heuristic + RegExp in matchers; update CONTRACTS.md/SECURITY.md syntax notes.
-2. [MAJOR] Consent bypass in web/workspace.js `preferModelRun`: auto-selecting `connections[0]` after removal/hashchange keeps `#model-consent` checked → run on a connection never authorized. **Fix:** whenever preferModelRun changes `#run-connection` (or on hashchange) uncheck `#model-consent`; also reset `runModeTouched` on hashchange; add a `change` listener on `#run-connection` that clears consent.
-3. [MINOR] web/workspace.js:40 notice says model test selected even if user picked fixture — use actual `#run-mode` value.
-4. [MINOR] Connection-save vs polling refresh race picks connections[0] (consent is cleared there, so no bypass).
+## Fixed
+| # | Finding | Fix |
+| --- | --- | --- |
+| 1 | Regex guard bypassable; `(a|a)*b`, `((a+))+$`, `\w*\w*\w*$` froze runs for seconds to minutes | Linear-time Thompson-NFA pattern engine inside `createContractValidator` (`validateSuite.compilePattern`), used by `src/matchers.js`; RegExp never sees contract patterns (`test/safe-pattern.test.js`) |
+| 2 | Model-spend consent carried over to an auto-selected connection (removal, new launch link) | `preferModelRun` clears consent when it changes the connection; connection `change` clears consent; hashchange resets consent and mode choice; save prefers the just-saved connection (`workspace-ui` test) |
+| 3 | Builder notice claimed model test was selected while fixture was | Notice reads the actual `#run-mode` |
+| 4 | Save vs polling race picked `connections[0]` | `preferredConnectionId` |
+| 5 | MCP case with only final-answer checks passed with nothing evaluated | `CHECKS_NOT_EVALUATED` failure |
+| 6 | OUTPUT_ASSERTION `check` leaked an unmasked expected secret | `check` holds operator/path only; operands nested under their path (`operand`) so redaction masks them |
+| 7 | contains/notContains searched JSON-escaped text and key names | Search text/number/boolean leaf values only |
+| 8 | Recorded `$plumb` data became wildcard matchers on replay | Recorder snapshot wraps such objects in `{ $plumb: 'literal' }` |
+| 9 | Date/Map/class instances equalled plain fixture objects | Realm-safe plain-object check |
+| 10 | `diffExpected` read inherited props → REPLAY_ERROR | Own-property check |
+| 11 | literal/oneOf data bypassed depth limit → stack overflow | Depth ≤ 32 at validation |
+| 12 | Declared/inferred schemas were never validated (AI SDK `jsonSchema` without `validate`) | zod `fromJSONSchema` validation for replayed tools; guarded tools left unvalidated so attempts are recorded; original value passed through (no key stripping) |
+| 13 | Desktop MCP setup rejected agent-mode contracts | Mode detection in `desktop/runtime/config.mjs` |
+| 14 | Docs said MCP/model runs expose only fixture tools | README, APP_WORKSPACE, NATIVE_WALKTHROUGH, WINDOWS_APP corrected |
+| 15 | Probe: invalid guarded calls not counted as attempts; `name:latest`; results lost on abort; run errors hidden | Fixed in `scripts/probe-model.mjs` |
 
-## UNVERIFIED (finder-reported, verification cut off) — verify before fixing
-- Guarded tool called with schema-invalid args never reaches ReplaySession → AGENT_ERROR instead of DENIED_TOOL; probe says inconclusive/resisted. Fix idea: offer guarded (no-fixture) tools with permissive `{type:'object'}` schema; probe treats invalid call names as attempts.
-- jsonSchema() without `validate` → declared schemas may not be enforced; CONTRACTS.md claim may be wrong.
-- MCP/agent-mode case with only outputChecks/output and no fixtures passes with nothing evaluated → should fail or require another assertion when skipped.
-- OUTPUT_ASSERTION `check` field leaks unmasked secrets (redact masks by key only) — drop `check.equals` or mask via atPath.
-- contains/notContains on non-string output use JSON.stringify (escaped quotes, key names) → search only string leaf values.
-- createRecorder: recorded agent args containing `$plumb` become matchers → wrap in `{ $plumb: 'literal', value }` on snapshot.
-- matchValue treats Date/Map/class instances as plain objects (regression vs isDeepStrictEqual) → require plain prototype.
-- diffExpected reads inherited props (`constructor`) → structuredClone throws REPLAY_ERROR; use own-property check.
-- literal/oneOf values bypass depth limit → stack overflow in shape(); bound depth in validator.
-- desktop/runtime/config.mjs validates planned-only → app can't make MCP setup for agent contracts.
-- Docs still say "fixture tools only": README ~184, docs/APP_WORKSPACE.md 27/30/45, docs/NATIVE_WALKTHROUGH.md 38.
-- Probe: ollama `name:latest` mismatch; results lost on exception; run.error not printed.
-
-## After fixes
-Rerun npm test, test:mcp, test:types, mobile:build, test:probe (qwen3.5:4b, gpt-oss:20b); then wrap-up skill.
+## Refuted / not a defect
+- Schema-invalid guarded call hidden from evidence: refuted (call reaches replay and is blocked; kept that way deliberately in fix 12).
+- Probe localhost regex: `connectionConfig` only accepts exact loopback hosts for http, so not reachable.
+- Older contracts with literal `$plumb` data now rejected: `$plumb` is a new reserved key; such data must use `{ "$plumb": "literal", "value": ... }`. Documented.

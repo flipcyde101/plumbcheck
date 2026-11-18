@@ -65,6 +65,9 @@ export function serveMcp(suite, caseName, { input = process.stdin, output = proc
       const failures = evaluateSession(session, scenario.expect);
       for (const failure of failures) audit.write(`${failure.code}: ${failure.message}\n`);
       const skipped = skippedOutputChecks(scenario.expect);
+      // A case whose only assertions need the final answer checked nothing over MCP: fail closed.
+      const otherChecks = scenario.fixtures.length > 0 || Object.hasOwn(scenario.expect ?? {}, 'callOrder') || scenario.expect?.never?.length > 0 || scenario.expect?.results?.length > 0;
+      if (skipped && !otherChecks) failures.push({ code: 'CHECKS_NOT_EVALUATED', message: 'This case only checks the final answer, which MCP does not carry. Run it with --agent or a model run.' });
       if (skipped) audit.write(`OUTPUT_CHECKS_SKIPPED: ${skipped} final-output check(s) need the agent's final answer, which MCP does not carry. Use --agent or a model run.\n`);
       const report = createReport(suite, [{ name: scenario.name, description: scenario.description ?? '', passed: failures.length === 0, events: session.events, failures, ...(skipped ? { skippedOutputChecks: skipped } : {}) }], start, 'mcp-replay');
       resolve({ complete: session.cursor === session.fixtures.length, session, report });

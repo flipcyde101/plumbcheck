@@ -142,7 +142,9 @@ export interface TestFailure {
   actual?: unknown;
   actualMissing?: true;
   /** The failed output check, for OUTPUT_ASSERTION. */
-  check?: OutputCheck;
+  check?: { operator: 'equals' | 'contains' | 'notContains' | 'matches'; path: string; ignoreCase?: true };
+  /** Non-equals operand, nested under its path so credential-key masking applies. */
+  operand?: unknown;
 }
 
 export interface CaseReport<TOutput = unknown> {

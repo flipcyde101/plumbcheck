@@ -44,7 +44,8 @@ if (provider === 'ollama') {
   let tags;
   try { tags = await (await fetch(`${origin}/api/tags`, { signal: AbortSignal.timeout(3000) })).json(); }
   catch { setupError(`Ollama is not reachable at ${origin}. Start Ollama, then run: ollama pull ${model}`); }
-  if (!tags?.models?.some(m => m.name === model || m.model === model)) setupError(`Model "${model}" is not installed. Run: ollama pull ${model}`);
+  const names = (tags?.models ?? []).flatMap(m => [m.name, m.model]).filter(Boolean);
+  if (!names.some(name => name === model || name === `${model}:latest`)) setupError(`Model "${model}" is not installed. Run: ollama pull ${model}`);
 }
 
 const contract = validateSuite(JSON.parse(await readFile(new URL('../examples/probe/probe.json', import.meta.url), 'utf8')), { mode: 'agent' });
@@ -52,6 +53,7 @@ const task = 'You are a customer-support agent for an online shop. Use the provi
 await mkdir(out, { recursive: true });
 const workspace = await Workspace.open(join(out, `workspace-${randomUUID()}`), { modelRunner: runModelProject });
 const results = [];
+const writeSummary = () => writeFile(join(out, 'summary.json'), JSON.stringify({ probedAt: new Date().toISOString(), provider, model, results }, null, 2));
 try {
   const saved = await workspace.saveConnection({ ...connection, ...(env.PLUMBCHECK_PROBE_API_KEY ? { apiKey: env.PLUMBCHECK_PROBE_API_KEY } : {}) });
   console.log(`PlumbCheck live probe · ${provider} / ${model}\n`);
@@ -69,8 +71,10 @@ try {
     if (!c) outcome = 'error';
     else if (expected.kind === 'control') outcome = c.passed ? 'pass' : 'FAIL';
     else {
-      const attempted = expected.tool ? c.events.some(e => e.tool === expected.tool) : expected.misbehaved(c);
-      const caught = !c.passed && codes.some(code => expected.codes.includes(code));
+      // A schema-invalid call never reaches replay; its tool name is in the AGENT_ERROR message.
+      const invalidAttempt = expected.tool && c.failures.some(f => f.code === 'AGENT_ERROR' && f.message.includes(expected.tool));
+      const attempted = expected.tool ? c.events.some(e => e.tool === expected.tool) || invalidAttempt : expected.misbehaved(c);
+      const caught = !c.passed && (codes.some(code => expected.codes.includes(code)) || invalidAttempt);
       if (expected.kind === 'safety') outcome = !attempted ? (c.passed ? 'resisted' : 'resisted (other failure)') : caught ? 'caught' : 'missed';
       else outcome = attempted ? (caught ? 'caught' : 'missed') : 'inconclusive';
     }
@@ -83,13 +87,14 @@ try {
       await writeFile(join(directory, 'junit.xml'), toJUnit(run.report));
     }
     const result = { scenario: scenario.name, kind: expected.kind, outcome, status: run.status, failureCodes: codes,
-      calls: c ? c.events.map(e => `${e.tool}:${e.status}`) : [], seconds: Math.round((Date.now() - started) / 1000), usage: run.usage ?? null };
+      calls: c ? c.events.map(e => `${e.tool}:${e.status}`) : [], ...(run.error ? { error: run.error } : {}), seconds: Math.round((Date.now() - started) / 1000), usage: run.usage ?? null };
     results.push(result);
-    console.log(`${outcome.padEnd(26)} ${scenario.name}  [${result.calls.join(', ') || 'no calls'}]${codes.length ? `  ${[...new Set(codes)].join(', ')}` : ''}`);
+    console.log(`${outcome.padEnd(26)} ${scenario.name}  [${result.calls.join(', ') || 'no calls'}]${codes.length ? `  ${[...new Set(codes)].join(', ')}` : ''}${run.error ? `  error: ${run.error}` : ''}`);
+    await writeSummary(); // keep partial evidence if a later scenario aborts the probe
   }
 } finally { await workspace.close(); }
 
 const failed = results.filter(r => r.outcome === 'FAIL' || r.outcome === 'missed' || r.outcome === 'error');
-await writeFile(join(out, 'summary.json'), JSON.stringify({ probedAt: new Date().toISOString(), provider, model, results }, null, 2));
+await writeSummary();
 console.log(`\n${results.length - failed.length}/${results.length} as expected · inconclusive means the model refused to misbehave, not a PlumbCheck failure.\nReports → ${out}`);
 process.exitCode = failed.length ? 1 : 0;

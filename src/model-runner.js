@@ -1,8 +1,21 @@
 import { ToolLoopAgent, tool, jsonSchema, isStepCount } from 'ai';
 import { runAgentSuite } from './agent-runner.js';
 import { toolSurface, providerToolNames } from './tool-surface.js';
+import { fromJSONSchema } from 'zod';
 class ModelBudgetError extends Error {}
 class ModelCallError extends Error {}
+
+/** The AI SDK does not validate a plain JSON Schema by itself. Tools this case
+ * replays are validated, so a schema-breaking call fails as an invalid tool call.
+ * Tools without a fixture (denied, approval-gated, `never`) stay unvalidated on
+ * purpose: any attempt must reach the replay session and be recorded as blocked. */
+function schemaFor(inputSchema, replayed) {
+  if (!replayed) return jsonSchema(inputSchema);
+  let validator;
+  try { validator = fromJSONSchema(inputSchema); } catch { return jsonSchema(inputSchema); }
+  return jsonSchema(inputSchema, { validate: value => { const result = validator.safeParse(value); return result.success ? { success: true, value } : { success: false, error: result.error }; } });
+  // `value`, not `result.data`: zod may strip unknown keys, which would hide extra arguments from replay.
+}
 
 /** Model decisions execute only the supplied replay client. No live tools. */
 export async function runModelProject({ project, connection, apiKey, limits, signal, model, onUsage, fetch: transport }) {
@@ -25,9 +38,9 @@ export async function runModelProject({ project, connection, apiKey, limits, sig
     const executed = new Set();
     const invalidCalls = [];
     let invalidToolCall = false, providerExceededBudget = false, toolBudgetExceeded = false;
-    const tools = Object.fromEntries(surface.map(({ name, description, inputSchema }, i) => [providerNames[i], tool({
+    const tools = Object.fromEntries(surface.map(({ name, description, inputSchema, replayed }, i) => [providerNames[i], tool({
       description: description ?? `Tool "${name}".`,
-      inputSchema: jsonSchema(inputSchema),
+      inputSchema: schemaFor(inputSchema, replayed),
       execute: async (arguments_, { toolCallId }) => {
         signal?.throwIfAborted();
         executed.add(toolCallId);

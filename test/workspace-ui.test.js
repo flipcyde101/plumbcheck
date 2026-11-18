@@ -342,3 +342,20 @@ test('with a saved connection the builder defaults to a real model run, never pr
   assert.equal(field('[data-guard-kind]').value, 'none', 'switching templates clears the guard');
   assert.equal(field('[data-guard-tool]').value, '');
 });
+
+test('model-spending consent never carries over to a connection the user did not choose', async t => {
+  const f = await fixture(t);
+  const a = await f.server.workspace.saveConnection({ name: 'Local A', provider: 'ollama', model: 'model-a', baseURL: 'http://127.0.0.1:11434/v1' });
+  const b = await f.server.workspace.saveConnection({ name: 'Local B', provider: 'lmstudio', model: 'model-b', baseURL: 'http://127.0.0.1:1234/v1' });
+  f.$('refresh-workspace').click();
+  await until(() => f.$('run-connection').querySelectorAll('option').length >= 3);
+  f.$('run-connection').value = b.id; f.$('run-connection').dispatchEvent(new f.dom.window.Event('change'));
+  f.$('model-consent').checked = true;
+  await f.server.workspace.remove('connections', b.id);
+  f.$('refresh-workspace').click();
+  await until(() => f.$('run-connection').value === a.id);
+  assert.equal(f.$('model-consent').checked, false, 'auto-selected connection must not inherit consent');
+  f.$('model-consent').checked = true;
+  f.$('run-connection').value = ''; f.$('run-connection').dispatchEvent(new f.dom.window.Event('change'));
+  assert.equal(f.$('model-consent').checked, false, 'changing the connection clears consent');
+});

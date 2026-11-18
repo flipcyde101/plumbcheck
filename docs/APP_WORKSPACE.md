@@ -24,10 +24,10 @@ Saving a project captures its contract and instructions together. Running uses t
 | Route | Actual behavior | Verification boundary |
 | --- | --- | --- |
 | Offline JSON | Checks planned tool calls against fixtures and policies | Core, desktop helper, and browser/native workspace checks |
-| Built-in model agent | Uses the selected model and project instructions to choose fixture tools | Actual Qwen 3.5:4B via Ollama; SDK-backed simulated-model tests |
+| Built-in model agent | Uses the selected model and project instructions to choose among every tool the contract names (blocked ones included) | Actual Qwen 3.5:4B via Ollama; SDK-backed simulated-model tests |
 | JavaScript SDK/CLI | Runs an explicitly supplied trusted agent callback | Actual callback and swallowed-error regression tests |
 | Python adapter | Synchronous/async Python code calls a fixture MCP subprocess | Standard-library integration check; tool-call evidence only |
-| External MCP agent | Agent connects to a selected case's fixture tools | Official MCP SDK interoperability; individual hosts need their own walkthrough |
+| External MCP agent | Agent connects to a selected case's contract tools | Official MCP SDK interoperability; individual hosts need their own walkthrough |
 | Assistant control | Assistant starts saved offline jobs and inspects their results | Official SDK plus real stdio bridge; no model spending or arbitrary code |
 
 Named provider adapters use pinned AI SDK packages for OpenAI, Anthropic, and Google. Ollama, LM Studio, and custom compatible endpoints use the provider's chat-compatible path. Constructing an adapter and passing simulated-model checks does not prove a live cloud account/model or every local model supports tool calls.
@@ -42,7 +42,7 @@ The app supports four active jobs, 100 projects, 20 connections, and 500 visible
 
 Run deadlines are 1–300 seconds, model steps 1–30 per case, tool calls at most 100 per case, and requested output 64–16,000 tokens per generation. A run-wide output budget defaults to 10,000 tokens. Generation limits are reduced to its remaining budget. If usage is missing, the requested generation allowance is counted conservatively; incomplete provider counts are labeled. Unknown/invalid model tool calls and exceeded limits prevent a passing report even if the SDK would otherwise recover. A provider can violate a requested token cap; the app detects that after the response and stops subsequent work. These limits are not a guaranteed currency ceiling, and input tokens also have a cost on paid providers.
 
-Cancellation aborts the model request and preserves a cancelled job. It does not reverse work already performed by a provider. Only simulated fixture tools are attached to this built-in model loop. Imported arbitrary JavaScript/Python programs are not executed through the app UI and are not sandboxed by the SDK.
+Cancellation aborts the model request and preserves a cancelled job. It does not reverse work already performed by a provider. Only simulated contract tools are attached to this built-in model loop; denied and approval-gated tools are offered but every call to them is blocked. Imported arbitrary JavaScript/Python programs are not executed through the app UI and are not sandboxed by the SDK.
 
 ## Local storage and credentials
 

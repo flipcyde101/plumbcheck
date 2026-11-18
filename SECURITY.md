@@ -20,7 +20,7 @@ The Windows application loads its bundled UI through a loopback server with an i
 
 Do not run untrusted JavaScript agents without an independent sandbox. JSON suite files cannot execute code through PlumbCheck, but they can consume local resources. Import only reasonably sized, trusted test data.
 
-Contracts may contain regular expressions (`matches` argument matchers and output checks). They run synchronously, so a run timeout cannot interrupt one. Patterns are limited to 200 characters, backreferences and repeated groups that already contain a repetition (such as `(a+)+`) are rejected at validation, and a pattern is never applied to text longer than 20,000 characters. These rules reduce, but do not mathematically rule out, slow backtracking. Treat contracts from untrusted sources, including sync snapshots, with the same care as other imported data.
+Contracts may contain patterns (`matches` argument matchers and output checks). They never reach JavaScript's backtracking `RegExp`: PlumbCheck compiles them with its own linear-time engine (at most 200 characters, repetition counts up to 100, bounded program size), so matching time grows linearly with the text and cannot hang a run. Text longer than 20,000 characters is not pattern-checked. Backreferences and lookarounds are rejected.
 
 Declared tool descriptions and schemas (`tools`) are shown to the model and MCP clients as written. Do not put secrets or expected answers in them.
 

@@ -1,20 +1,43 @@
-/** Argument matchers and final-output checks. Self-contained (no imports) so the
- * Node runner and the Android bundle share one implementation. Contracts are
- * validated by contract.js before any of this runs. */
+import { createContractValidator } from './contract.js';
+
+/** Argument matchers and final-output checks, shared by the Node runner and the
+ * Android bundle. Contracts are validated by contract.js before any of this runs.
+ * Patterns use contract.js's linear-time engine, never backtracking RegExp. */
 export function createMatchers() {
+  const { compilePattern } = createContractValidator();
+  const compiled = new Map();
   const MAX_PATTERN_INPUT = 20000;
-  const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+  // Only JSON-like objects count: a Date, Map or class instance never equals a plain fixture object.
+  // Realm-safe: a plain object's prototype is null or a root Object.prototype (from any realm).
+  const plain = value => {
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+    const proto = Object.getPrototypeOf(value);
+    return proto === null || Object.getPrototypeOf(proto) === null;
+  };
   const isMatcher = value => plain(value) && Object.hasOwn(value, '$plumb');
 
   /** Strict JSON equality; matcher-shaped data is compared as plain data. */
   function equalJson(a, b) {
     if (Object.is(a, b)) return true;
-    if (!a || !b || typeof a !== 'object' || typeof b !== 'object' || Array.isArray(a) !== Array.isArray(b)) return false;
+    if (Array.isArray(a) || Array.isArray(b)) return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((item, i) => equalJson(item, b[i]));
+    if (!plain(a) || !plain(b)) return false;
     const ak = Object.keys(a), bk = Object.keys(b);
     return ak.length === bk.length && ak.every(k => Object.hasOwn(b, k) && equalJson(a[k], b[k]));
   }
 
-  const regexp = (pattern, ignoreCase = false) => new RegExp(pattern, ignoreCase ? 'i' : '');
+  /** Text and scalar values inside an answer; object keys are not searched. */
+  function leaves(value, found = [], depth = 0) {
+    if (typeof value === 'string') found.push(value);
+    else if (typeof value === 'number' || typeof value === 'boolean') found.push(String(value));
+    else if (value !== null && typeof value === 'object' && depth < 64) for (const item of Object.values(value)) leaves(item, found, depth + 1);
+    return found;
+  }
+
+  const regexp = (pattern, ignoreCase = false) => {
+    const key = `${ignoreCase ? 'i' : '-'}${pattern}`;
+    if (!compiled.has(key)) { if (compiled.size > 500) compiled.clear(); compiled.set(key, compilePattern(pattern, ignoreCase)); }
+    return compiled.get(key);
+  };
   const fold = (text, ignoreCase) => ignoreCase ? text.toLowerCase() : text;
 
   function satisfies(matcher, actual) {
@@ -46,7 +69,7 @@ export function createMatchers() {
   function diffExpected(expected, actual) {
     if (isMatcher(expected)) return satisfies(expected, actual) ? structuredClone(actual) : structuredClone(expected);
     if (Array.isArray(expected)) return expected.map((item, i) => diffExpected(item, Array.isArray(actual) ? actual[i] : undefined));
-    if (plain(expected)) return Object.fromEntries(Object.entries(expected).map(([k, v]) => [k, diffExpected(v, plain(actual) ? actual[k] : undefined)]));
+    if (plain(expected)) return Object.fromEntries(Object.entries(expected).map(([k, v]) => [k, diffExpected(v, plain(actual) && Object.hasOwn(actual, k) ? actual[k] : undefined)]));
     return expected;
   }
 
@@ -73,9 +96,10 @@ export function createMatchers() {
       if (value.length > MAX_PATTERN_INPUT) return { op, passed: false, found, value, reason: `text longer than ${MAX_PATTERN_INPUT} characters is not checked with a pattern` };
       return { op, passed: regexp(check.matches, check.ignoreCase).test(value), found, value };
     }
-    const text = fold(typeof value === 'string' ? value : JSON.stringify(value), check.ignoreCase);
+    // Search the answer's own text values (not JSON-escaped text, not key names).
     const needle = fold(check[op], check.ignoreCase);
-    return { op, passed: op === 'contains' ? text.includes(needle) : !text.includes(needle), found, value };
+    const hit = leaves(value).some(text => fold(text, check.ignoreCase).includes(needle));
+    return { op, passed: op === 'contains' ? hit : !hit, found, value };
   }
 
   return { isMatcher, matchValue, diffExpected, checkOutput, regexp, operator };

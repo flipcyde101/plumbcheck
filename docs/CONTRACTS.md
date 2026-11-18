@@ -53,7 +53,7 @@ The optional suite field `tools` gives each tool the description and input schem
 | `description` | Text of at most 2,000 characters shown to models and MCP clients |
 | `inputSchema` | JSON Schema whose root has `"type": "object"`; at most 20 KB and 32 levels |
 
-Agent, model and MCP runs offer every tool the contract names: fixture tools, every `policies` entry, `expect.never` and `tools`. Declaring a tool does not allow it; policies still decide. A declared schema replaces the shape inferred from fixtures and is enforced by the model provider or SDK, so a call that breaks it fails the run as an invalid tool call. Without a declaration a tool gets a neutral description and an inferred shape that never contains literal fixture values.
+Agent, model and MCP runs offer every tool the contract names: fixture tools, every `policies` entry, `expect.never` and `tools`. Declaring a tool does not allow it; policies still decide. A declared schema replaces the shape inferred from fixtures. For tools the case replays, PlumbCheck validates the model's arguments against the schema, so a schema-breaking call fails the run as an invalid tool call (`AGENT_ERROR`). Tools without a fixture in the case (denied, approval-gated or `never` tools) are not schema-checked on purpose: any attempt must reach replay and be recorded as blocked. Without a declaration a tool gets a neutral description and an inferred shape that never contains literal fixture values.
 
 ## Argument matchers
 
@@ -61,16 +61,16 @@ Fixture `arguments` may replace a value with a `$plumb` matcher when an LLM legi
 
 | Matcher | Accepts |
 | --- | --- |
-| `{ "$plumb": "any" }` | Any value; the key must still be present |
+| `{ "$plumb": "any" }` | Any value of any type; the key must still be present. Use `contains` or `matches` to require text |
 | `{ "$plumb": "contains", "value": "shipped", "ignoreCase": true }` | Text containing `value` |
 | `{ "$plumb": "matches", "pattern": "^ORD-\\d+$", "ignoreCase": false }` | Text matching a regular expression |
 | `{ "$plumb": "oneOf", "values": ["A", "B"] }` | Exactly one of the listed JSON values |
 | `{ "$plumb": "range", "min": 1, "max": 5 }` | A finite number within the bounds (either bound optional) |
 | `{ "$plumb": "literal", "value": { "$plumb": "any" } }` | Exactly `value`, used to match data that itself contains a `$plumb` key |
 
-Matchers are allowed only below the root of fixture `arguments`. They are rejected in planned `calls` and are inert inside `result`. Values are never coerced: `contains` and `matches` need text, and `range` needs a number. The rest of the arguments still compare exactly, so a changed recipient still fails. Reports keep the fixture as written in `expectedArguments`; the field diff shows only values that really differ. Discovery schemas describe a matcher's type only, never its pattern or value.
+`$plumb` is a reserved key in arguments: any object that has it is read as a matcher. To compare real data that contains a `$plumb` key, wrap it as `{ "$plumb": "literal", "value": ... }`; `createRecorder` snapshots do this automatically, so a recording can never turn into a wildcard. Matchers are allowed only below the root of fixture `arguments`. They are rejected in planned `calls` and are inert inside `result`. Values are never coerced: `contains` and `matches` need text, and `range` needs a number. The rest of the arguments still compare exactly, so a changed recipient still fails. Reports keep the fixture as written in `expectedArguments`; the field diff shows only values that really differ. Discovery schemas describe a matcher's type only, never its pattern or value.
 
-Patterns are limited to 200 characters. Backreferences and repeated groups that already contain a repetition, such as `(a+)+`, are rejected, and a pattern is never applied to text longer than 20,000 characters (that check fails instead). See [SECURITY.md](../SECURITY.md).
+Patterns are limited to 200 characters and run on PlumbCheck's own linear-time engine, never JavaScript's backtracking `RegExp`, so no pattern can hang a run. Supported syntax: literals and escapes (`\.`, `\n`, `\x41`, `\u0042`), `.`, character classes such as `[a-z]` and `[^@]`, `\d \w \s` and their negations, `\b \B`, the anchors `^` and `$`, groups `(...)` and `(?:...)`, `|`, and `* + ? {n} {n,} {n,m}` with counts up to 100. Backreferences, lookarounds, named groups and flags other than `ignoreCase` are rejected at validation. A pattern is never applied to text longer than 20,000 characters (that check fails instead). See [SECURITY.md](../SECURITY.md).
 
 ## Final output checks
 
@@ -79,8 +79,8 @@ Patterns are limited to 200 characters. Backreferences and repeated groups that 
 | Field | Meaning |
 | --- | --- |
 | `equals` | Deep JSON equality with the value at `path` |
-| `contains` / `notContains` | Text containment; non-text values are checked against their JSON text |
-| `matches` | Regular expression on text, with the pattern limits above |
+| `contains` / `notContains` | Text containment. For a JSON answer, every text, number and boolean value inside it is searched; key names are not |
+| `matches` | Pattern on text, using the linear-time pattern syntax above |
 | `path` | Optional dotted path into a JSON answer; empty or absent selects the whole answer |
 | `ignoreCase` | Optional case-insensitive comparison |
 
@@ -105,6 +105,7 @@ Output checks need a final answer, so only agent replay (`--agent`, `runAgentSui
 | `RESULT_MISMATCH` | Result at the expected path differs or does not exist |
 | `OUTPUT_MISMATCH` | The agent's output differs from `expect.output` |
 | `OUTPUT_ASSERTION` | A final output check failed |
+| `CHECKS_NOT_EVALUATED` | An MCP case only had final-answer checks, which MCP cannot evaluate |
 | `AGENT_ERROR` | The agent or model run threw, or the model made an unknown or schema-invalid tool call |
 
 SDK `ContractError` objects expose `code`. `runSuite()` returns a report with `passed`, `summary`, cases, events, and failures; invalid configuration throws instead. Output masking happens at delivery boundaries, so callers of the SDK must redact their own persisted output.

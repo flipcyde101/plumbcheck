@@ -56,8 +56,8 @@ test('planned contracts may use fixture matchers but not matcher calls', async (
 for (const [label, args] of [
   ['unknown matcher kind', { a: { $plumb: 'fuzzy' } }],
   ['matcher with extra key', { a: { $plumb: 'any', value: 1 } }],
-  ['nested quantifier pattern', { a: { $plumb: 'matches', pattern: '(a+)+$' } }],
-  ['alternation group repeated with inner quantifier', { a: { $plumb: 'matches', pattern: '(\\w+|x)*' } }],
+  ['lookahead pattern', { a: { $plumb: 'matches', pattern: '(?=a)a' } }],
+  ['named group pattern', { a: { $plumb: 'matches', pattern: '(?<id>a)' } }],
   ['backreference pattern', { a: { $plumb: 'matches', pattern: '(a)\\1' } }],
   ['invalid regular expression', { a: { $plumb: 'matches', pattern: '[' } }],
   ['overlong pattern', { a: { $plumb: 'matches', pattern: 'a'.repeat(201) } }],
@@ -106,7 +106,7 @@ test('planned runs report output checks as skipped instead of passing them silen
 
 for (const [label, check] of [
   ['no operator', {}], ['two operators', { contains: 'a', equals: 'a' }], ['unknown key', { contains: 'a', regex: 'x' }],
-  ['empty contains', { contains: '' }], ['unsafe pattern', { matches: '(.*a)*' }], ['non-boolean ignoreCase', { contains: 'a', ignoreCase: 'yes' }],
+  ['empty contains', { contains: '' }], ['unsupported pattern', { matches: '(?!a)b' }], ['non-boolean ignoreCase', { contains: 'a', ignoreCase: 'yes' }],
 ]) test(`invalid output check is rejected: ${label}`, async () => {
   await assert.rejects(runAgentSuite(agentSuite({ to: 'x' }, { outputChecks: [check] }), async () => {}), /Invalid suite:/);
 });

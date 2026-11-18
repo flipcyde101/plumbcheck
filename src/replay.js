@@ -104,8 +104,19 @@ export function createRecorder(client) {
       const selected = fixtures.slice();
       await Promise.allSettled(selected.map(entry => operations.get(entry)));
       if (selected.some(entry => !Object.hasOwn(entry, 'result'))) throw new ContractError('RECORDING_INCOMPLETE', 'A recording entry has no completed response.');
-      try { return copyJson(selected); }
+      let copied;
+      try { copied = copyJson(selected); }
       catch { throw new ContractError('RECORDING_NOT_JSON', 'Recording contains values that cannot be saved as JSON. Use JSON tool arguments and results.'); }
+      // Recorded arguments are data. Wrap any object that happens to carry `$plumb`
+      // so replaying the recording can never turn it into a wildcard matcher.
+      const escape = value => {
+        if (Array.isArray(value)) return value.map(escape);
+        if (value === null || typeof value !== 'object') return value;
+        if (Object.hasOwn(value, '$plumb')) return { $plumb: 'literal', value };
+        return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, escape(item)]));
+      };
+      // The root stays an object (matchers are never allowed at the root; validation rejects one).
+      return copied.map(entry => ({ ...entry, arguments: Object.fromEntries(Object.entries(entry.arguments ?? {}).map(([key, item]) => [key, escape(item)])) }));
     },
   };
 }

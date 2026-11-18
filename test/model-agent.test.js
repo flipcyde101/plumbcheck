@@ -7,7 +7,7 @@ const usage = { inputTokens: { total: 10 }, outputTokens: { total: 5 } };
 const response = (content, unified = 'stop') => ({ content, finishReason: { unified }, usage, warnings: [] });
 const contract = { version: 1, name: 'Model scenario', policies: { allow: ['orders.lookup'] }, cases: [{ name: 'Read order', input: { id: 'ORD-1' }, fixtures: [{ tool: 'orders.lookup', arguments: { id: 'ORD-1' }, result: { status: 'shipped' } }], expect: { callOrder: ['orders.lookup'], output: { status: 'shipped' } } }] };
 const limits = { maxSteps: 3, maxOutputTokens: 100 };
-function model(argument = 'ORD-1') { return new MockLanguageModelV4({ doGenerate: [response([{ type: 'tool-call', toolCallId: 'call-1', toolName: 'tool_0', input: JSON.stringify({ id: argument }) }], 'tool-calls'), response([{ type: 'text', text: '{"status":"shipped"}' }])] }); }
+function model(argument = 'ORD-1') { return new MockLanguageModelV4({ doGenerate: [response([{ type: 'tool-call', toolCallId: 'call-1', toolName: 'orders_lookup', input: JSON.stringify({ id: argument }) }], 'tool-calls'), response([{ type: 'text', text: '{"status":"shipped"}' }])] }); }
 
 test('real AI SDK loop runs model-selected tools and checks the final JSON output', async () => {
   const m = model(); const report = await runModelProject({ project: { contract, task: 'Read the order and return JSON.' }, model: m, limits });
@@ -58,7 +58,7 @@ test('an unknown model tool call cannot be healed into a passing output-only tes
 });
 
 test('schema-invalid calls fail even after all valid fixtures were consumed', async () => {
-  const m = new MockLanguageModelV4({ doGenerate: [response([{ type: 'tool-call', toolCallId: 'good', toolName: 'tool_0', input: '{"id":"ORD-1"}' }], 'tool-calls'), response([{ type: 'tool-call', toolCallId: 'invalid', toolName: 'tool_0', input: '{"id":123}' }], 'tool-calls'), response([{ type: 'text', text: '{"status":"shipped"}' }])] });
+  const m = new MockLanguageModelV4({ doGenerate: [response([{ type: 'tool-call', toolCallId: 'good', toolName: 'orders_lookup', input: '{"id":"ORD-1"}' }], 'tool-calls'), response([{ type: 'tool-call', toolCallId: 'invalid', toolName: 'orders_lookup', input: '{"id":123}' }], 'tool-calls'), response([{ type: 'text', text: '{"status":"shipped"}' }])] });
   const report = await runModelProject({ project: { contract, task: 'Read the order.' }, model: m, limits });
   assert.equal(report.passed, false); assert.ok(report.cases[0].failures.some(f => /unknown or schema-invalid/.test(f.message) || ['ARGUMENT_MISMATCH', 'FIXTURE_MISSING'].includes(f.code)));
 });
@@ -74,7 +74,7 @@ test('tool-call budget failures cannot be swallowed by the SDK after valid fixtu
   const suite = structuredClone(contract);
   suite.cases[0].fixtures = Array.from({ length: 100 }, () => structuredClone(contract.cases[0].fixtures[0]));
   suite.cases[0].expect = { output: 'done' };
-  const m = new MockLanguageModelV4({ doGenerate: [response(Array.from({ length: 101 }, (_, i) => ({ type: 'tool-call', toolCallId: `call-${i}`, toolName: 'tool_0', input: '{"id":"ORD-1"}' })), 'tool-calls'), response([{ type: 'text', text: 'done' }])] });
+  const m = new MockLanguageModelV4({ doGenerate: [response(Array.from({ length: 101 }, (_, i) => ({ type: 'tool-call', toolCallId: `call-${i}`, toolName: 'orders_lookup', input: '{"id":"ORD-1"}' })), 'tool-calls'), response([{ type: 'text', text: 'done' }])] });
   const report = await runModelProject({ project: { contract: suite, task: 'Read.' }, model: m, limits });
   assert.equal(report.passed, false); assert.equal(report.cases[0].events.length, 100);
   assert.ok(report.cases[0].failures.some(f => /tool-call budget/.test(f.message)));

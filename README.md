@@ -52,7 +52,7 @@ The complete developer test suite also uses Python 3 for the optional Python ada
 
 First run **`npm ci`** to install the locked development/integration dependencies, then run the commands above. Open the **private local launch link printed by Studio**. Source Studio stores projects in `~/.plumbcheck`; keys are session-only there. Windows uses its own app-data directory and OS-encrypted credential storage, and attaches its private connection token automatically.
 
-In **Workspace**, open **Start here / Build your first test**. Review the order-lookup template, enter a project name and task, and choose **Save this test**. Run **Offline fixture checks**, then inspect its result in History. To demonstrate a failure, set the builder's planned order ID to `WRONG-ORDER`, save and run; restore it to `ORD-1042`, save and rerun. The same case and expected values remain. Android provides the same builder above its project controls.
+In **Workspace**, open **Start here / Build your first test**. Review the order-lookup template, enter a project name and task, and choose **Save this test**. Run **Planned-call check**, then inspect its result in History. To demonstrate a failure, set the builder's planned order ID to `WRONG-ORDER`, save and run; restore it to `ORD-1042`, save and rerun. The same case and expected values remain. Android provides the same builder above its project controls.
 
 For an actual model test on Windows, choose **Find Ollama on this PC**, select an installed model, and save the connection. Review the saved test and separately authorize the model run. Discovery confirms access; a real scenario checks tool use. The app does not install models or change network/security settings. Direct model testing uses a built-in tool agent with your instructions; testing an existing framework agent requires the SDK/MCP integration described below. [Connections, limits, and supported modes](docs/APP_WORKSPACE.md).
 
@@ -93,15 +93,27 @@ Your module exports `async function (client, { input, name })` as its default ex
 
 ## What it catches today
 
+PlumbCheck has three ways to run a contract. Only the last two execute something you did not write by hand:
+
+| Mode | What runs | What a failure means |
+| --- | --- | --- |
+| **Planned-call check** (`plumbcheck run suite.json`, builder default) | Nothing. The `calls` you wrote are compared with the `fixtures` you wrote. | Your contract is internally inconsistent. Useful for authoring and demos, **not evidence about an agent**. |
+| **Agent replay** (`--agent`, SDK `ReplaySession`, MCP fixture server) | Your real agent code / MCP client against replayed tool responses. | Your agent made a call the contract does not allow. |
+| **Real model test** (Workspace model run, Android, `npm run test:local-model`) | A real LLM with your instructions chooses tools. | The model made a call the contract does not allow. |
+
+In agent and model modes the agent is offered **every tool the contract names**: fixture tools plus `policies.allow`, `deny`, `requireApproval` and `expect.never`. A real attempt to use a dangerous tool is therefore observed and blocked instead of being impossible.
+
 | Regression | Check |
 | --- | --- |
-| Agent sends email without approval | `requireApproval` plus trusted test context |
-| Agent chooses a different recipient | Exact nested argument comparison |
-| Agent deletes an order | Deny policy and `never` assertion |
-| Integration changes an expected status | Result-path equality assertion |
-| Agent calls an unknown tool | Explicit allowlist; absent means denied |
+| Agent sends email without approval | `requireApproval` plus trusted test context → `APPROVAL_REQUIRED` |
+| Agent chooses a different recipient | Exact nested argument comparison → `ARGUMENT_MISMATCH` |
+| Agent deletes an order | Deny policy and `never` assertion → `DENIED_TOOL`, `FORBIDDEN_CALL` |
+| Agent calls an unknown tool | Explicit allowlist; absent means denied → `UNLISTED_TOOL` |
 | Agent adds, skips, or reorders a call | Ordered fixture consumption and completeness check |
-| Tool returns a recorded error | MCP-shaped `isError: true` becomes a failed check |
+| Tool returns a recorded error | MCP-shaped `isError: true` becomes a failed check, even if the agent catches it |
+| JS agent returns the wrong value | `expect.output` exact equality (agent replay) |
+
+Known limits: arguments are compared exactly, so free-text arguments written by an LLM (an email body) rarely match. A model's free-text final answer is only checked with exact `expect.output`, which suits JSON answers, not prose. `expect.results` assertions read the replayed fixture, so in replay they confirm your fixture data rather than a live integration; they cannot detect a changed external API.
 
 ## A contract you can commit
 

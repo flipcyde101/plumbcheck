@@ -39,3 +39,9 @@ test('MCP rejects malformed and repeated initialization without resetting the se
   assert.equal(r.status,0,r.stderr);assert.equal(r.responses[0].error.code,-32602);assert.equal(r.responses[2].error.code,-32600);
   assert.equal(r.responses[3].result.structuredContent.status,'shipped');
 });
+test('MCP discovery lists denied tools so an agent attempt is observable', () => {
+  const r=execute([initialize(1),rpc(2,'tools/list')]);
+  const names=r.responses[1].result.tools.map(t=>t.name);
+  assert.ok(names.includes('orders.delete'),names.join());
+  assert.ok(!JSON.stringify(r.responses[1].result).includes('ORD-1042'));
+});

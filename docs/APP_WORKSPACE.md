@@ -9,7 +9,7 @@ The Windows app is an installed Electron application with its runtime included. 
 For a recorded hands-on example with screenshots, see [the native Windows walkthrough](NATIVE_WALKTHROUGH.md).
 
 1. Open Workspace → **Start here / Build your first test**. Review the order or ticket template, name the project and describe the task. Enter tool arguments and simulated response fields using text, number or boolean values. Dots create nested fields. Save with **Save this test**.
-2. Run **Offline fixture checks**. Open the completed run in History and inspect its intercepted calls and field differences. The planned call is authored by you; this mode does not invoke a model.
+2. Run **Planned-call check**. Open the completed run in History and inspect its intercepted calls and field differences. The planned call is authored by you; this mode does not invoke a model.
 3. In the builder, change a planned argument to `WRONG-ORDER` while leaving the expected value unchanged. Save and run to see `ARGUMENT_MISMATCH`. Restore the correct planned value, save and rerun. While that builder project stays open, these saves update the same project revision; comparison shows failure → pass for the same case.
 4. Choose **Find Ollama on this PC**, select an installed model and save its connection. This only checks the server and lists models; it does not download models or prove tool support. Separately authorize sending your saved scenario to the selected model, then run it. The model chooses calls; PlumbCheck supplies simulated tool responses and evaluates what happened. You can also configure a provider API through the connection form.
 

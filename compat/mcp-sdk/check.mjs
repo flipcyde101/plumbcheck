@@ -44,7 +44,7 @@ test('official SDK connects, discovers parameter shapes, calls a tool, and close
 
 test('official SDK executes an approved two-tool scenario from discovered tools', { timeout: 15000 }, async t => {
   const { client, finish } = await connected(t, { name: 'Approved customer update' });
-  const { tools } = await client.listTools(); assert.equal(tools.length, 2);
+  const { tools } = await client.listTools(); assert.deepEqual(tools.map(t => t.name).sort(), ['email.send', 'orders.delete', 'orders.lookup']);
   const order = await client.callTool({ name: 'orders.lookup', arguments: { orderId: 'ORD-1042' } });
   const sent = await client.callTool({ name: 'email.send', arguments: { to: order.structuredContent.customerEmail, subject: 'Your order update', body: 'Your order has shipped.' } });
   assert.equal(sent.structuredContent.accepted, true);

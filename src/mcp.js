@@ -3,7 +3,8 @@ import { ReplaySession } from './replay.js';
 import { validateSuite, object } from './validation.js';
 import { redact } from './redact.js';
 import { evaluateSession, createReport } from './evaluate.js';
-import { fixtureInputSchema, mcpResult } from './mcp-schema.js';
+import { mcpResult } from './mcp-schema.js';
+import { toolSurface } from './tool-surface.js';
 
 /** Minimal fixture-only MCP stdio adapter, pinned to the 2025-11-25 protocol. */
 export function serveMcp(suite, caseName, { input = process.stdin, output = process.stdout, audit = process.stderr } = {}) {
@@ -13,9 +14,10 @@ export function serveMcp(suite, caseName, { input = process.stdin, output = proc
   const session = new ReplaySession({ fixtures: scenario.fixtures, policies: suite.policies, context: scenario.context });
   const start = performance.now();
   let initialized = false;
-  const definitions = [...new Set(scenario.fixtures.map(f => f.tool))].map(name => ({
-    name, description: 'PlumbCheck fixture-only tool. No live service is connected.',
-    inputSchema: fixtureInputSchema(scenario.fixtures.filter(f => f.tool === name)),
+  // List every contract-named tool (denied, approval-gated and `never` tools too):
+  // an agent cannot attempt a tool it never discovers, which made those checks vacuous.
+  const definitions = toolSurface(suite, scenario).map(({ name, inputSchema }) => ({
+    name, description: 'PlumbCheck fixture-only tool. No live service is connected.', inputSchema,
   }));
   const send = (message) => output.write(JSON.stringify(message) + '\n');
   const error = (id, code, message) => send({ jsonrpc: '2.0', id, error: { code, message } });

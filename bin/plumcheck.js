@@ -77,7 +77,7 @@ async function main() {
   if (options.json) console.log(JSON.stringify(redact(report), null, 2));
   else {
     const diffs = createDiffTools(redact);
-    console.log(`\nPlumbCheck · ${report.name}\nMode: ${report.mode === 'agent-replay' ? 'agent replay (trusted local code; not sandboxed)' : 'fixture replay'}\n`);
+    console.log(`\nPlumbCheck · ${report.name}\nMode: ${report.mode === 'agent-replay' ? 'agent replay (trusted local code; not sandboxed)' : 'planned calls (no agent executed: compares the calls written in the contract with its fixtures)'}\n`);
     for (const c of report.cases) {
       console.log(`${c.passed ? 'PASS' : 'FAIL'}  ${c.name}`);
       for (const failure of c.failures) {

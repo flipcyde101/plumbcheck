@@ -31,7 +31,7 @@ test('mobile provider executes real SDK tool decisions and catches wrong argumen
     const transport = async (url, init) => {
       assert.equal(String(url), `${server}/v1/chat/completions`); requests.push(JSON.parse(init.body));
       const first = steps++ === 0;
-      return Response.json({ id: 'test', object: 'chat.completion', created: 1, model: 'qwen3.5:4b', choices: [{ index: 0, finish_reason: first ? 'tool_calls' : 'stop', message: first ? { role: 'assistant', content: null, tool_calls: [{ id: 'call-1', type: 'function', function: { name: 'tool_0', arguments: JSON.stringify({ id: wrong ? 'WRONG' : 'ORD-1' }) } }] } : { role: 'assistant', content: 'shipped' } }], usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 } });
+      return Response.json({ id: 'test', object: 'chat.completion', created: 1, model: 'qwen3.5:4b', choices: [{ index: 0, finish_reason: first ? 'tool_calls' : 'stop', message: first ? { role: 'assistant', content: null, tool_calls: [{ id: 'call-1', type: 'function', function: { name: 'orders_lookup', arguments: JSON.stringify({ id: wrong ? 'WRONG' : 'ORD-1' }) } }] } : { role: 'assistant', content: 'shipped' } }], usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 } });
     };
     const report = await runOllama({ contract, task: 'Look up the order.', model: 'qwen3.5:4b', server, transport, limits: { maxSteps: 3, maxOutputTokens: 100, maxTotalOutputTokens: 1000 } });
     assert.equal(report.passed, !wrong);

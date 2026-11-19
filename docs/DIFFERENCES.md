@@ -31,6 +31,6 @@ Credential keys are masked **before** generating comparison rows, including valu
 
 Each comparison displays at most **20 differences**, visits at most **20,000 values**, and descends at most **64 levels**. A notice appears when a comparison reaches a limit. Value previews are shortened after **240 characters** and marked with an ellipsis. Inspect the complete evidence when you need more detail.
 
-Differences explain an existing failure. Exact replay matching and assertion evaluation remain the source of pass/fail decisions. Truncation, masking, or JSON conversion can hide a visible difference without changing the original result.
+Differences explain an existing failure. Replay matching (exact, or explicit matchers) and assertion evaluation remain the source of pass/fail decisions. For matcher fixtures the diff hides values a matcher accepted, while the evidence keeps the fixture as written in `expectedArguments`. Truncation, masking, or JSON conversion can hide a visible difference without changing the original result.
 
 ![Wrong-recipient field comparison in the browser workbench](images/workbench-diff.jpg)

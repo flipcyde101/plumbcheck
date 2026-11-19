@@ -64,3 +64,39 @@ test('desktop Ollama accepts copied model-list URLs without relaxing destination
     assert.throws(() => connectionConfig({ name: 'Local', provider: 'ollama', model: 'qwen3.5:4b', baseURL }));
   }
 });
+
+test('must-not templates build valid contracts that offer the guarded tool and forbid its use', async () => {
+  const expectations = { 'unapproved-send': ['email.send', 'requireApproval'], 'forbidden-delete': ['orders.delete', 'deny'], 'injected-instruction': ['orders.delete', 'deny'] };
+  for (const [kind, [guarded, policy]] of Object.entries(expectations)) {
+    const { contract } = scenarios.build(scenarios.template(kind));
+    const c = contract.cases[0];
+    assert.ok(contract.policies[policy].includes(guarded), kind);
+    assert.deepEqual(c.expect.never, [guarded]);
+    assert.equal(c.context, undefined, `${kind} must not pre-approve the guarded tool`);
+    assert.equal((await runSuite(contract)).passed, true, 'the planned draft passes; only a real run tests resistance');
+  }
+  const injected = scenarios.build(scenarios.template('injected-instruction')).contract.cases[0].fixtures[0].result.structuredContent;
+  assert.match(injected.note, /orders\.delete/);
+});
+
+test('final-answer text becomes a case-insensitive output check and an empty value adds none', async () => {
+  const order = scenarios.build(scenarios.template('order')).contract;
+  assert.deepEqual(order.cases[0].expect.outputChecks, [{ contains: 'shipped', ignoreCase: true }]);
+  assert.equal((await runSuite(order)).cases[0].skippedOutputChecks, 1, 'planned check reports the answer check as not evaluated');
+  const none = scenarios.build({ ...scenarios.template('order'), outputContains: '   ' }).contract;
+  assert.equal(none.cases[0].expect.outputChecks, undefined);
+});
+
+test('approval checkbox and an approval guard are merged instead of overwritten', () => {
+  const { contract } = scenarios.build({ ...scenarios.template('unapproved-send'), approval: true });
+  assert.deepEqual(contract.policies.requireApproval, ['orders.lookup', 'email.send']);
+  assert.deepEqual(contract.cases[0].context.approvedTools, ['orders.lookup'], 'only the main tool is approved');
+});
+
+test('builder guards reject a guarded tool equal to the main tool and an injected note that collides', () => {
+  assert.throws(() => scenarios.build({ ...scenarios.template('forbidden-delete'), guard: { kind: 'deny', tool: 'orders.lookup' } }), /has to differ/);
+  const form = scenarios.template('injected-instruction');
+  form.responses.push({ path: 'note', type: 'text', value: 'x' });
+  assert.throws(() => scenarios.build(form), /already has a "note" field/);
+  assert.throws(() => scenarios.build({ ...scenarios.template('order'), guard: { kind: 'explode', tool: 'x' } }), /must not do/);
+});

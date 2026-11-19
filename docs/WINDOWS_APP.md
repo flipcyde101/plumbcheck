@@ -31,7 +31,7 @@ The app includes a dedicated console runtime for the fixture MCP server. Generat
 
 Use the generated configuration rather than pointing an MCP client at the GUI executable or Setup installer. The console helper receives stdin/stdout pipes and has no app window. JSON-RPC is the only stdout content; audit events go to stderr. Reports finalize at clean stdin EOF. Exit codes are 0 for pass, 1 for a failed contract, and 2 for invalid setup/report-writing errors. See [MCP behavior and boundaries](MCP.md).
 
-This exposes fixture tools to the agent being tested. The separate control service lets a compatible assistant start/manage saved offline tests; choose **Create assistant configuration** in Workspace. See [assistant integration](ASSISTANT_INTEGRATION.md) and its host-verification limits.
+This exposes the contract's simulated tools to the agent being tested. The separate control service lets a compatible assistant start/manage saved offline tests; choose **Create assistant configuration** in Workspace. See [assistant integration](ASSISTANT_INTEGRATION.md) and its host-verification limits.
 
 ## Build from source
 
@@ -55,4 +55,4 @@ Run `npm ci` at the repository root first. Build tools are isolated in `desktop/
 
 The app serves its bundled UI on a random loopback-only port. Renderer Node integration is disabled, context isolation and sandboxing are enabled, IPC checks the originating window/frame, and native save operations use a file dialog. Browser permission requests and unrelated network destinations are denied. Navigation is restricted; known documentation links open in the system browser. Packaged Electron fuses disable its Node environment/inspector launch routes and require the application archive with integrity validation. The separate console helper runs the fixed MCP server script in the user's security context; it is not an isolated worker.
 
-These measures do not sandbox an arbitrary agent program or constitute a security audit. The app does not load agent JavaScript modules through its editor. The built-in model agent only receives fixture tools. Android offline testing, direct Ollama testing, and explicit snapshot sync have preview implementations; phone-to-worker execution, automatic framework adapters, remote assistant hosting, and subscription sign-in remain roadmap work.
+These measures do not sandbox an arbitrary agent program or constitute a security audit. The app does not load agent JavaScript modules through its editor. The built-in model agent only receives simulated contract tools. Android offline testing, direct Ollama testing, and explicit snapshot sync have preview implementations; phone-to-worker execution, automatic framework adapters, remote assistant hosting, and subscription sign-in remain roadmap work.

@@ -20,4 +20,8 @@ The Windows application loads its bundled UI through a loopback server with an i
 
 Do not run untrusted JavaScript agents without an independent sandbox. JSON suite files cannot execute code through PlumbCheck, but they can consume local resources. Import only reasonably sized, trusted test data.
 
+Contracts may contain patterns (`matches` argument matchers and output checks). They never reach JavaScript's backtracking `RegExp`: PlumbCheck compiles them with its own linear-time engine (at most 200 characters, repetition counts up to 100, bounded program size), so matching time grows linearly with the text and cannot hang a run. Text longer than 20,000 characters is not pattern-checked. Backreferences and lookarounds are rejected.
+
+Declared tool descriptions and schemas (`tools`) are shown to the model and MCP clients as written. Do not put secrets or expected answers in them.
+
 Only the current alpha is maintained. No external security audit has been performed.

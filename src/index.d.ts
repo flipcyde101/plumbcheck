@@ -16,8 +16,27 @@ export interface ToolCall {
   arguments: ToolArguments;
 }
 
+/** Explicit flexible match for one fixture argument value. Not allowed in planned `calls`. */
+export type ArgumentMatcher =
+  | { $plumb: 'any' }
+  | { $plumb: 'contains'; value: string; ignoreCase?: boolean }
+  | { $plumb: 'matches'; pattern: string; ignoreCase?: boolean }
+  | { $plumb: 'oneOf'; values: readonly unknown[] }
+  | { $plumb: 'range'; min?: number; max?: number }
+  | { $plumb: 'literal'; value: unknown };
+
+/** Fixture arguments: literal JSON, with `ArgumentMatcher` objects allowed below the root. */
+export type FixtureArguments = Record<string, unknown>;
+
 export interface Fixture<TResult = unknown> extends ToolCall {
+  arguments: FixtureArguments;
   result: TResult;
+}
+
+/** Real description and input schema shown to models and MCP clients. */
+export interface ToolDeclaration {
+  description?: string;
+  inputSchema?: { type: 'object'; properties?: Record<string, unknown>; required?: readonly string[]; [key: string]: unknown };
 }
 
 export interface Policies {
@@ -39,10 +58,20 @@ export interface ResultAssertion {
   equals: unknown;
 }
 
+/** One check on the agent's final output. Exactly one operator is required. */
+export type OutputCheck = { path?: string; ignoreCase?: boolean } & (
+  | { equals: unknown; contains?: never; notContains?: never; matches?: never }
+  | { contains: string; equals?: never; notContains?: never; matches?: never }
+  | { notContains: string; equals?: never; contains?: never; matches?: never }
+  | { matches: string; equals?: never; contains?: never; notContains?: never }
+);
+
 export interface Expectations {
   callOrder?: readonly string[];
   never?: readonly string[];
   results?: readonly ResultAssertion[];
+  /** Evaluated only when an agent or model produced output; other modes report them as skipped. */
+  outputChecks?: readonly OutputCheck[];
 }
 
 interface CaseBase<TResult> {
@@ -68,6 +97,7 @@ interface SuiteBase {
   name: string;
   description?: string;
   policies: Policies;
+  tools?: Record<string, ToolDeclaration>;
 }
 
 export interface PlannedSuite<TResult = unknown> extends SuiteBase {
@@ -96,7 +126,9 @@ export interface ToolEvent<TResult = unknown> {
   arguments: unknown;
   status: 'replayed' | 'blocked' | 'failed';
   result?: TResult;
-  expectedArguments?: ToolArguments;
+  expectedArguments?: FixtureArguments;
+  /** Expected arguments with satisfied matchers replaced by actual values, for diffs. */
+  diffExpected?: unknown;
   code?: string;
   message?: string;
   durationMs: number;
@@ -109,6 +141,10 @@ export interface TestFailure {
   expected?: unknown;
   actual?: unknown;
   actualMissing?: true;
+  /** The failed output check, for OUTPUT_ASSERTION. */
+  check?: { operator: 'equals' | 'contains' | 'notContains' | 'matches'; path: string; ignoreCase?: true };
+  /** Non-equals operand, nested under its path so credential-key masking applies. */
+  operand?: unknown;
 }
 
 export interface CaseReport<TOutput = unknown> {
@@ -118,6 +154,8 @@ export interface CaseReport<TOutput = unknown> {
   events: ToolEvent[];
   failures: TestFailure[];
   output?: TOutput;
+  /** Output checks this mode could not evaluate (no agent output). */
+  skippedOutputChecks?: number;
 }
 
 export interface TestReport<TOutput = unknown> {

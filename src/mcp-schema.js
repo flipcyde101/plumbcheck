@@ -5,12 +5,25 @@ function alternatives(schemas) {
   return unique.length === 1 ? unique[0] : { anyOf: unique };
 }
 
-/** Infer shapes, never literal argument values (which may contain credentials). */
-function shape(value) {
+/** Matchers describe a type, never their pattern or expected value. */
+function matcherShape(matcher) {
+  switch (matcher.$plumb) {
+    case 'contains': case 'matches': return { type: 'string' };
+    case 'range': return { type: 'number' };
+    case 'oneOf': return alternatives(matcher.values.map(value => shape(value, true)));
+    case 'literal': return shape(matcher.value, true);
+    default: return {};
+  }
+}
+
+/** Infer shapes, never literal argument values (which may contain credentials).
+ * `raw` treats matcher-like objects as plain data (inside literal / oneOf values). */
+function shape(value, raw = false) {
   if (value === null) return { type: 'null' };
-  if (Array.isArray(value)) return { type: 'array', ...(value.length ? { items: alternatives(value.map(shape)) } : {}) };
+  if (Array.isArray(value)) return { type: 'array', ...(value.length ? { items: alternatives(value.map(item => shape(item, raw))) } : {}) };
+  if (object(value) && !raw && Object.hasOwn(value, '$plumb')) return matcherShape(value);
   if (object(value)) return {
-    type: 'object', properties: Object.fromEntries(Object.entries(value).map(([key, child]) => [key, shape(child)])),
+    type: 'object', properties: Object.fromEntries(Object.entries(value).map(([key, child]) => [key, shape(child, raw)])),
     required: Object.keys(value), additionalProperties: false,
   };
   return { type: typeof value };

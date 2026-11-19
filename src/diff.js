@@ -38,10 +38,11 @@ export function createDiffTools(mask) {
   function forFailure(c, failure) {
     const event = Number.isInteger(failure.call) ? c.events[failure.call] : null;
     if (failure.code === 'ARGUMENT_MISMATCH' && event && own(event, 'expectedArguments')) {
-      return { label: 'Tool arguments', ...compare(event.expectedArguments, event.arguments) };
+      // diffExpected shows satisfied matchers as the actual value, so only real differences remain.
+      return { label: 'Tool arguments', ...compare(own(event, 'diffExpected') ? event.diffExpected : event.expectedArguments, event.arguments) };
     }
     if (!own(failure, 'expected') || (!own(failure, 'actual') && !failure.actualMissing)) return null;
-    const label = { EXPECTED_ORDER: 'Tool order', RESULT_MISMATCH: 'Result assertion', OUTPUT_MISMATCH: 'Agent output' }[failure.code] || 'Expected and actual';
+    const label = { EXPECTED_ORDER: 'Tool order', RESULT_MISMATCH: 'Result assertion', OUTPUT_MISMATCH: 'Agent output', OUTPUT_ASSERTION: 'Final output check' }[failure.code] || 'Expected and actual';
     return { label, ...compare(failure.expected, failure.actual, { actualMissing: failure.actualMissing === true }) };
   }
 

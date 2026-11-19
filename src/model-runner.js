@@ -1,8 +1,21 @@
 import { ToolLoopAgent, tool, jsonSchema, isStepCount } from 'ai';
 import { runAgentSuite } from './agent-runner.js';
-import { fixtureInputSchema } from './mcp-schema.js';
+import { toolSurface, providerToolNames } from './tool-surface.js';
+import { fromJSONSchema } from 'zod';
 class ModelBudgetError extends Error {}
 class ModelCallError extends Error {}
+
+/** The AI SDK does not validate a plain JSON Schema by itself. Tools this case
+ * replays are validated, so a schema-breaking call fails as an invalid tool call.
+ * Tools without a fixture (denied, approval-gated, `never`) stay unvalidated on
+ * purpose: any attempt must reach the replay session and be recorded as blocked. */
+function schemaFor(inputSchema, replayed) {
+  if (!replayed) return jsonSchema(inputSchema);
+  let validator;
+  try { validator = fromJSONSchema(inputSchema); } catch { return jsonSchema(inputSchema); }
+  return jsonSchema(inputSchema, { validate: value => { const result = validator.safeParse(value); return result.success ? { success: true, value } : { success: false, error: result.error }; } });
+  // `value`, not `result.data`: zod may strip unknown keys, which would hide extra arguments from replay.
+}
 
 /** Model decisions execute only the supplied replay client. No live tools. */
 export async function runModelProject({ project, connection, apiKey, limits, signal, model, onUsage, fetch: transport }) {
@@ -17,13 +30,17 @@ export async function runModelProject({ project, connection, apiKey, limits, sig
   return runAgentSuite(suite, async (client, context) => {
     signal?.throwIfAborted();
     const c = suite.cases.find(c => c.name === context.name);
-    const names = [...new Set(c.fixtures.map(f => f.tool))];
+    // Offer every tool the contract names (including denied, approval-gated and
+    // `never` tools) so a real attempt is observed and fails for the right reason.
+    const surface = toolSurface(suite, c);
+    const providerNames = providerToolNames(surface.map(t => t.name));
     let calls = 0;
     const executed = new Set();
+    const invalidCalls = [];
     let invalidToolCall = false, providerExceededBudget = false, toolBudgetExceeded = false;
-    const tools = Object.fromEntries(names.map((name, i) => [`tool_${i}`, tool({
-      description: `Test tool: ${name}. Uses simulated responses.`,
-      inputSchema: jsonSchema(fixtureInputSchema(c.fixtures.filter(f => f.tool === name))),
+    const tools = Object.fromEntries(surface.map(({ name, description, inputSchema, replayed }, i) => [providerNames[i], tool({
+      description: description ?? `Tool "${name}".`,
+      inputSchema: schemaFor(inputSchema, replayed),
       execute: async (arguments_, { toolCallId }) => {
         signal?.throwIfAborted();
         executed.add(toolCallId);
@@ -37,7 +54,7 @@ export async function runModelProject({ project, connection, apiKey, limits, sig
       stopWhen: isStepCount(limits.maxSteps),
       prepareStep: () => {
         if (toolBudgetExceeded) throw new ModelBudgetError('Per-case tool-call budget exceeded.');
-        if (invalidToolCall) throw new ModelCallError('The model attempted an unknown or schema-invalid tool call. The run cannot pass.');
+        if (invalidToolCall) throw new ModelCallError(`The model attempted an unknown or schema-invalid tool call (${[...new Set(invalidCalls)].join(', ')}). The run cannot pass.`);
         if (providerExceededBudget) throw new ModelBudgetError('The provider exceeded the requested output-token budget. The run stopped.');
         if (accountedOutput >= totalBudget) throw new ModelBudgetError('Run output-token budget exhausted. Start a new authorized run with a reviewed limit.');
         reservedStep = Math.min(limits.maxOutputTokens, totalBudget - accountedOutput);
@@ -55,17 +72,23 @@ export async function runModelProject({ project, connection, apiKey, limits, sig
         accountedOutput += output ?? reservedStep;
         // SDK lifecycle callbacks are observers: their exceptions are ignored.
         // Enforce these flags in prepareStep and after generate resolves instead.
-        invalidToolCall ||= step.toolCalls.some(call => call.invalid || !Object.hasOwn(tools, call.toolName) || !executed.has(call.toolCallId));
+        for (const call of step.toolCalls) {
+          if (call.invalid || !Object.hasOwn(tools, call.toolName) || !executed.has(call.toolCallId)) {
+            invalidToolCall = true;
+            const index = providerNames.indexOf(call.toolName);
+            invalidCalls.push(index >= 0 ? surface[index].name : String(call.toolName).slice(0, 80));
+          }
+        }
         providerExceededBudget ||= accountedOutput > totalBudget;
         onUsage?.({ ...usage });
       },
-      instructions: project.task + '\nUse only the provided test tools. Never invent tool results. If the task asks for JSON, return only JSON.',
+      instructions: project.task + '\nUse only the provided tools. Never invent tool results. If the task asks for JSON, return only JSON.',
     });
     let result;
     try {
       result = await agent.generate({ prompt: JSON.stringify({ scenario: c.name, description: c.description || '', input: context.input ?? null }), abortSignal: signal });
       if (toolBudgetExceeded) throw new ModelBudgetError('Per-case tool-call budget exceeded.');
-      if (invalidToolCall) throw new ModelCallError('The model attempted an unknown or schema-invalid tool call. The run cannot pass.');
+      if (invalidToolCall) throw new ModelCallError(`The model attempted an unknown or schema-invalid tool call (${[...new Set(invalidCalls)].join(', ')}). The run cannot pass.`);
       if (providerExceededBudget) throw new ModelBudgetError('The provider exceeded the requested output-token budget. The run stopped.');
     }
     catch (error) { if (error instanceof ModelBudgetError || error instanceof ModelCallError) throw error; throw new Error('Model execution failed. Verify model tool support, credentials, server availability, and run limits. Provider response bodies are excluded from reports.'); }

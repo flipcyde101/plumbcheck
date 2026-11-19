@@ -1,7 +1,7 @@
 import {
   ReplaySession, ContractError, createRecorder, runSuite, runAgentSuite,
   validateSuite, redact, toHtml, toJUnit,
-  type AgentSuite, type PlannedSuite, type ToolRequest, type Fixture,
+  type AgentSuite, type PlannedSuite, type ToolRequest, type Fixture, type OutputCheck, type ArgumentMatcher,
 } from 'plumbcheck';
 
 const planned = {
@@ -71,3 +71,13 @@ redact(plan).passed;
 const incompleteFixtures: readonly Fixture[] = recorder.fixtures;
 // @ts-expect-error Attempted argument evidence may be malformed and needs narrowing.
 plan.cases[0]!.events[0]!.arguments.orderId;
+
+const bodyMatcher: ArgumentMatcher = { $plumb: 'contains', value: 'shipped', ignoreCase: true };
+const checks: OutputCheck[] = [{ contains: 'shipped', ignoreCase: true }, { path: 'status', equals: 'ready' }, { matches: '^ok' }];
+const declared: AgentSuite<Input> = {
+  version: 1, name: 'Declared tools', tools: { read: { description: 'Read one order.', inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] } } },
+  policies: { allow: ['read'] }, cases: [{ name: 'Read', input: { orderId: 'ORD-1' },
+    fixtures: [{ tool: 'read', arguments: { id: { $plumb: 'matches', pattern: '^ORD-' }, note: bodyMatcher }, result: {} }], expect: { outputChecks: checks } }],
+};
+const declaredReport = await runAgentSuite(declared, async () => 'ok');
+const skipped: number | undefined = declaredReport.cases[0]?.skippedOutputChecks;

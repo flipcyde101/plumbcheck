@@ -70,6 +70,10 @@ An explicitly typed input must be present in each case. `AgentSuite<undefined>` 
 
 `validateSuite(unknown)` validates the built-in contract structure, not your custom input or response schema. `redact()` returns `unknown` because masking a credential key can change a value's type. Agent outputs still need to be finite JSON data at runtime.
 
+## Matchers, output checks and tool declarations
+
+`ArgumentMatcher`, `OutputCheck` and `ToolDeclaration` describe the optional contract fields. `Fixture.arguments` accepts matcher objects below its root; planned `calls` keep plain `ToolArguments`. `Expectations.outputChecks` is available on both case kinds, and `CaseReport.skippedOutputChecks` reports checks a mode could not evaluate. `TestFailure.code` stays `string` so new failure codes such as `OUTPUT_ASSERTION` do not break existing code. Types document the shapes; `validateSuite` enforces them at runtime.
+
 ## Snapshot recordings before saving or replaying them
 
 ```ts

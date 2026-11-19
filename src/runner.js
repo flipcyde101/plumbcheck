@@ -1,6 +1,6 @@
 import { ReplaySession } from './replay.js';
 import { validateSuite } from './validation.js';
-import { evaluateSession, createReport } from './evaluate.js';
+import { evaluateSession, createReport, skippedOutputChecks } from './evaluate.js';
 
 export async function runSuite(input) {
   const suite = validateSuite(input);
@@ -13,7 +13,8 @@ export async function runSuite(input) {
       catch { /* Shared evaluation reads the host-owned event evidence. */ }
     }
     const failures = evaluateSession(session, c.expect);
-    cases.push({ name: c.name, description: c.description ?? '', passed: failures.length === 0, events: session.events, failures });
+    const skipped = skippedOutputChecks(c.expect);
+    cases.push({ name: c.name, description: c.description ?? '', passed: failures.length === 0, events: session.events, failures, ...(skipped ? { skippedOutputChecks: skipped } : {}) });
   }
   return createReport(suite, cases, start);
 }

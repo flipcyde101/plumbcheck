@@ -19,7 +19,7 @@ PlumbCheck checks attempted tool calls against a test you define. You supply a t
 2. Choose **Order lookup** and select **Load template** if changing templates. The selector alone does not replace the form fields.
 3. Give the project a name. Keep tool `orders.lookup`, field `orderId`, expected value `ORD-1042`, and simulated response `status = shipped`.
 4. Set **Planned offline value** to `WRONG-ORDER`. Choose **Save this test**.
-5. Under **Run a saved test**, choose **Offline fixture checks**, then **Run saved project**.
+5. Under **Run a saved test**, choose **Planned-call check**, then **Run saved project**. (If a model connection is already saved, the Workspace preselects **Real model test**; switch back for this offline step.)
 6. In **History**, choose the new run's **Inspect** button. Expect `ARGUMENT_MISMATCH` and the changed `/orderId` value. A missing-result assertion can also fail because the mismatched call produced no valid fixture response.
 7. Return to Workspace. In the builder, change only the planned value to `ORD-1042`, save and run again. Keep the builder project open so this updates it rather than creating another project. Expect 1/1 passed; both runs remain in History.
 
@@ -35,6 +35,6 @@ PlumbCheck checks attempted tool calls against a test you define. You supply a t
 
 ![Observed native Qwen pass with attempted arguments and fixture response](images/windows-preview5-qwen.png)
 
-Changing a planned offline value does not force a model to make that call. Model mode uses your task and available fixture tools; it does not receive the planned call as an expected answer. Discovery confirms server access, while a scenario verifies actual tool use.
+Changing a planned offline value does not force a model to make that call. Model mode uses your task and every tool the contract names; it does not receive the planned call as an expected answer. Discovery confirms server access, while a scenario verifies actual tool use.
 
 This is a basic native first-use check, not a full platform certification. It did not test a fresh-account installation, upgrade/uninstall, physical Android, remote HTTPS sync, actual external assistant hosts or the full accessibility/security surface. Existing external agents use the separate MCP/SDK routes described in [the workspace guide](APP_WORKSPACE.md).

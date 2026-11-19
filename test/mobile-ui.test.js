@@ -59,3 +59,17 @@ test('mobile builder preserves unsaved instructions and existing draft on cancel
   assert.deepEqual([f.$('name').value, f.$('contract').value, f.$('model-task').value], before);
   assert.equal(f.project(), null);
 });
+
+test('mobile builder saves a must-not template and the offline check reports the skipped answer check', async t => {
+  const f = await phone(t, { 'plumbcheck-ollama': JSON.stringify({ server: 'http://127.0.0.1:11434', model: 'qwen3.5:4b' }) });
+  f.replies.push(true);
+  f.field('[data-template-kind]').value = 'injected-instruction'; f.field('[data-template]').click();
+  assert.equal(f.field('[data-guard-kind]').value, 'injection');
+  f.submit();
+  await until(() => /Project saved/.test(f.field('[data-message]').textContent));
+  const contract = f.project().contract;
+  assert.deepEqual(contract.cases[0].expect.never, ['orders.delete']);
+  assert.match(f.$('message').textContent, /Recommended: authorize the Ollama run/);
+  f.$('run').click(); await until(() => /1\/1 passed/.test(f.$('message').textContent));
+  assert.equal(f.evidence().report.cases[0].skippedOutputChecks, 1);
+});

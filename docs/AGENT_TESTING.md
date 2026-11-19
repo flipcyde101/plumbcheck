@@ -3,7 +3,7 @@
 PlumbCheck has two ways to exercise a contract:
 
 - **Planned-call mode:** JSON declares the calls to check. Useful for reviewing a captured or synthetic execution. No user JavaScript is imported.
-- **Agent-code mode:** PlumbCheck calls your actual exported function with a fixture-only client. Your function chooses its tool calls from the input and returned responses. Tool policies, exact arguments, call order, results, fixture completeness, and final output are checked.
+- **Agent-code mode:** PlumbCheck calls your actual exported function with a fixture-only client. Your function chooses its tool calls from the input and returned responses. Tool policies, arguments (exact, or explicit `$plumb` matchers), call order, results, fixture completeness, and final output are checked.
 
 ## Try a real regression
 
@@ -37,7 +37,7 @@ The CLI imports the module's **default export** from a local path relative to yo
 
 The client is a frozen facade exposing only `callTool`. Fixtures, policies, approval context, and captured events stay in the host. Each case receives a cloned `input`, its case `name`, and a new fixture cursor. Calls are matched in invocation order. The function should await all its work before returning; background calls scheduled after it returns are outside the supported lifecycle.
 
-Returning a JSON value records `case.output`. Add `expect.output` to assert equality. `null`, `false`, `0`, and an empty string are all valid expected values. Returning `undefined` is permitted if you do not assert an output. Non-JSON return values fail the case.
+Returning a JSON value records `case.output`. Add `expect.output` to assert exact equality, or `expect.outputChecks` for text and JSON-path checks such as `{ "contains": "shipped", "ignoreCase": true }` ([final output checks](CONTRACTS.md#final-output-checks)). `null`, `false`, `0`, and an empty string are all valid expected values. Returning `undefined` is permitted if you do not assert an output. Non-JSON return values fail the case.
 
 ```json
 {
@@ -60,7 +60,7 @@ Returning a JSON value records `case.output`. Add `expect.output` to assert equa
 }
 ```
 
-An agent case must contain a fixture or an explicit output/call-order/forbidden-tool assertion. An empty case is rejected rather than reporting a meaningless pass. `callOrder: []` can explicitly assert that an agent makes no tool calls.
+An agent case must contain a fixture or an explicit output, output-check, call-order or forbidden-tool assertion. An empty case is rejected rather than reporting a meaningless pass. `callOrder: []` can explicitly assert that an agent makes no tool calls.
 
 ## Use from your own test runner
 

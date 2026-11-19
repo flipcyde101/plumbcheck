@@ -314,3 +314,48 @@ test('a fresh workspace opens the builder and saves the first test without a mis
   f.dom.window.document.querySelector('[data-view="overview"]').click();
   assert.match(f.$('artifact-source').textContent, /BUILT-IN EXAMPLE/);
 });
+
+test('with a saved connection the builder defaults to a real model run, never pre-consents, and respects a manual choice', async t => {
+  const f = await fixture(t);
+  await f.server.workspace.saveConnection({ name: 'Local', provider: 'ollama', model: 'qwen3.5:4b', baseURL: 'http://127.0.0.1:11434/v1' });
+  const root = f.$('scenario-builder'), field = selector => root.querySelector(selector);
+  f.replies.push(true, true);
+  field('[data-template-kind]').value = 'forbidden-delete';
+  field('[data-template]').click();
+  assert.equal(field('[data-guard-kind]').value, 'deny');
+  assert.equal(field('[data-guard-tool]').value, 'orders.delete');
+  field('[data-name]').value = 'Must not delete';
+  field('form').dispatchEvent(new f.dom.window.Event('submit', { bubbles: true, cancelable: true }));
+  await until(() => /Saved revision 1/.test(field('[data-message]').textContent));
+  await until(() => f.$('run-mode').value === 'model');
+  assert.equal(f.$('model-consent').checked, false);
+  assert.equal(f.$('run-connection').value, f.server.workspace.summary().connections[0].id);
+  const saved = f.server.workspace.summary().projects.find(p => p.name === 'Must not delete');
+  assert.ok(saved);
+  f.$('run-mode').value = 'fixture'; f.$('run-mode').dispatchEvent(new f.dom.window.Event('change'));
+  const renders = f.server.workspace.summary().connections.length;
+  f.$('refresh-workspace').click();
+  await new Promise(resolve => setTimeout(resolve, 300));
+  assert.equal(renders, 1);
+  assert.equal(f.$('run-mode').value, 'fixture', 'a manual choice survives refreshes');
+  field('[data-template-kind]').value = 'order'; field('[data-template]').click();
+  assert.equal(field('[data-guard-kind]').value, 'none', 'switching templates clears the guard');
+  assert.equal(field('[data-guard-tool]').value, '');
+});
+
+test('model-spending consent never carries over to a connection the user did not choose', async t => {
+  const f = await fixture(t);
+  const a = await f.server.workspace.saveConnection({ name: 'Local A', provider: 'ollama', model: 'model-a', baseURL: 'http://127.0.0.1:11434/v1' });
+  const b = await f.server.workspace.saveConnection({ name: 'Local B', provider: 'lmstudio', model: 'model-b', baseURL: 'http://127.0.0.1:1234/v1' });
+  f.$('refresh-workspace').click();
+  await until(() => f.$('run-connection').querySelectorAll('option').length >= 3);
+  f.$('run-connection').value = b.id; f.$('run-connection').dispatchEvent(new f.dom.window.Event('change'));
+  f.$('model-consent').checked = true;
+  await f.server.workspace.remove('connections', b.id);
+  f.$('refresh-workspace').click();
+  await until(() => f.$('run-connection').value === a.id);
+  assert.equal(f.$('model-consent').checked, false, 'auto-selected connection must not inherit consent');
+  f.$('model-consent').checked = true;
+  f.$('run-connection').value = ''; f.$('run-connection').dispatchEvent(new f.dom.window.Event('change'));
+  assert.equal(f.$('model-consent').checked, false, 'changing the connection clears consent');
+});

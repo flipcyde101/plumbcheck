@@ -2,41 +2,39 @@
 
 **Test the work. Trust the agent.**
 
-Local tool-call regression tests for AI agents and business automations. Catch a changed recipient, an unapproved send, a forbidden operation, or an unexpected response before deploying your automation.
+Local regression tests for what your AI agent *does*: catch a wrong tool argument, an unapproved send, a forbidden operation or a wrong final answer before the agent touches real systems.
+
+[![CI](https://github.com/stepan4002/plumbcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/stepan4002/plumbcheck/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Release](https://img.shields.io/github/v/release/stepan4002/plumbcheck?include_prereleases&label=release)](https://github.com/stepan4002/plumbcheck/releases)
+
+![A tool reply hides an instruction to delete the order; the agent calls orders.delete; PlumbCheck blocks it and the live probe reports 6/6 caught](docs/images/demo.gif)
+
+*A tool reply hides an instruction to delete the order. The agent tries `orders.delete`, PlumbCheck blocks it and fails the test. `npm run test:probe` runs the same six scenarios against your own local model.*
+
+## Quick start
+
+**Windows app (no Node.js needed):** download `PlumbCheck-…-Windows-x64-Setup.exe` from the [latest release](https://github.com/stepan4002/plumbcheck/releases) and run it. This is an unsigned preview, so Windows SmartScreen asks you to confirm.
+
+**From source (Node.js 22+):**
+
+```sh
+git clone https://github.com/stepan4002/plumbcheck && cd plumbcheck && npm ci && npm run demo
+```
+
+`npm run demo` fails on purpose (exit code 1) and writes `reports/demo/report.html` showing the regressions it caught. `npm start` opens the local Studio.
 
 Built by [Plumbnote](https://plumbnote.com). MIT licensed. Offline fixture checks need no account or API key. Optional model connections use your API account or a local server. No telemetry. The fixture engine uses Node built-ins; model and assistant integrations use pinned SDK dependencies bundled into the Windows app.
 
 Canonical commands: `plumbcheck` and `plumbcheck-mcp`. Earlier `plumcheck` / `plumcheck-mcp` aliases remain supported. TypeScript declarations ship with the package; see [typed usage and completed recording snapshots](docs/TYPESCRIPT.md).
 
+**Status: v0.2 preview, not a production release.** Windows application, saved projects, model-selected tool tests, run history, cancellation, comparison, Python/JavaScript adapters, fixture MCP and testing-control MCP, Android APK preview, and optional self-hosted snapshot sync. [Release gates](release-readiness.json) record the remaining verification and distribution requirements; the usability plan is in [ROADMAP.md](ROADMAP.md#usability-work-and-release-plan). Questions and ideas: [Discussions](https://github.com/stepan4002/plumbcheck/discussions). Help and response times: [SUPPORT.md](SUPPORT.md).
+
 ![PlumbCheck local workbench](docs/images/workbench.jpg)
-
-**Status: v0.2 preview, not a production release.** Windows application, saved projects, model-selected tool tests, run history, cancellation, comparison, Python/JavaScript adapters, fixture MCP and testing-control MCP, Android APK preview, and optional self-hosted snapshot sync. Qwen 3.5:4B has passed a real local tool test and a deliberate wrong-argument regression. [Release gates](release-readiness.json) record the remaining verification and distribution requirements.
-
-[![CI](https://github.com/stepan4002/plumbcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/stepan4002/plumbcheck/actions/workflows/ci.yml)
-
-## Usability work and release plan
-
-The next milestone is a complete first-use journey: **install Windows → find Ollama → create a test without JSON → run → understand a failure → fix it → rerun the same scenarios**. Passing engine tests and building installers are separate from verifying this entire experience with a new user.
-
-| Priority | Work | Current state / completion requirement |
-| --- | --- | --- |
-| 1 | Guided agent/model connection | Implemented for local Ollama: find the server, select a returned model ID, save and select the connection, then separately authorize a real tool-use test. Local recovery messages and pasted model-list URLs are supported. Existing external MCP agents still need manual host setup and verification. |
-| 2 | Create tests without JSON | Implemented on Windows and Android for one-tool scenarios: order/ticket templates, editable tasks, nested typed argument/response fields, expected vs planned values and trusted test-approval fixtures. Advanced multi-tool editing remains JSON-based. |
-| 3 | A convincing first test and clear results | Implemented builder walkthrough: change a planned argument to produce a failure, correct it and rerun the same case without changing its expected values. Windows saves updates as revisions while the builder project stays open. The downloaded Windows app passed the basic native failure/fix/model walkthrough; broader native/Android acceptance remains open. |
-| 4 | Reproducible history | Retain immutable contracts and instructions for every revision, inspect exact run inputs and restore an older version as a new revision. Current save counters do not preserve all earlier contract contents. |
-| 5 | Phone connection and usable sync | Verify physical-phone Ollama access, simplify secure pairing/recovery, and verify HTTPS Windows/Android exchange. Current sync is manual snapshot exchange through a self-hosted relay. Phone-triggered Windows execution is planned. |
-| 6 | Verified assistant/provider routes | Complete real Claude/ChatGPT host walkthroughs and live cloud-provider checks. MCP control exists; host support and API access must be verified separately. Subscription sign-in is not implemented and requires an officially supported route. |
-| 7 | Dependable distribution | Windows publisher signing, update delivery, clean-machine install/upgrade/uninstall, physical Android checks and independent security/accessibility/usability review remain release work. |
-
-The Windows `.exe` and Android APK are applications with bundled interfaces. The source browser Studio is a development option. See [the detailed backlog](docs/IMPROVEMENT_BACKLOG.md), [platform roadmap](docs/PLATFORM_ROADMAP.md), [external QA results](docs/EXTERNAL_QA.md), and [release gates](release-readiness.json). Planned features are not included merely because they appear here.
-
-Follow [the tested Windows walkthrough with screenshots](docs/NATIVE_WALKTHROUGH.md) to create a failure, correct it and run the same scenario with a local model.
 
 ## Install and start
 
-**Windows app:** download the artifact from a successful [Windows desktop build](https://github.com/stepan4002/plumbcheck/actions/workflows/windows-desktop.yml), extract it, and run the `.exe` installer. A portable ZIP is included too. No Node.js setup is needed. This unsigned preview includes saved projects, model connections, run evidence, and bundled fixture/control MCP helpers. See [the Windows app guide](docs/WINDOWS_APP.md).
+**Windows app:** download the `.exe` installer or the portable ZIP from the [latest release](https://github.com/stepan4002/plumbcheck/releases) (`SHA256SUMS.txt` lists checksums). Builds of every commit are also available from the [Windows desktop workflow](https://github.com/stepan4002/plumbcheck/actions/workflows/windows-desktop.yml). No Node.js setup is needed. This unsigned preview includes saved projects, model connections, run evidence, and bundled fixture/control MCP helpers. See [the Windows app guide](docs/WINDOWS_APP.md).
 
-**Android preview:** the [Android workflow](https://github.com/stepan4002/plumbcheck/actions/workflows/android.yml) builds a debug-signed APK. It runs fixture checks offline, saves a project, imports/exports JSON, and runs a built-in tool agent through your Ollama server using native Android networking. Actual Qwen calls passed a correct scenario and failed a deliberate wrong-order scenario on the QA emulator. Optional HTTPS snapshot sync is separate. Imported snapshots retain their reports in Windows History with source/revision labels; report upload from Android is explicit. A locally built release-variant APK uses a private preview signing key. Real-phone networking and a long-term distribution identity remain release gates. See [connect Android to Ollama](docs/ANDROID_OLLAMA.md) and [Android and sync](docs/ANDROID_AND_SYNC.md).
+**Android preview:** a debug-signed APK is attached to each [release](https://github.com/stepan4002/plumbcheck/releases) and built by the [Android workflow](https://github.com/stepan4002/plumbcheck/actions/workflows/android.yml). It runs fixture checks offline, saves a project, imports/exports JSON, and runs a built-in tool agent through your Ollama server using native Android networking. Actual Qwen calls passed a correct scenario and failed a deliberate wrong-order scenario on the QA emulator. Optional HTTPS snapshot sync is separate. Imported snapshots retain their reports in Windows History with source/revision labels; report upload from Android is explicit. A locally built release-variant APK uses a private preview signing key. Real-phone networking and a long-term distribution identity remain release gates. See [connect Android to Ollama](docs/ANDROID_OLLAMA.md) and [Android and sync](docs/ANDROID_AND_SYNC.md).
 
 **Source version:**
 

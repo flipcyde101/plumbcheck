@@ -67,7 +67,7 @@ with ReplayClient("my-contract.json", "Read-only order lookup", out="reports/pyt
 assert client.report["passed"]
 ```
 
-LangGraph, CrewAI or other framework tools must call `client.call_tool(name, arguments)` inside their tool functions. See [the Python adapter](../adapters/python/README.md).
+LangGraph, CrewAI or other framework tools must call `client.call_tool(name, arguments)` inside their tool functions. See [the Python adapter](../adapters/python/README.md) and the [runnable order lookup example](../examples/python-order-lookup/README.md).
 
 ## 4. Model and instructions only
 

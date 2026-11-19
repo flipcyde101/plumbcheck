@@ -1,0 +1,21 @@
+name: Feature request
+description: Suggest a check, integration or workflow PlumbCheck should support.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to test?
+      description: Describe the agent or automation and the mistake you want to catch. Use synthetic examples.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would help?
+      description: A contract snippet, command or UI flow you have in mind. Optional.
+  - type: input
+    id: agent
+    attributes:
+      label: Agent setup
+      placeholder: Framework (LangChain, OpenAI Agents SDK, MCP client, n8n...), model, where it runs

@@ -14,6 +14,6 @@ New integrations must state their supported protocol/framework versions and limi
 
 Run `npm run mobile:build` and `npm run plugin:build` when changing those surfaces. Android native builds use the checked-in Gradle wrapper. `npm run test:local-model` is opt-in, requires a running loopback model server, and must not be added to ordinary account-free CI. Actual host/device/provider support needs its own evidence. `npm run release:check` must remain nonzero until every production gate has been verified; do not change gate statuses simply to obtain a green release command.
 
-Good initial contributions include clearer diagnostics, integration examples, TypeScript declarations, accessibility improvements, and documented real-world test scenarios. Check ROADMAP.md and discuss a large change before committing to it.
+New here? Start with an issue labelled [good first issue](https://github.com/stepan4002/plumbcheck/labels/good%20first%20issue). Good initial contributions include clearer diagnostics, integration examples, TypeScript declarations, accessibility improvements, and documented real-world test scenarios. Check ROADMAP.md and discuss a large change before committing to it.
 
 Contributions are made under the repository's MIT license. Please interact respectfully and give useful, specific feedback. Contact hello@plumbnote.com if a conversation needs maintainer attention.

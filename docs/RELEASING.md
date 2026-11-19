@@ -1,6 +1,6 @@
 # Public release checklist
 
-The founder selected `stepan4002/plumbcheck` as the source repository. The npm package and a tagged public release have not been published. Verify repository visibility separately before a public launch.
+The founder selected `stepan4002/plumbcheck` as the source repository. Preview releases are tagged and published on GitHub Releases with the Windows installer, portable ZIP, checksums, SBOM and Android APK attached; record each in `CHANGELOG.md`. The npm package has not been published. Verify repository visibility separately before a public launch.
 
 ## Version 0.2 preview
 

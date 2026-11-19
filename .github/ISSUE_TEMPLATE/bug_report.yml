@@ -1,5 +1,6 @@
 name: Bug report
 description: Report unexpected behavior with a minimal synthetic reproduction.
+labels: [bug]
 body:
   - type: textarea
     id: problem

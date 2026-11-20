@@ -25,7 +25,7 @@ One pre-existing timing test (`workspace-ui.test.js`, "a new launch link refresh
 ### Gate evidence (pending)
 
 - **core-and-integrations:** CI run URLs for `ci.yml` (all four jobs and audit), `windows-desktop.yml` (including `upgrade-path`) and `android.yml` on the release commit; the release workflow dry run.
-- **live-models:** `npm run test:probe` summaries for OpenAI and Anthropic (`reports/probe/<slug>/summary.json`), model IDs and token usage.
+- **live-models:** `npm run test:probe` summary for OpenAI (`reports/probe/<slug>/summary.json`), model IDs and token usage.
 - **windows-clean-machine:** the Windows Sandbox walkthrough (`launch/CLEAN_MACHINE_CHECKLIST.md`) with screenshots, plus the CI `upgrade-path` run.
 - **windows-authenticode:** `Get-AuthenticodeSignature` output for the signed installer and `PlumbCheck.exe` of a signed release candidate, publisher SignPath Foundation.
 

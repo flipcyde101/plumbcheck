@@ -24,7 +24,7 @@
       "id": "live-models",
       "scope": "1.0",
       "status": "pending",
-      "reason": "OpenAI and Anthropic live probe on the release build (npm run test:probe for each provider). Ollama Qwen 3.5:4B has already passed correct and deliberate-regression live tests."
+      "reason": "OpenAI live probe on the release build (npm run test:probe). Anthropic is experimental until verified (decided 2026-11-20). Ollama Qwen 3.5:4B has already passed correct and deliberate-regression live tests."
     },
     {
       "id": "assistant-hosts",

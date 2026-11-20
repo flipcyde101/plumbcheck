@@ -27,7 +27,7 @@ These ship with 1.0 but carry no compatibility promise. They can change or be re
 - The Android app and its offline/LAN Ollama features.
 - `plumbcheck-sync` (the snapshot relay) and the snapshot format.
 - The assistant-host plugin bundle in `plugins/plumbcheck` (build from source; not certified by any host).
-- The Google provider for model runs.
+- The Anthropic and Google providers for model runs (not yet verified against a live account).
 
 ## Deprecation
 

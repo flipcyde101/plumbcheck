@@ -61,6 +61,8 @@ In **Workspace**, open **Start here / Build your first test**. Review the order-
 
 For an actual model test on Windows, choose **Find Ollama on this PC**, select an installed model, and save the connection. Review the saved test and separately authorize the model run. Discovery confirms access; a real scenario checks tool use. The app does not install models or change network/security settings. Direct model testing uses a built-in tool agent with your instructions; testing an existing framework agent requires the SDK/MCP integration described below. [Connections, limits, and supported modes](docs/APP_WORKSPACE.md).
 
+If Ollama discovery or a model run fails, see [Troubleshoot Ollama connections](docs/TROUBLESHOOTING.md).
+
 The separate built-in workbench demonstration starts with six synthetic checks, including four deliberate regressions. Its **smaller passing example** contains two scenarios; comparisons deliberately show the other four as removed. Use the builder walkthrough above to demonstrate failure and correction with unchanged scenario coverage. Offline examples send nothing to an external service.
 
 Use **Open JSON** to import your own contract or saved execution report by file or paste. Edit and download contracts, undo a contract import, or inspect a report with its **not rerun** source label. See [the workbench guide](docs/WORKBENCH.md) for import limits and sharing precautions.

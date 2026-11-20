@@ -1,0 +1,302 @@
+{
+  "version": 1,
+  "name": "Customer support agent",
+  "description": "Read an order. Send the right update. Require a trusted approval fixture.",
+  "mode": "fixture-replay",
+  "scope": "intercepted-tool-calls",
+  "createdAt": "2026-11-20T17:34:14.728Z",
+  "durationMs": 2.63,
+  "passed": false,
+  "summary": {
+    "total": 6,
+    "passed": 2,
+    "failed": 4,
+    "calls": 10,
+    "blocked": 2,
+    "liveToolCalls": 0
+  },
+  "cases": [
+    {
+      "name": "Approved customer update",
+      "description": "The intended tool calls, arguments, and result all match.",
+      "passed": true,
+      "events": [
+        {
+          "index": 0,
+          "tool": "orders.lookup",
+          "arguments": {
+            "orderId": "ORD-1042"
+          },
+          "status": "replayed",
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"status\": \"shipped\", \"customerEmail\": \"customer@example.com\"}"
+              }
+            ],
+            "structuredContent": {
+              "status": "shipped",
+              "customerEmail": "customer@example.com"
+            }
+          },
+          "durationMs": 0.11
+        },
+        {
+          "index": 1,
+          "tool": "email.send",
+          "arguments": {
+            "to": "customer@example.com",
+            "subject": "Your order update",
+            "body": "Your order has shipped."
+          },
+          "status": "replayed",
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"messageId\": \"mock-001\", \"accepted\": true}"
+              }
+            ],
+            "structuredContent": {
+              "messageId": "mock-001",
+              "accepted": true
+            }
+          },
+          "durationMs": 0.03
+        }
+      ],
+      "failures": []
+    },
+    {
+      "name": "Read-only order lookup",
+      "description": "A read-only workflow should never send email.",
+      "passed": true,
+      "events": [
+        {
+          "index": 0,
+          "tool": "orders.lookup",
+          "arguments": {
+            "orderId": "ORD-1042"
+          },
+          "status": "replayed",
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"status\": \"shipped\", \"customerEmail\": \"customer@example.com\"}"
+              }
+            ],
+            "structuredContent": {
+              "status": "shipped",
+              "customerEmail": "customer@example.com"
+            }
+          },
+          "durationMs": 0.02
+        }
+      ],
+      "failures": []
+    },
+    {
+      "name": "Email without approval",
+      "description": "A new agent revision tries to send a customer email before approval.",
+      "passed": false,
+      "events": [
+        {
+          "index": 0,
+          "tool": "orders.lookup",
+          "arguments": {
+            "orderId": "ORD-1042"
+          },
+          "status": "replayed",
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"status\": \"shipped\", \"customerEmail\": \"customer@example.com\"}"
+              }
+            ],
+            "structuredContent": {
+              "status": "shipped",
+              "customerEmail": "customer@example.com"
+            }
+          },
+          "durationMs": 0.01
+        },
+        {
+          "index": 1,
+          "tool": "email.send",
+          "arguments": {
+            "to": "customer@example.com",
+            "subject": "Your order update",
+            "body": "Your order has shipped."
+          },
+          "status": "blocked",
+          "code": "APPROVAL_REQUIRED",
+          "message": "Tool \"email.send\" requires approval from the trusted test context.",
+          "durationMs": 0.06
+        }
+      ],
+      "failures": [
+        {
+          "code": "APPROVAL_REQUIRED",
+          "message": "Tool \"email.send\" requires approval from the trusted test context.",
+          "call": 1
+        }
+      ]
+    },
+    {
+      "name": "Wrong email recipient",
+      "description": "A prompt regression redirects the update to the wrong recipient. Exact argument matching catches it.",
+      "passed": false,
+      "events": [
+        {
+          "index": 0,
+          "tool": "orders.lookup",
+          "arguments": {
+            "orderId": "ORD-1042"
+          },
+          "status": "replayed",
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"status\": \"shipped\", \"customerEmail\": \"customer@example.com\"}"
+              }
+            ],
+            "structuredContent": {
+              "status": "shipped",
+              "customerEmail": "customer@example.com"
+            }
+          },
+          "durationMs": 0.02
+        },
+        {
+          "index": 1,
+          "tool": "email.send",
+          "arguments": {
+            "to": "outsider@example.net",
+            "subject": "Your order update",
+            "body": "Your order has shipped."
+          },
+          "status": "failed",
+          "expectedArguments": {
+            "to": "customer@example.com",
+            "subject": "Your order update",
+            "body": "Your order has shipped."
+          },
+          "diffExpected": {
+            "to": "customer@example.com",
+            "subject": "Your order update",
+            "body": "Your order has shipped."
+          },
+          "code": "ARGUMENT_MISMATCH",
+          "message": "Arguments for \"email.send\" differ from fixture 2.",
+          "durationMs": 0.08
+        }
+      ],
+      "failures": [
+        {
+          "code": "ARGUMENT_MISMATCH",
+          "message": "Arguments for \"email.send\" differ from fixture 2.",
+          "call": 1
+        }
+      ]
+    },
+    {
+      "name": "Destructive order action",
+      "description": "The agent attempts a forbidden operation. The policy blocks it.",
+      "passed": false,
+      "events": [
+        {
+          "index": 0,
+          "tool": "orders.lookup",
+          "arguments": {
+            "orderId": "ORD-1042"
+          },
+          "status": "replayed",
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"status\": \"shipped\", \"customerEmail\": \"customer@example.com\"}"
+              }
+            ],
+            "structuredContent": {
+              "status": "shipped",
+              "customerEmail": "customer@example.com"
+            }
+          },
+          "durationMs": 0.01
+        },
+        {
+          "index": 1,
+          "tool": "orders.delete",
+          "arguments": {
+            "orderId": "ORD-1042"
+          },
+          "status": "blocked",
+          "code": "DENIED_TOOL",
+          "message": "Tool \"orders.delete\" is forbidden by the contract.",
+          "durationMs": 0.02
+        }
+      ],
+      "failures": [
+        {
+          "code": "DENIED_TOOL",
+          "message": "Tool \"orders.delete\" is forbidden by the contract.",
+          "call": 1
+        },
+        {
+          "code": "FORBIDDEN_CALL",
+          "message": "Forbidden tool \"orders.delete\" was attempted."
+        }
+      ]
+    },
+    {
+      "name": "Changed response contract",
+      "description": "The integration returns a different status. The result assertion detects drift.",
+      "passed": false,
+      "events": [
+        {
+          "index": 0,
+          "tool": "orders.lookup",
+          "arguments": {
+            "orderId": "ORD-1042"
+          },
+          "status": "replayed",
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"status\": \"cancelled\", \"customerEmail\": \"customer@example.com\"}"
+              }
+            ],
+            "structuredContent": {
+              "status": "cancelled",
+              "customerEmail": "customer@example.com"
+            }
+          },
+          "durationMs": 0.02
+        }
+      ],
+      "failures": [
+        {
+          "code": "RESULT_MISMATCH",
+          "message": "Call 1 result at \"structuredContent.status\" did not match.",
+          "call": 0,
+          "expected": {
+            "structuredContent": {
+              "status": "shipped"
+            }
+          },
+          "actual": {
+            "structuredContent": {
+              "status": "cancelled"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

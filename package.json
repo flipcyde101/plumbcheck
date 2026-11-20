@@ -37,6 +37,7 @@
     "src",
     "web",
     "examples",
+    "schema",
     "docs",
     "ROADMAP.md",
     "CHANGELOG.md",
@@ -84,6 +85,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "ajv": "8.17.1",
     "esbuild": "0.28.2",
     "jsdom": "26.1.0"
   }

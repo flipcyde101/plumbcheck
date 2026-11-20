@@ -272,7 +272,9 @@ export function createContractValidator() {
   /** Validate the entire contract before any case can execute. Unknown keys fail closed. */
   function validateSuite(suite, { mode = 'planned' } = {}) {
     requireValue(['planned', 'agent'].includes(mode), 'unknown validation mode');
-    keys(suite, ['version', 'name', 'description', 'policies', 'cases', 'tools'], 'suite');
+    // `$schema` is an editor hint only; it is accepted and ignored (readers before 1.0 reject it).
+    keys(suite, ['$schema', 'version', 'name', 'description', 'policies', 'cases', 'tools'], 'suite');
+    if (own(suite, '$schema')) requireValue(typeof suite.$schema === 'string', '$schema must be a string');
     requireValue(suite.version === 1, 'version must be 1');
     requireValue(typeof suite.name === 'string' && suite.name.length > 0, 'name is required');
     if (own(suite, 'description')) requireValue(typeof suite.description === 'string', 'description must be a string');

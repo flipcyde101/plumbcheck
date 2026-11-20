@@ -1,6 +1,7 @@
 // Opt-out update notice. At most one GitHub Releases request per day; it never downloads or
 // installs anything, and every failure is silent (the app keeps working offline).
-const { readFile, writeFile, rename, unlink } = require('node:fs/promises');
+const { readFile, writeFile, unlink } = require('node:fs/promises');
+const { replaceFile } = require('./replace-file.cjs');
 const { randomUUID } = require('node:crypto');
 
 const LATEST = 'https://api.github.com/repos/stepan4002/plumbcheck/releases/latest';
@@ -60,7 +61,7 @@ function createUpdateChecker({ fetch, settingsFile, currentVersion, now = () => 
   /** Throws when the file cannot be written, so callers decide whether that matters. */
   async function save(settings) {
     const temporary = `${settingsFile}.${randomUUID()}.tmp`;
-    try { await writeFile(temporary, JSON.stringify(settings, null, 2), { flag: 'wx', mode: 0o600 }); await rename(temporary, settingsFile); }
+    try { await writeFile(temporary, JSON.stringify(settings, null, 2), { flag: 'wx', mode: 0o600 }); await replaceFile(temporary, settingsFile); }
     finally { await unlink(temporary).catch(() => {}); }
   }
   /** Re-read, apply one change, write. Returns the settings as saved. */

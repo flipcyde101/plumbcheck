@@ -1,4 +1,5 @@
-const { mkdir, readFile, writeFile, rename, unlink } = require('node:fs/promises');
+const { mkdir, readFile, writeFile, unlink } = require('node:fs/promises');
+const { replaceFile } = require('./replace-file.cjs');
 const { join } = require('node:path');
 const { randomUUID } = require('node:crypto');
 
@@ -18,7 +19,7 @@ exports.createVault = async function createVault(directory, safeStorage) {
     const next = queue.then(async () => {
       const value = { ...keys }; await update(value);
       const temporary = `${file}.${randomUUID()}.tmp`;
-      try { await writeFile(temporary, JSON.stringify(value), { flag: 'wx', mode: 0o600 }); await rename(temporary, file); keys = value; }
+      try { await writeFile(temporary, JSON.stringify(value), { flag: 'wx', mode: 0o600 }); await replaceFile(temporary, file); keys = value; }
       finally { await unlink(temporary).catch(e => { if (e.code !== 'ENOENT') throw e; }); }
     });
     queue = next.catch(() => {}); return next;

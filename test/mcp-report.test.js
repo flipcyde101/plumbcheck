@@ -15,7 +15,7 @@ async function withServer(input,check){
   try{
     const path=join(dir,'suite.json');await writeFile(path,JSON.stringify(input));
     const out=join(dir,'evidence with spaces');
-    const run=spawnSync(process.execPath,['bin/plumcheck-mcp.js',path,'Check actual calls','--out',out],{cwd,encoding:'utf8',input:messages.map(m=>JSON.stringify(m)).join('\n')+'\n',timeout:10_000});
+    const run=spawnSync(process.execPath,['bin/plumbcheck-mcp.js',path,'Check actual calls','--out',out],{cwd,encoding:'utf8',input:messages.map(m=>JSON.stringify(m)).join('\n')+'\n',timeout:10_000});
     await check(run,out);
   }finally{await rm(dir,{recursive:true,force:true});}
 }

@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "plumbcheck",
   "version": "0.2.0-preview.5",
-  "description": "Run saved PlumbCheck fixture tests and inspect actual regression evidence through a running local application.",
+  "description": "Experimental: run saved PlumbCheck fixture tests and inspect actual regression evidence through a running local application.",
   "author": { "name": "Plumbnote" },
-  "extensions": { "com.openai": { "interface": { "displayName": "PlumbCheck", "shortDescription": "Test agent actions", "longDescription": "List saved projects, validate contracts, run offline suites, inspect results, compare runs, and cancel jobs. Requires the local PlumbCheck app. No arbitrary shell execution or model spending.", "developerName": "Plumbnote", "category": "Developer Tools", "logo": "assets/icon.png", "composerIcon": "assets/icon.png", "brandColor": "#3024ff", "defaultPrompt": "Run my saved PlumbCheck regression suite and explain the actual failures." } } }
+  "extensions": { "com.openai": { "interface": { "displayName": "PlumbCheck", "shortDescription": "Test agent actions", "longDescription": "Experimental: list saved projects, validate contracts, run offline suites, inspect results, compare runs, and cancel jobs. Requires the local PlumbCheck app. No arbitrary shell execution or model spending.", "developerName": "Plumbnote", "category": "Developer Tools", "logo": "assets/icon.png", "composerIcon": "assets/icon.png", "brandColor": "#3024ff", "defaultPrompt": "Run my saved PlumbCheck regression suite and explain the actual failures." } } }
 }

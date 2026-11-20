@@ -1,6 +1,7 @@
 {
   "appId": "com.plumbnote.plumbcheck",
   "productName": "PlumbCheck",
+  "copyright": "Copyright © 2026 Plumbnote. MIT License.",
   "electronVersion": "45.3.2",
   "directories": { "app": "app", "output": "../dist/windows", "buildResources": "assets" },
   "asar": true,
@@ -15,7 +16,7 @@
   },
   "files": ["**/*"],
   "artifactName": "PlumbCheck-${version}-Windows-${arch}.${ext}",
-  "win": { "target": ["nsis", "zip"], "icon": "assets/icon.ico", "signExecutable": false },
+  "win": { "target": ["nsis", "zip"], "icon": "assets/icon.ico", "signExecutable": false, "legalTrademarks": "PlumbCheck is a project of Plumbnote." },
   "nsis": {
     "artifactName": "PlumbCheck-${version}-Windows-x64-Setup.exe",
     "oneClick": false,

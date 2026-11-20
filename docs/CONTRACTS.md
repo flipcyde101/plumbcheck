@@ -46,7 +46,7 @@ Any otherwise passing case with unused fixtures fails. Each case gets a fresh fi
 
 `results` read the replayed fixture, so in replay they confirm your fixture data, not a live integration.
 
-This alpha intentionally avoids claiming full JSON Schema result validation. Equality checks support a narrow, inspectable contract. JSON Schema integration is a roadmap item.
+Result assertions use exact equality on purpose: the check stays narrow and inspectable. They do not validate tool results against a JSON Schema. (The [contract schema](#editor-support-and-schema) describes contracts themselves, not tool results.)
 
 ## Tool declarations
 

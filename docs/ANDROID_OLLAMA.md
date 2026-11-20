@@ -26,6 +26,8 @@ Server address and model ID are saved locally. The two consent checkboxes reset 
 
 ## Connection diagnostics
 
+See [Troubleshoot Ollama connections](TROUBLESHOOTING.md) for the error messages shown during discovery and model runs.
+
 **Network details** reports Android version, active transport, and target SDK. The app targets SDK 36. Android documents implicit local-network access for apps targeting below 37; targeting 37 will require the new runtime permission. A browser has its own permissions and networking behavior. See [Android local-network protection](https://developer.android.com/privacy-and-security/local-network-permission).
 
 If discovery fails, check the current computer IP, Ollama LAN binding, firewall scope, phone Wi-Fi/VPN route, and router client isolation. A successful request on the computer alone does not prove the phone can reach it. Test port `11434` unless you deliberately configured another port; an earlier temporary diagnostic listener is not a permanent app endpoint.

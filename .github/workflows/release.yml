@@ -196,7 +196,9 @@ jobs:
       - name: Draft the GitHub release
         run: |
           if [ "$DRY_RUN" = true ]; then echo "Dry run: would draft v$VERSION (pre-release: $PRERELEASE, signed: $SIGNED) with:"; ls -1 release; exit 0; fi
-          if gh release view "v$VERSION" > /dev/null 2>&1; then
+          if draft=$(gh release view "v$VERSION" --json isDraft --jq .isDraft 2> /dev/null); then
+            # Rebuilt binaries never match byte for byte; replacing files users already verified is not allowed.
+            if [ "$draft" != true ]; then echo "::error::v$VERSION is already published. Cut a new version instead of replacing its files."; exit 1; fi
             gh release upload "v$VERSION" release/* --clobber
           else
             flags=(--draft --verify-tag --title "PlumbCheck $VERSION" --notes-file notes.md)
@@ -207,7 +209,8 @@ jobs:
   npm:
     needs: [verify, release]
     # Turn on after the first manual publish and the npm trusted-publisher setup (docs/RELEASING.md).
-    if: github.event_name == 'push' && needs.release.result == 'success' && vars.NPM_TRUSTED_PUBLISHING == 'true'
+    # !cancelled() replaces the implicit success(), which would skip this job whenever `sign` was skipped upstream.
+    if: ${{ !cancelled() && github.event_name == 'push' && needs.release.result == 'success' && vars.NPM_TRUSTED_PUBLISHING == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: npm

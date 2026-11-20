@@ -74,3 +74,21 @@ test('a failing bridge or a browser without the desktop bridge shows nothing', a
   assert.equal(browser.$('update-banner').hidden, true);
   assert.equal(browser.$('update-toggle-row').hidden, true, 'Studio in a browser never offers update checks');
 });
+
+test('a late first answer cannot undo the user turning checks off', async t => {
+  let answerFirst;
+  const calls = [];
+  const f = await page(t, {
+    updateStatus: () => new Promise(resolve => { answerFirst = resolve; }),
+    setUpdateChecks: async enabled => { calls.push(enabled); return { enabled, available: false }; },
+  });
+  assert.equal(f.$('update-toggle').checked, true, 'checks are on by default, before the first answer arrives');
+  f.$('update-toggle').checked = false;
+  f.$('update-toggle').dispatchEvent(new f.dom.window.Event('change'));
+  await until(() => /Update checks are off/.test(f.$('workspace-message').textContent));
+  answerFirst({ enabled: true, available: true, version: '1.1.0', url });
+  await new Promise(resolve => setTimeout(resolve, 50));
+  assert.deepEqual(calls, [false]);
+  assert.equal(f.$('update-toggle').checked, false, 'the stale answer must not re-tick the box');
+  assert.equal(f.$('update-banner').hidden, true, 'the stale answer must not show the banner');
+});

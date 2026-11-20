@@ -47,45 +47,56 @@ function releaseFrom(body) {
 
 function createUpdateChecker({ fetch, settingsFile, currentVersion, now = () => Date.now(), timeoutMs = 10_000 }) {
   let pending = null;
+  // Every read-modify-write of settings.json runs through this queue, so a check that finishes
+  // late can never write back a stale copy over a newer choice (such as turning checks off).
+  let queue = Promise.resolve();
+  const exclusive = task => { const run = queue.then(task); queue = run.catch(() => {}); return run; };
   async function load() {
     try {
       const value = JSON.parse(await readFile(settingsFile, 'utf8'));
       return { ...defaults, ...(value && typeof value === 'object' && !Array.isArray(value) ? value : {}) };
     } catch { return { ...defaults }; }
   }
+  /** Throws when the file cannot be written, so callers decide whether that matters. */
   async function save(settings) {
     const temporary = `${settingsFile}.${randomUUID()}.tmp`;
     try { await writeFile(temporary, JSON.stringify(settings, null, 2), { flag: 'wx', mode: 0o600 }); await rename(temporary, settingsFile); }
-    catch { /* Preferences are best effort; never block startup. */ }
     finally { await unlink(temporary).catch(() => {}); }
   }
+  /** Re-read, apply one change, write. Returns the settings as saved. */
+  const update = change => exclusive(async () => { const settings = await load(); change(settings); await save(settings); return settings; });
   const result = (settings) => {
     const latest = releaseFrom({ tag_name: settings.latestRelease?.version, html_url: settings.latestRelease?.url });
     const available = Boolean(settings.checkForUpdates && latest && isNewer(latest.version, currentVersion));
     return { enabled: settings.checkForUpdates !== false, available, ...(available ? latest : {}) };
   };
   async function check() {
-    const settings = await load();
+    const settings = await exclusive(load);
     if (settings.checkForUpdates === false) return result(settings);
     const last = Date.parse(settings.lastUpdateCheck);
     if (Number.isFinite(last) && now() - last >= 0 && now() - last < DAY) return result(settings);
-    settings.lastUpdateCheck = new Date(now()).toISOString(); // throttle failures too
+    // Record the attempt before the request, so failures are throttled too. Saving is best effort.
+    const stamp = new Date(now()).toISOString();
+    await update(s => { s.lastUpdateCheck = stamp; }).catch(() => {});
+    let latest = null;
     try {
       const response = await fetch(LATEST, { headers: { Accept: 'application/vnd.github+json', 'User-Agent': `PlumbCheck/${currentVersion}` }, signal: AbortSignal.timeout(timeoutMs) });
-      if (response.ok) { const latest = releaseFrom(await response.json()); if (latest) settings.latestRelease = latest; }
+      if (response.ok) latest = releaseFrom(await response.json());
     } catch { /* Offline, rate-limited or blocked: stay silent. */ }
-    await save(settings);
-    return result(settings);
+    // Merge only what this check learned into the current file; the user may have changed it meanwhile.
+    const current = await update(s => { if (latest) s.latestRelease = latest; }).catch(() => exclusive(load));
+    return result(current);
   }
   return {
     /** Concurrent callers share one request. */
     status() { pending ??= check().finally(() => { pending = null; }); return pending; },
+    /** Rejects when the choice cannot be saved, so the UI can say so. */
     async setEnabled(enabled) {
       if (typeof enabled !== 'boolean') throw new Error('Expected true or false.');
-      const settings = await load();
-      settings.checkForUpdates = enabled;
-      await save(settings);
-      return enabled ? this.status() : result(settings);
+      const saved = await update(s => { s.checkForUpdates = enabled; });
+      if (!enabled) return result(saved);
+      await pending?.catch(() => {}); // a check that started while disabled must not answer for this one
+      return this.status();
     },
   };
 }

@@ -51,5 +51,6 @@ jobs:
           node-version: 24
       - name: Runtime dependencies shipped in the npm package and the Windows app
         run: npm audit --omit=dev --audit-level=high
-      - name: Desktop build tooling
-        run: npm audit --prefix desktop --omit=dev --audit-level=high
+      # Electron is a devDependency here but ships inside the Windows app, so audit everything.
+      - name: Electron runtime and desktop build tooling
+        run: npm audit --prefix desktop --audit-level=high

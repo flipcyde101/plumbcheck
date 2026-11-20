@@ -10,7 +10,7 @@ Releases are cut from `stepan4002/plumbcheck` by [the release workflow](../.gith
 4. **Merge** the pull request after CI is green, then **tag** `main`: `git tag v1.2.3 && git push origin v1.2.3`. The tag must equal `v` plus the `package.json` version.
 5. The workflow runs CI, the Windows build with its upgrade-path test, and Android. For a stable version it also requires `npm run release:check` to pass.
 6. **Signing** (when `vars.SIGNPATH_ENABLED` is `true`): approve **two** requests in SignPath, first the app (`PlumbCheck.exe`), then the installer that the workflow rebuilds around the signed app. Each waits up to an hour. A stable release without signed files fails; a pre-release may be unsigned.
-7. The workflow computes `SHA256SUMS.txt` over the final files and **drafts** the GitHub release (marked pre-release when the version contains `-`). Review the draft and publish it. Re-running the workflow for the same tag replaces the files of the existing release.
+7. The workflow computes `SHA256SUMS.txt` over the final files and **drafts** the GitHub release (marked pre-release when the version contains `-`). Review the draft and publish it. Re-running the workflow for the same tag replaces the files of a release that is still a draft; once a release is published its files are never replaced, so cut a new version instead.
 8. **npm** (when `vars.NPM_TRUSTED_PUBLISHING` is `true`): the `npm` job publishes with provenance through OIDC, using `--tag next` for pre-releases. It skips a version that is already on npm, so re-runs are safe.
 
 ### One-time setup

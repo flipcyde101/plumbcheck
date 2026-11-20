@@ -106,3 +106,51 @@ test('concurrent status calls share one request', async t => {
   await Promise.all([f.checker.status(), f.checker.status(), f.checker.status()]);
   assert.equal(f.calls.length, 1);
 });
+
+/** A fetch that answers only when the test says so, to hold a check open on the "network". */
+function heldFetch(body = release('v1.1.0')) {
+  const waiting = [];
+  const fetch = () => new Promise(resolve => waiting.push(() => resolve({ ok: true, json: async () => body })));
+  return { fetch, answer: () => waiting.splice(0).forEach(go => go()), get requests() { return waiting.length; } };
+}
+const until = async predicate => { for (let i = 0; i < 200 && !predicate(); i++) await new Promise(r => setTimeout(r, 5)); assert.ok(predicate()); };
+
+test('turning checks off while a check waits on the network keeps the opt-out', async t => {
+  const dir = await mkdtemp(join(tmpdir(), 'plumbcheck-updates-race-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const settingsFile = join(dir, 'settings.json'), held = heldFetch();
+  const checker = createUpdateChecker({ fetch: held.fetch, settingsFile, currentVersion: '1.0.0' });
+  const first = checker.status();
+  await until(() => held.requests === 1);
+  assert.deepEqual(await checker.setEnabled(false), { enabled: false, available: false });
+  held.answer();
+  assert.deepEqual(await first, { enabled: false, available: false }, 'the late answer reflects the newer choice');
+  assert.equal(JSON.parse(await readFile(settingsFile, 'utf8')).checkForUpdates, false, 'the opt-out survives on disk');
+  const relaunched = createUpdateChecker({ fetch: () => assert.fail('must not contact GitHub'), settingsFile, currentVersion: '1.0.0', now: () => Date.now() + 3 * DAY });
+  assert.deepEqual(await relaunched.status(), { enabled: false, available: false });
+});
+
+test('a quick on-then-off ends off, and turning on again uses the cached release', async t => {
+  const dir = await mkdtemp(join(tmpdir(), 'plumbcheck-updates-race-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const settingsFile = join(dir, 'settings.json'), held = heldFetch();
+  await writeFile(settingsFile, JSON.stringify({ checkForUpdates: false }));
+  const checker = createUpdateChecker({ fetch: held.fetch, settingsFile, currentVersion: '1.0.0' });
+  const on = checker.setEnabled(true);
+  await until(() => held.requests === 1);
+  await checker.setEnabled(false);
+  held.answer();
+  assert.equal((await on).enabled, false, 'the slower "on" answer reports the final state');
+  assert.equal(JSON.parse(await readFile(settingsFile, 'utf8')).checkForUpdates, false);
+  // Turning on again within the day uses the release learned by the earlier check, without a new request.
+  assert.deepEqual(await checker.setEnabled(true), { enabled: true, available: true, version: '1.1.0', url: 'https://github.com/stepan4002/plumbcheck/releases/tag/v1.1.0' });
+  assert.equal(held.requests, 0);
+});
+
+test('a choice that cannot be saved is reported, not silently dropped', async t => {
+  const dir = await mkdtemp(join(tmpdir(), 'plumbcheck-updates-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const checker = createUpdateChecker({ fetch: async () => ({ ok: false }), settingsFile: join(dir, 'missing-folder', 'settings.json'), currentVersion: '1.0.0' });
+  await assert.rejects(checker.setEnabled(false));
+  assert.deepEqual(await checker.status(), { enabled: true, available: false }, 'a status check still fails silently');
+});

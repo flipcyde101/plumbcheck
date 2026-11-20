@@ -54,7 +54,9 @@ async function start() {
   window.webContents.setWindowOpenHandler(({ url }) => { if (external(url)) shell.openExternal(url); return { action: 'deny' }; });
   window.webContents.on('will-navigate', (event, url) => { if (url !== `${origin}/`) { event.preventDefault(); if (external(url)) shell.openExternal(url); } });
   window.webContents.on('will-attach-webview', event => event.preventDefault());
-  const trusted = event => event.sender === window.webContents && event.senderFrame === window.webContents.mainFrame && event.senderFrame.url === `${origin}/`;
+  // The page may carry an in-page fragment (the skip link sets #main), so compare the URL without it.
+  const pageURL = url => { try { const u = new URL(url); u.hash = ''; return u.href; } catch { return null; } };
+  const trusted = event => event.sender === window?.webContents && event.senderFrame === window.webContents.mainFrame && pageURL(event.senderFrame.url) === `${origin}/`;
   ipcMain.handle('plumbcheck:updates-status', event => { if (!trusted(event)) throw new Error('Invalid update request.'); return updates.status(); });
   ipcMain.handle('plumbcheck:updates-set-enabled', (event, enabled) => { if (!trusted(event)) throw new Error('Invalid update request.'); return updates.setEnabled(enabled); });
   ipcMain.handle('plumbcheck:control-setup', event => {
@@ -63,7 +65,7 @@ async function start() {
     return { mcpServers: { plumbcheck: { command: path.join(runtime, 'node.exe'), args: [path.join(runtime, 'bin', 'plumbcheck-control.js'), '--connect', path.join(directory, 'bridge.json')] } } };
   });
   ipcMain.handle('plumbcheck:create-mcp-setup', async (event, request) => {
-    if (event.sender !== window.webContents || event.senderFrame !== window.webContents.mainFrame || event.senderFrame.url !== `${origin}/`) throw new Error('Invalid setup request.');
+    if (!trusted(event)) throw new Error('Invalid setup request.');
     if (creatingSetup) throw new Error('Finish the current save dialog first.');
     const suite = readDesktopContract(request?.contractText);
     if (typeof request?.caseName !== 'string' || !suite.cases.some(c => c.name === request.caseName)) throw new Error('Choose a case from this contract.');

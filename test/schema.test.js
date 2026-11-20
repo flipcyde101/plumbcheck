@@ -3,7 +3,9 @@
 //   - result assertion `call` index past the planned calls,
 //   - duplicate case names,
 //   - patterns that do not compile in the linear-time engine (backreferences, lookarounds, counts > 100),
-//   - nesting depth and size limits, and the agent-case "needs a fixture or an assertion" rule.
+//   - a range matcher whose min exceeds its max,
+//   - nesting depth and size limits (the validator counts UTF-16 code units, JSON Schema counts code points),
+//   - the agent-case "needs a fixture or an assertion" rule.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
@@ -72,6 +74,8 @@ for (const [label, change] of [
   ['assertion index past the calls', s => { s.cases[0].expect = { results: [{ call: 4, path: '', equals: 0 }] }; }],
   ['duplicate case names', s => { s.cases.push(structuredClone(s.cases[0])); }],
   ['pattern with a backreference', s => { s.cases[0].fixtures[0].arguments = { id: { $plumb: 'matches', pattern: '(a)\\1' } }; }],
+  ['range matcher with min above max', s => { s.cases[0].fixtures[0].arguments = { id: { $plumb: 'range', min: 5, max: 1 } }; }],
+  ['pattern of 101 emoji: 101 code points but 202 UTF-16 units', s => { s.cases[0].fixtures[0].arguments = { id: { $plumb: 'matches', pattern: '\u{1F600}'.repeat(101) } }; }],
 ]) test(`validator-only semantic rule: ${label}`, () => {
   const s = suite(); change(s);
   assert.equal(accepts(s), false, 'validator should reject');

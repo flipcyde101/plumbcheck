@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://stepan4002.github.io/plumbcheck/schema/contract-v1.schema.json",
   "title": "PlumbCheck contract, version 1",
-  "description": "Structural description of a PlumbCheck v1 tool-call contract. PlumbCheck's own validator is authoritative: it additionally checks assertion indexes against the calls, unique case names, that patterns compile in the linear-time engine, nesting and size limits, and that agent cases assert something. See docs/CONTRACTS.md.",
+  "description": "Structural description of a PlumbCheck v1 tool-call contract. PlumbCheck's own validator is authoritative: it additionally checks assertion indexes against the calls, unique case names, that patterns compile in the linear-time engine, that a range matcher's min does not exceed its max, nesting and size limits (text lengths are counted in UTF-16 code units, so characters outside the Basic Multilingual Plane count twice), and that agent cases assert something. See docs/CONTRACTS.md.",
   "type": "object",
   "required": [
     "version",

@@ -50,6 +50,22 @@ test('experimental and post-1.0 pending gates are reported but do not block', as
   assert.match(r.out, /POST-1\.0 pending audit/);
 });
 
+test('scope names that are Object.prototype properties do not make a gate non-blocking', async t => {
+  for (const scope of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) {
+    const r = await check(t, [pending('b', scope)]);
+    assert.equal(r.code, 1, `${scope}: ${r.out}`);
+    assert.match(r.out, /OPEN b/);
+  }
+});
+
+test('malformed gate lists exit 2 instead of passing or crashing', async t => {
+  for (const required of [[], [null], ['text'], [{ id: 'a' }], [{ status: 'verified' }], [verified('a'), verified('a')]]) {
+    const r = await check(t, required);
+    assert.equal(r.code, 2, `${JSON.stringify(required)}: ${r.out}`);
+    assert.doesNotMatch(r.out, /All required gates verified|TypeError/);
+  }
+});
+
 test('an unreadable gate file exits 2', async t => {
   assert.equal((await check(t, 'not json')).code, 2);
   assert.equal((await check(t, JSON.stringify({ version: 2, required: [] }))).code, 2);

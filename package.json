@@ -59,6 +59,7 @@
     "mobile:preview": "node scripts/preview-mobile.mjs",
     "plugin:build": "node scripts/build-plugin.mjs",
     "release:check": "node scripts/release-check.mjs",
+    "version:set": "node scripts/set-version.mjs",
     "sbom": "node scripts/build-sbom.mjs",
     "check": "node bin/plumbcheck.js run examples/customer-support/safe.json",
     "example:sdk": "node examples/customer-support/agent.js",

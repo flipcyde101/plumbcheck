@@ -2,6 +2,19 @@
 
 All notable changes to PlumbCheck are listed here. The project follows [Semantic Versioning](https://semver.org/); `0.x` preview releases may change contracts between versions.
 
+## [Unreleased]
+
+### Added
+- [Stability policy](docs/STABILITY.md): what 1.x freezes (contract v1, report v1, CLI flags and exit codes, the JS API, the Python adapter, MCP tool names, the Windows data folder) and what ships experimental.
+- JSON Schema for contracts at `schema/contract-v1.schema.json`, also published at its `$id` URL. Contracts may carry an optional `$schema` key; PlumbCheck ignores it.
+- `npm run version:set -- <version>` writes one version everywhere; Studio, saved reports and both MCP servers report it.
+
+### Changed
+- **Release gate scope (decided 2026-11-20).** Each gate in `release-readiness.json` now has a `scope`. The 1.0 release requires `core-and-integrations`, `windows-authenticode`, `windows-clean-machine` and `live-models` (OpenAI and Anthropic). `assistant-hosts`, `android-device` and `remote-service` are `experimental`, matching the surfaces that 1.0 ships as experimental; `external-review` is `post-1.0`. Reason: 1.0 covers the CLI, contract format, JS/Python adapters, MCP servers and the Windows app; the phone app, hosted relay and assistant-host plugins are not part of that promise, so they no longer block it. No gate's status was changed to pass. `core-and-integrations` went back to pending because its evidence was for 0.2.0-preview.5. A gate without a scope counts as required.
+
+### Deprecated
+- The `plumcheck` and `plumcheck-mcp` command aliases. Use `plumbcheck` and `plumbcheck-mcp`; the aliases are removed in 2.0.
+
 ## [0.2.0-preview.5] - 2026-11-19
 
 First tagged release. Preview: not production-ready; see [release gates](release-readiness.json).

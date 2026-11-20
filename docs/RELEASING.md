@@ -4,7 +4,7 @@ The founder selected `stepan4002/plumbcheck` as the source repository. Preview r
 
 ## Version 0.2 preview
 
-`release-readiness.json` records production gates. Run `npm run release:check`; a nonzero result means required evidence is missing, even when preview builds work. Keep the preview label until every relevant gate has reviewable evidence. Do not mark signing, cloud integrations, assistant hosts, or actual-device checks verified based on mocks or SDK tests.
+`release-readiness.json` records release gates. Each gate has a `scope`: `1.0` gates are required, `experimental` and `post-1.0` gates are reported but do not block, and a gate with no scope counts as required. Run `npm run release:check`; a nonzero result means a required gate is still missing reviewable evidence, even when preview builds work. Do not mark signing, cloud integrations, assistant hosts, or actual-device checks verified based on mocks or SDK tests.
 
 Install root dependencies with `npm ci`, then run `npm test`, `npm run test:mcp`, `npm run test:types`, `npm run mobile:build`, and `npm run plugin:build`. Compatibility workspaces need their own `npm ci --prefix compat/mcp-sdk` and `npm ci --prefix compat/typescript`. Invoke `npm run test:local-model` separately with an authorized running Ollama model; ordinary CI never calls paid or local models.
 

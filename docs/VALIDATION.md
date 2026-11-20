@@ -1,5 +1,7 @@
 # Verification record
 
+> **Historical records.** Everything below the 1.0 sections describes preview builds. Mentions of "seven gates" refer to the gate model before 1.0.0-rc.1, when every gate was required. Since rc.1 each gate has a scope and only `1.0` gates block a release (see `release-readiness.json` and CHANGELOG.md). Superseded `core-and-integrations` evidence, recorded at 0.2.0-preview.5: "4a829a5: 208 core tests, seven MCP checks and packed TypeScript consumer check passed; all four Node 22/24 Windows/Linux CI jobs, Android unit/assembly/lint and Windows packaging/installed-helper workflows passed."
+
 ## 0.2.0-preview.5 first-use workflow
 
 The README now contains all seven usability/release work areas and distinguishes implemented features from planned or unverified work. The first implementation increment adds a shared Windows/Android form builder for one-tool scenarios, nested text/number/boolean argument and response fields, order/ticket templates, expected versus planned arguments and a bounded generated contract. Windows builder saves update the same active project, so a wrong planned value can fail and be corrected without removing cases or changing expected values. Android preserves the draft on cancellation/storage failure and restores saved evidence without rerunning it.

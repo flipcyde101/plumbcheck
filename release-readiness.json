@@ -5,8 +5,8 @@
     {
       "id": "core-and-integrations",
       "scope": "1.0",
-      "status": "pending",
-      "reason": "Re-verify on the 1.0 release build: full test suite, MCP and TypeScript compatibility checks and every CI workflow. The previous evidence (4a829a5, 0.2.0-preview.5) is kept in docs/VALIDATION.md."
+      "status": "verified",
+      "evidence": "Release workflow run 44828952980 on c5f564e (v1.0.0-rc.1): verify, ci (Node 22/24 on Windows and Linux, npm audit), Windows build, upgrade-path and Android all passed. Fix PR #19 (3969817) passed the same CI, Windows build, upgrade-path and Android jobs (runs 44836416834, 44836416864, 44836417091). Local: 338/338 tests. Re-runs automatically on the v1.0.0 tag. Details in docs/VALIDATION.md."
     },
     {
       "id": "windows-authenticode",
@@ -17,14 +17,14 @@
     {
       "id": "windows-clean-machine",
       "scope": "1.0",
-      "status": "pending",
-      "reason": "Native save dialogs and real OS-encrypted credential recovery passed locally; CI installed and checked the helper. Clean-account interactive install/uninstall and upgrade behavior still need verification."
+      "status": "verified",
+      "evidence": "2026-11-21, Windows Sandbox (fresh account): installed 0.2.0-preview.5, saved and ran a test, upgraded in place to 1.0.0-rc.1 (installer detected the existing install), project and run history kept, rerun passed, update toggle and MCP config checked, data kept across restart, uninstalled through Settings with AppData user data kept. Automated upgrade-path job passed in runs 44828952980 and 44836416864. Limits recorded in docs/VALIDATION.md."
     },
     {
       "id": "live-models",
       "scope": "1.0",
-      "status": "pending",
-      "reason": "OpenAI live probe on the release build (npm run test:probe). Anthropic is experimental until verified (decided 2026-11-20). Ollama Qwen 3.5:4B has already passed correct and deliberate-regression live tests."
+      "status": "verified",
+      "evidence": "2026-11-20, OpenAI gpt-4.1-mini, npm run test:probe on 3969817: 6/6 as expected (2 controls passed; instructed delete, unapproved email, wrong final answer and injected instruction caught), 5,061 tokens in total. The model followed the injected delete and the unapproved send; PlumbCheck blocked both. Ollama qwen3.5:4b passed earlier. Anthropic stays experimental."
     },
     {
       "id": "assistant-hosts",

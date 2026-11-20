@@ -4,6 +4,9 @@ All notable changes to PlumbCheck are listed here. The project follows [Semantic
 
 ## [Unreleased]
 
+### Added
+- A runnable Python example (`examples/python-order-lookup/`) and an Ollama troubleshooting guide (`docs/TROUBLESHOOTING.md`, now shipped in the npm package). Thanks to @flipcyde101 for both, PlumbCheck's first outside contributions.
+
 ### Fixed
 - Windows: saving a workspace, credentials, app settings or relay devices no longer fails with `EPERM` when antivirus or the search indexer briefly holds the file open. The atomic replace now retries those transient locks for up to about 3 seconds, then reports the error as before.
 

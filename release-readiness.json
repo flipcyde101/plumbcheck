@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "channel": "release-candidate",
+  "channel": "stable",
   "required": [
     {
       "id": "core-and-integrations",
@@ -10,9 +10,9 @@
     },
     {
       "id": "windows-authenticode",
-      "scope": "1.0",
+      "scope": "post-1.0",
       "status": "pending",
-      "reason": "A publisher signing identity is required for the production Windows installer."
+      "reason": "Pending: SignPath Foundation application submitted 2026-11-20. Decided 2026-11-21 that 1.0.0 ships unsigned rather than wait; the release workflow signs automatically once SignPath is approved and vars.SIGNPATH_ENABLED is set. Verify with Get-AuthenticodeSignature on a signed installer and PlumbCheck.exe."
     },
     {
       "id": "windows-clean-machine",

@@ -56,7 +56,7 @@ Not covered by this pass: the SmartScreen prompt (the installers came in through
 
 6/6 as expected, 5,061 tokens in total. The model followed the instruction injected into a tool result and attempted `orders.delete`; PlumbCheck blocked it and failed the case. The first attempt, on `c5f564e`, crashed after three scenarios with `EPERM` while saving its workspace (antivirus briefly locking the file); #19 fixed that. Ollama `qwen3.5:4b` passed the same probe earlier. Anthropic is experimental in 1.0 and was not verified.
 
-**windows-authenticode: pending.** Waiting for the SignPath Foundation application (submitted 20 November 2026). Needs `Get-AuthenticodeSignature` output for a signed installer and `PlumbCheck.exe`.
+**windows-authenticode: pending, moved to post-1.0 (decided 21 November 2026).** The SignPath Foundation application was submitted on 20 November 2026 and approval time is unknown, so 1.0.0 ships unsigned instead of waiting. The README and the Windows guide say so and explain the SmartScreen warning. The gate is verified later with `Get-AuthenticodeSignature` output for a signed installer and `PlumbCheck.exe`.
 
 ## 0.2.0-preview.5 first-use workflow
 

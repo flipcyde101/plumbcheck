@@ -3,7 +3,7 @@ android {
     namespace 'com.plumbnote.plumbcheck'
     compileSdk 36
     buildFeatures { buildConfig true }
-    defaultConfig { applicationId 'com.plumbnote.plumbcheck'; minSdk 26; targetSdk 36; versionCode 10000; versionName '1.0.0-rc.1' }
+    defaultConfig { applicationId 'com.plumbnote.plumbcheck'; minSdk 26; targetSdk 36; versionCode 10000; versionName '1.0.0' }
     signingConfigs {
         release {
             if (System.getenv('PLUMBCHECK_ANDROID_KEYSTORE')) {

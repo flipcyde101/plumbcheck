@@ -4,6 +4,18 @@ All notable changes to PlumbCheck are listed here. The project follows [Semantic
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-21
+
+PlumbCheck's first stable release. From here on the project follows Semantic Versioning: contract format v1, report v1, the CLI flags and exit codes, the JavaScript API, the Python adapter, the MCP tool names and the Windows data folder only change incompatibly in a new major version. The [stability policy](docs/STABILITY.md) lists what is stable and what ships experimental (Android, `plumbcheck-sync`, the assistant-host plugin, the Anthropic and Google providers).
+
+Highlights since 0.2.0-preview.5 (details under [1.0.0-rc.1] below): the stability policy and a JSON Schema for contracts, the npm package with provenance, an opt-out update notice in the Windows app, a tag-triggered release workflow, an automated install → upgrade → uninstall test, and supply-chain hardening (pinned actions, `npm audit` in CI, Dependabot).
+
+Verified for this release (see [docs/VALIDATION.md](docs/VALIDATION.md)): the full CI matrix, an interactive clean-machine install and upgrade from 0.2.0-preview.5 on Windows, and a live OpenAI `gpt-4.1-mini` probe (6/6; the model followed an injected delete instruction and PlumbCheck blocked it).
+
+### Changed
+- **Windows code signing is pending (decided 2026-11-21).** 1.0.0 ships unsigned instead of waiting for the SignPath Foundation application, so Windows SmartScreen shows a warning; check the SHA-256 against `SHA256SUMS.txt`, then choose **More info → Run anyway**. The `windows-authenticode` gate moved to `post-1.0`, and the release workflow requires signing for stable releases only while that gate is in the 1.0 scope. Signed builds follow in a 1.x release.
+- `main` requires the four test jobs and `npm audit` on every pull request; the Windows and Android builds run and must pass whenever their code changes.
+
 ### Added
 - A runnable Python example (`examples/python-order-lookup/`) and an Ollama troubleshooting guide (`docs/TROUBLESHOOTING.md`, now shipped in the npm package). Thanks to @flipcyde101 for both, PlumbCheck's first outside contributions.
 
@@ -66,6 +78,7 @@ First tagged release. Preview: not production-ready; see [release gates](release
 - Hosted agents (n8n, Zapier, OpenAI Assistants) and remote MCP are not supported yet.
 - The Windows installer is unsigned; the Android APK is debug-signed.
 
-[Unreleased]: https://github.com/stepan4002/plumbcheck/compare/v1.0.0-rc.1...HEAD
+[Unreleased]: https://github.com/stepan4002/plumbcheck/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/stepan4002/plumbcheck/releases/tag/v1.0.0
 [1.0.0-rc.1]: https://github.com/stepan4002/plumbcheck/releases/tag/v1.0.0-rc.1
 [0.2.0-preview.5]: https://github.com/stepan4002/plumbcheck/releases/tag/v0.2.0-preview.5

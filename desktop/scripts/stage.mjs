@@ -25,6 +25,9 @@ console.log(`Staged PlumbCheck ${pkg.version} with its local runtime and synthet
 
 if (process.platform !== 'win32' || process.arch !== 'x64') throw new Error('The Windows x64 desktop build requires Windows and an x64 Node.js runtime.');
 const helper = join(root, 'desktop', 'mcp-runtime');
+if (helper !== resolve(root, 'desktop/mcp-runtime')) throw new Error('Unexpected runtime directory.');
+// Start clean so files removed from the source tree cannot linger in the bundled runtime.
+await rm(helper, { recursive: true, force: true });
 await mkdir(helper, { recursive: true });
 for (const name of ['bin', 'src', 'web', 'package.json', 'LICENSE']) await cp(join(root, name), join(helper, name), { recursive: true });
 await cp(join(app, 'node_modules'), join(helper, 'node_modules'), { recursive: true });

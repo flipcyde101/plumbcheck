@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { startStudio, loadExamples } from '../src/studio.js';
 
 const cwd = fileURLToPath(new URL('..', import.meta.url));
-const cli = (...args) => spawnSync(process.execPath, ['bin/plumcheck.js', ...args], { cwd, encoding: 'utf8', timeout: 10_000 });
+const cli = (...args) => spawnSync(process.execPath, ['bin/plumbcheck.js', ...args], { cwd, encoding: 'utf8', timeout: 10_000 });
 
 const forgedHostRequest = (url) => new Promise((resolve, reject) => {
   const req = request(url, { headers: { Host: 'attacker.example' } }, res => {

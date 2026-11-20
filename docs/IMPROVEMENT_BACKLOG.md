@@ -1,5 +1,7 @@
 # Improvement backlog
 
+> **Historical.** This document records planning or QA from the 0.2 previews and is kept for reference. It does not describe 1.0. For current direction see [ROADMAP.md](../ROADMAP.md); for what 1.x promises see [STABILITY.md](STABILITY.md).
+
 Updated 16 November 2026. This backlog tracks the continuing application-quality goal. Completed increments require authoritative tests and workflow evidence; preview checks do not close external release gates.
 
 | Priority | Work | Evidence / acceptance | State |

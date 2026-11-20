@@ -1,6 +1,6 @@
 {
   "name": "plumbcheck",
-  "version": "0.2.0-preview.5",
+  "version": "1.0.0-rc.1",
   "description": "Test what your AI automation does before it does it. Local tool-call contracts, fixture replay, and CI reports.",
   "type": "module",
   "license": "MIT",
@@ -37,7 +37,20 @@
     "src",
     "web",
     "examples",
-    "docs",
+    "schema",
+    "adapters/python/plumbcheck.py",
+    "adapters/python/README.md",
+    "docs/CONTRACTS.md",
+    "docs/CONNECT_YOUR_AGENT.md",
+    "docs/MCP.md",
+    "docs/TYPESCRIPT.md",
+    "docs/AGENT_TESTING.md",
+    "docs/ASSISTANT_INTEGRATION.md",
+    "docs/WORKBENCH.md",
+    "docs/WINDOWS_APP.md",
+    "docs/APP_WORKSPACE.md",
+    "docs/STABILITY.md",
+    "docs/PRIVACY.md",
     "ROADMAP.md",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
@@ -58,6 +71,7 @@
     "mobile:preview": "node scripts/preview-mobile.mjs",
     "plugin:build": "node scripts/build-plugin.mjs",
     "release:check": "node scripts/release-check.mjs",
+    "version:set": "node scripts/set-version.mjs",
     "sbom": "node scripts/build-sbom.mjs",
     "check": "node bin/plumbcheck.js run examples/customer-support/safe.json",
     "example:sdk": "node examples/customer-support/agent.js",
@@ -84,6 +98,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "ajv": "8.20.0",
     "esbuild": "0.28.2",
     "jsdom": "26.1.0"
   }

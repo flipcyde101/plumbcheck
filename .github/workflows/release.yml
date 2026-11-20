@@ -1,0 +1,234 @@
+name: Release
+# A v* tag builds, tests, optionally signs, and drafts the GitHub release; a maintainer publishes it.
+# Manual runs are always dry runs: they build and list the files but never create a release or publish.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Build and list the release files only (manual runs are always dry runs)'
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - id: version
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [ "$GITHUB_EVENT_NAME" = push ] && [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $version. Run npm run version:set first."
+            exit 1
+          fi
+          case "$version" in *-*) prerelease=true ;; *) prerelease=false ;; esac
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+      - name: Release gates
+        if: steps.version.outputs.prerelease == 'false'
+        run: node scripts/release-check.mjs
+
+  ci:
+    needs: verify
+    uses: ./.github/workflows/ci.yml
+
+  windows:
+    needs: verify
+    uses: ./.github/workflows/windows-desktop.yml
+
+  android:
+    needs: verify
+    uses: ./.github/workflows/android.yml
+
+  # Two SignPath requests, each approved by the maintainer in SignPath:
+  # 1. PlumbCheck.exe inside win-unpacked; 2. the installer rebuilt around the signed app.
+  sign:
+    needs: [verify, windows]
+    if: vars.SIGNPATH_ENABLED == 'true' && github.event_name == 'push'
+    runs-on: windows-latest
+    timeout-minutes: 150
+    permissions:
+      contents: read
+      actions: read
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      VERSION: ${{ needs.verify.outputs.version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: PlumbCheck-Windows-x64-unpacked
+          path: unsigned/win-unpacked
+      - id: upload-app
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: PlumbCheck-Windows-x64-app-unsigned
+          path: unsigned/win-unpacked/
+          if-no-files-found: error
+          retention-days: 1
+      - name: Sign PlumbCheck.exe (approve in SignPath)
+        uses: signpath/github-action-submit-signing-request@a2c5b60d9c75f073142b653c354b632eedce097b # v3.2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG }}
+          artifact-configuration-slug: app
+          github-artifact-id: ${{ steps.upload-app.outputs.artifact-id }}
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: signed/win-unpacked
+      - name: Rebuild the installer around the signed application
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm ci --prefix desktop --ignore-scripts --no-audit --no-fund
+          npm --prefix desktop run stage
+          cd desktop && npx electron-builder --config electron-builder.json --prepackaged ../signed/win-unpacked --win nsis --x64 --publish never
+          mkdir -p ../signed/installer && cp ../dist/windows/PlumbCheck-$VERSION-Windows-x64-Setup.exe ../signed/installer/
+      - id: upload-installer
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: PlumbCheck-Windows-x64-installer-unsigned
+          path: signed/installer/
+          if-no-files-found: error
+          retention-days: 1
+      - name: Sign the installer (approve in SignPath)
+        uses: signpath/github-action-submit-signing-request@a2c5b60d9c75f073142b653c354b632eedce097b # v3.2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG }}
+          artifact-configuration-slug: installer
+          github-artifact-id: ${{ steps.upload-installer.outputs.artifact-id }}
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: signed/final
+      - name: Verify signatures and rebuild the ZIP from the signed application
+        shell: pwsh
+        run: |
+          $checks = @("signed/final/PlumbCheck-$env:VERSION-Windows-x64-Setup.exe", 'signed/win-unpacked/PlumbCheck.exe')
+          foreach ($file in $checks) {
+            $signature = Get-AuthenticodeSignature $file
+            Write-Output "$file : $($signature.Status) : $($signature.SignerCertificate.Subject)"
+            if ($signature.Status -ne 'Valid') { throw "$file is not validly signed ($($signature.Status))." }
+          }
+          Compress-Archive -Path signed/win-unpacked/* -DestinationPath "signed/final/PlumbCheck-$env:VERSION-Windows-x64.zip"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: PlumbCheck-Windows-x64-signed
+          path: signed/final/
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    needs: [verify, ci, windows, android, sign]
+    if: ${{ !cancelled() && needs.verify.result == 'success' && needs.ci.result == 'success' && needs.windows.result == 'success' && needs.android.result == 'success' && (needs.sign.result == 'success' || needs.sign.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.verify.outputs.version }}
+      PRERELEASE: ${{ needs.verify.outputs.prerelease }}
+      SIGNED: ${{ needs.sign.result == 'success' }}
+      DRY_RUN: ${{ github.event_name != 'push' || inputs.dry_run == true }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: PlumbCheck-Windows-x64
+          path: artifacts/windows
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        if: needs.sign.result == 'success'
+        with:
+          name: PlumbCheck-Windows-x64-signed
+          path: artifacts/signed
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: PlumbCheck-Android-preview
+          path: artifacts/android
+      - name: Assemble the release files and checksums
+        run: |
+          if [ "$PRERELEASE" = false ] && [ "$SIGNED" != true ] && [ "$DRY_RUN" != true ]; then
+            echo "::error::A stable release needs signed Windows binaries. Enable SignPath (vars.SIGNPATH_ENABLED) and approve both signing requests."
+            exit 1
+          fi
+          mkdir release
+          windows=artifacts/windows; [ "$SIGNED" = true ] && windows=artifacts/signed
+          cp "$windows/PlumbCheck-$VERSION-Windows-x64-Setup.exe" "$windows/PlumbCheck-$VERSION-Windows-x64.zip" release/
+          cp artifacts/windows/SBOM.cdx.json release/
+          mapfile -t apks < <(find artifacts/android -name '*.apk')
+          [ "${#apks[@]}" -eq 1 ] || { echo "::error::Expected one Android APK, found ${#apks[@]}."; exit 1; }
+          cp "${apks[0]}" "release/PlumbCheck-$VERSION-Android-experimental-debug.apk"
+          # Checksums are computed last, over the exact files being released (after signing).
+          (cd release && sha256sum -- * > SHA256SUMS.txt)
+          ls -la release && cat release/SHA256SUMS.txt
+      - name: Release notes from CHANGELOG.md
+        run: |
+          heading="## [$VERSION]"
+          awk -v h="$heading" 'index($0, h) == 1 { found = 1; next } found && /^## \[/ { exit } found { print }' CHANGELOG.md > notes.md
+          if ! grep -q '[^[:space:]]' notes.md; then echo "::error::CHANGELOG.md has no section starting with \"$heading\"."; exit 1; fi
+          {
+            echo
+            echo '---'
+            [ "$SIGNED" = true ] && echo '- **Windows**: installer and app signed with a certificate by SignPath Foundation (free code signing provided by SignPath.io).' \
+              || echo '- **Windows**: these binaries are **not signed**. Windows SmartScreen will warn; choose "More info" and "Run anyway" only if the SHA-256 matches `SHA256SUMS.txt`.'
+            echo '- **Android (experimental)**: debug-signed APK. It cannot update the release-signed 0.2.0-preview.5 APK; uninstall that first (this removes its local data).'
+            echo '- Verify downloads against `SHA256SUMS.txt`. See [docs/STABILITY.md](https://github.com/stepan4002/plumbcheck/blob/main/docs/STABILITY.md) for what this version promises.'
+          } >> notes.md
+          cat notes.md
+      - name: Draft the GitHub release
+        run: |
+          if [ "$DRY_RUN" = true ]; then echo "Dry run: would draft v$VERSION (pre-release: $PRERELEASE, signed: $SIGNED) with:"; ls -1 release; exit 0; fi
+          if draft=$(gh release view "v$VERSION" --json isDraft --jq .isDraft 2> /dev/null); then
+            # Rebuilt binaries never match byte for byte; replacing files users already verified is not allowed.
+            if [ "$draft" != true ]; then echo "::error::v$VERSION is already published. Cut a new version instead of replacing its files."; exit 1; fi
+            gh release upload "v$VERSION" release/* --clobber
+          else
+            flags=(--draft --verify-tag --title "PlumbCheck $VERSION" --notes-file notes.md)
+            [ "$PRERELEASE" = true ] && flags+=(--prerelease)
+            gh release create "v$VERSION" "${flags[@]}" release/*
+          fi
+
+  npm:
+    needs: [verify, release]
+    # Turn on after the first manual publish and the npm trusted-publisher setup (docs/RELEASING.md).
+    # !cancelled() replaces the implicit success(), which would skip this job whenever `sign` was skipped upstream.
+    if: ${{ !cancelled() && github.event_name == 'push' && needs.release.result == 'success' && vars.NPM_TRUSTED_PUBLISHING == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      VERSION: ${{ needs.verify.outputs.version }}
+      PRERELEASE: ${{ needs.verify.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: Publish with provenance (OIDC trusted publishing, no token)
+        run: |
+          if npm view "plumbcheck@$VERSION" version > /dev/null 2>&1; then echo "plumbcheck@$VERSION is already published."; exit 0; fi
+          npm install -g npm@latest
+          tag=(); [ "$PRERELEASE" = true ] && tag=(--tag next)
+          npm publish --provenance --access public "${tag[@]}"

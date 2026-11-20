@@ -131,7 +131,7 @@ test('output failure evidence retains credential keys for delivery masking', asy
 
 test('CLI tests actual agent modules and keeps JSON stdout parseable', () => {
   const cwd=fileURLToPath(new URL('..',import.meta.url));
-  const cli=(...args)=>spawnSync(process.execPath,['bin/plumcheck.js',...args],{cwd,encoding:'utf8',timeout:10_000});
+  const cli=(...args)=>spawnSync(process.execPath,['bin/plumbcheck.js',...args],{cwd,encoding:'utf8',timeout:10_000});
   const shared=['run','examples/customer-support/agent-contract.json','--json','--agent'];
   const good=cli(...shared,'examples/customer-support/support-agent.js');assert.equal(good.status,0,good.stderr);assert.equal(JSON.parse(good.stdout).passed,true);
   const bad=cli(...shared,'examples/customer-support/regressed-agent.js');assert.equal(bad.status,1,bad.stderr);assert.equal(JSON.parse(bad.stdout).summary.failed,1);

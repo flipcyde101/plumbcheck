@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 import threading
 
-__version__ = "0.2.0-preview.5"
+__version__ = "1.0.0-rc.1"
 
 
 class ContractFailed(RuntimeError):

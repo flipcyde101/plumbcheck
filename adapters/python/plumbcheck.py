@@ -10,6 +10,8 @@ import subprocess
 import tempfile
 import threading
 
+__version__ = "1.0.0-rc.1"
+
 
 class ContractFailed(RuntimeError):
     pass
@@ -33,7 +35,7 @@ class ReplayClient:
         )
         threading.Thread(target=self._read, daemon=True).start()
         try:
-            self._request("initialize", {"protocolVersion": "2025-11-25", "capabilities": {}, "clientInfo": {"name": "plumbcheck-python", "version": "0.2.0"}})
+            self._request("initialize", {"protocolVersion": "2025-11-25", "capabilities": {}, "clientInfo": {"name": "plumbcheck-python", "version": __version__}})
         except Exception:
             self.close(check=False)
             raise

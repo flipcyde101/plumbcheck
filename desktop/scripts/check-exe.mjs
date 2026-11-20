@@ -12,6 +12,7 @@ const helper=join(dirname(application),'resources','mcp-runtime');
 const executable=join(helper,'node.exe');
 const runnerScript=join(helper,'bin','plumbcheck-mcp.js');
 assert.ok((await stat(executable)).size>1000000,'The bundled MCP runtime is required.');
+const expectedVersion=JSON.parse(await readFile(join(root,'package.json'),'utf8')).version;
 const dir=await mkdtemp(join(tmpdir(),'plumbcheck-exe-'));
 try {
   const suite=JSON.parse(await readFile(join(root,'examples/customer-support/safe.json'),'utf8'));
@@ -31,9 +32,10 @@ try {
     const responses=stdout.trim().split('\n').map(line=>JSON.parse(line));
     assert.equal(responses.length,3,`Expected only JSON-RPC stdout. ${stdout}\n${stderr}`);
     assert.equal(responses[0].result.protocolVersion,'2025-11-25');
+    assert.equal(responses[0].result.serverInfo.version,expectedVersion,'The installed MCP runtime must report the release version.');
     const report=JSON.parse(await readFile(join(out,'report.json'),'utf8'));
     assert.equal(report.passed,!mismatch);assert.equal(report.mode,'mcp-replay');assert.equal(report.summary.calls,2);
-    assert.match(await readFile(join(out,'report.html'),'utf8'),/PlumbCheck/);
+    const html=await readFile(join(out,'report.html'),'utf8');assert.match(html,/PlumbCheck/);assert.ok(html.includes(`class="version">v${expectedVersion}<`),'Saved reports must carry the release version.');
     if(mismatch) assert.match(await readFile(join(out,'junit.xml'),'utf8'),/\/to/);
     console.log(`Packaged EXE: ${mismatch?'wrong-recipient failure':'approved two-call replay'} passed.`);
   }

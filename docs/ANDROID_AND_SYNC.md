@@ -1,5 +1,7 @@
 # Android and snapshot sync
 
+> **Experimental.** This surface ships with PlumbCheck 1.0 but has no compatibility promise and can change in any release. See [STABILITY.md](STABILITY.md#experimental).
+
 Updated 16 November 2026 for 0.2.0-preview.5. Android is a preview, not a verified production mobile release.
 
 ## Android application

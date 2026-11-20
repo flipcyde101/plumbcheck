@@ -1,13 +1,17 @@
 name: Windows desktop
 on:
   workflow_dispatch:
+  workflow_call:
   push:
     branches: [main]
-    paths: ['desktop/**', 'src/**', 'web/**', 'bin/**', 'scripts/build-sbom.mjs', 'examples/**', 'package*.json', '.github/workflows/windows-desktop.yml']
+    paths: ['desktop/**', 'src/**', 'web/**', 'bin/**', 'scripts/build-sbom.mjs', 'examples/**', 'test/fixtures/compat/**', 'package*.json', '.github/workflows/windows-desktop.yml']
   pull_request:
-    paths: ['desktop/**', 'src/**', 'web/**', 'bin/**', 'scripts/build-sbom.mjs', 'examples/**', 'package*.json', '.github/workflows/windows-desktop.yml']
+    paths: ['desktop/**', 'src/**', 'web/**', 'bin/**', 'scripts/build-sbom.mjs', 'examples/**', 'test/fixtures/compat/**', 'package*.json', '.github/workflows/windows-desktop.yml']
 permissions:
   contents: read
+env:
+  # The version of the previous public release that every new build must upgrade cleanly.
+  PREVIOUS_RELEASE: 0.2.0-preview.5
 jobs:
   windows-executable:
     runs-on: windows-latest
@@ -15,8 +19,8 @@ jobs:
     env:
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
           cache: npm
@@ -24,6 +28,7 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm ci --prefix desktop --ignore-scripts --no-audit --no-fund
       - run: node desktop/node_modules/electron/install.js
+      # stage.mjs deletes and rebuilds desktop/app and desktop/mcp-runtime before packaging.
       - run: npm --prefix desktop run build:win
       - run: npm --prefix desktop run test:exe
       - name: Dependency inventory
@@ -40,7 +45,7 @@ jobs:
       - name: Compute executable checksum
         shell: pwsh
         run: Get-ChildItem dist/windows/* -File | Where-Object { $_.Extension -in '.exe', '.zip' -or $_.Name -eq 'SBOM.cdx.json' } | Get-FileHash -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } | Set-Content dist/windows/SHA256SUMS.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: PlumbCheck-Windows-x64
           path: |
@@ -50,3 +55,69 @@ jobs:
             dist/windows/SBOM.cdx.json
           if-no-files-found: error
           retention-days: 30
+      # The release workflow signs PlumbCheck.exe from this folder and rebuilds the installer around it.
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: PlumbCheck-Windows-x64-unpacked
+          path: dist/windows/win-unpacked/
+          if-no-files-found: error
+          retention-days: 30
+
+  # Install the previous public release, add user data, upgrade in place, then uninstall.
+  upgrade-path:
+    needs: windows-executable
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      INSTALL_DIR: 'C:\Program Files Test\PlumbCheck'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: PlumbCheck-Windows-x64
+          path: new
+      - name: Download the previous release installer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $name = "PlumbCheck-$env:PREVIOUS_RELEASE-Windows-x64-Setup.exe"
+          gh release download "v$env:PREVIOUS_RELEASE" --repo $env:GITHUB_REPOSITORY --pattern $name --dir old
+          if ($LASTEXITCODE -ne 0 -or -not (Test-Path "old/$name")) { throw "The $env:PREVIOUS_RELEASE installer ($name) is missing from its GitHub release, so the upgrade path cannot be tested." }
+      - name: Install the previous release into a path with spaces
+        run: |
+          # NSIS requires /D= last and unquoted, even when the path contains spaces.
+          $installer = (Get-ChildItem old/*-Setup.exe).FullName
+          $run = Start-Process -FilePath $installer -ArgumentList "/S /D=$env:INSTALL_DIR" -WindowStyle Hidden -Wait -PassThru
+          if ($run.ExitCode -ne 0) { throw "Previous installer failed: $($run.ExitCode)" }
+          if (-not (Test-Path (Join-Path $env:INSTALL_DIR 'PlumbCheck.exe'))) { throw 'The previous release did not install into the requested folder.' }
+      - name: Add user data written by 0.2
+        run: |
+          $data = Join-Path $env:APPDATA 'PlumbCheck'
+          New-Item -ItemType Directory -Force $data | Out-Null
+          Copy-Item test/fixtures/compat/workspace-0.2.json (Join-Path $data 'workspace.json')
+      - name: Upgrade in place with the new build
+        run: |
+          $installer = (Get-ChildItem new/*-Setup.exe).FullName
+          $run = Start-Process -FilePath $installer -ArgumentList "/S /D=$env:INSTALL_DIR" -WindowStyle Hidden -Wait -PassThru
+          if ($run.ExitCode -ne 0) { throw "Upgrade failed: $($run.ExitCode)" }
+      - name: The upgraded app reads 0.2 data and its MCP configuration works
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          & (Join-Path $env:INSTALL_DIR 'resources\mcp-runtime\node.exe') desktop/scripts/check-upgrade.mjs $env:INSTALL_DIR $version test/fixtures/compat/workspace-0.2.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Uninstall removes the program and keeps user data
+        run: |
+          $uninstaller = Join-Path $env:INSTALL_DIR 'Uninstall PlumbCheck.exe'
+          if (-not (Test-Path $uninstaller)) { throw 'The uninstaller is missing.' }
+          Start-Process -FilePath $uninstaller -ArgumentList '/S' -WindowStyle Hidden -Wait
+          # The NSIS uninstaller copies itself to a temporary folder and returns early; wait for it.
+          $deadline = (Get-Date).AddSeconds(120)
+          while ((Test-Path (Join-Path $env:INSTALL_DIR 'PlumbCheck.exe')) -or (Test-Path (Join-Path $env:INSTALL_DIR 'resources'))) {
+            if ((Get-Date) -gt $deadline) { throw 'The program files were not removed within 120 seconds.' }
+            Start-Sleep -Seconds 2
+          }
+          if (-not (Test-Path (Join-Path $env:APPDATA 'PlumbCheck\workspace.json'))) { throw 'Uninstall removed the user workspace; it must be kept.' }
+          Write-Output 'Uninstall removed the program and kept %APPDATA%\PlumbCheck.'

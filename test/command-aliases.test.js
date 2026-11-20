@@ -29,3 +29,17 @@ test('canonical MCP entry preserves JSON-RPC framing and replay behavior',()=>{
     assert.equal(responses.length,2);assert.equal(responses[1].result.structuredContent.status,'shipped');
   }
 });
+test('deprecated aliases warn on stderr only; canonical commands do not', () => {
+  const legacy = cli('plumcheck', '--version'), canonical = cli('plumbcheck', '--version');
+  assert.equal(legacy.status, 0); assert.equal(legacy.stdout, canonical.stdout);
+  assert.match(legacy.stderr, /"plumcheck" command is deprecated and will be removed in 2\.0/);
+  assert.equal(canonical.stderr, '');
+  const mcp = spawnSync(process.execPath, ['bin/plumcheck-mcp.js'], { cwd, encoding: 'utf8', input: '', timeout: 10000 });
+  assert.match(mcp.stderr, /"plumcheck-mcp" command is deprecated/); assert.equal(mcp.stdout, '');
+});
+test('the sync relay is labelled experimental in its help', () => {
+  const help = cli('plumbcheck-sync', '--help');
+  assert.equal(help.status, 0); assert.match(help.stdout, /^\[experimental\]/);
+  const usage = cli('plumbcheck-sync');
+  assert.equal(usage.status, 2); assert.match(usage.stderr, /\[experimental\]/);
+});

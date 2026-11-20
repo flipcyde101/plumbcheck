@@ -1,6 +1,6 @@
 # Application workspace
 
-Updated 16 November 2026. Current channel: 0.2 preview.
+Updated 16 November 2026. Applies to PlumbCheck 1.0. Workspaces created by 0.2 previews open unchanged.
 
 The Windows app is an installed Electron application with its runtime included. Its interface is served on a random loopback port inside its own window. The browser Studio is also available for source development. End users do not need a web server, browser, npm, or Node.js installation.
 

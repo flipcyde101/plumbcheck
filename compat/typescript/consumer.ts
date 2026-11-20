@@ -36,7 +36,7 @@ const agentReport = await runAgentSuite(suite, async (client, { input, name }) =
 const agentMode: 'agent-replay' = agentReport.mode;
 const returnedStatus: string | undefined = agentReport.cases[0]?.output?.status;
 
-const noInput: AgentSuite<undefined> = { version: 1, name: 'No input', policies: {}, cases: [{ name: 'Output only', fixtures: [], expect: { output: false } }] };
+const noInput: AgentSuite<undefined> = { $schema: 'https://stepan4002.github.io/plumbcheck/schema/contract-v1.schema.json', version: 1, name: 'No input', policies: {}, cases: [{ name: 'Output only', fixtures: [], expect: { output: false } }] };
 await runAgentSuite(noInput, (_client, { input }) => { const missing: undefined = input; return missing === undefined; });
 
 const recorder = createRecorder({ async callTool(_request: ToolRequest) { return { ready: true }; } });

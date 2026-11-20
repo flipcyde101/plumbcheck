@@ -1,5 +1,7 @@
 # Connect Android to Ollama
 
+> **Experimental.** This surface ships with PlumbCheck 1.0 but has no compatibility promise and can change in any release. See [STABILITY.md](STABILITY.md#experimental).
+
 Available in **0.2.0-preview.2**. Install the Android APK, then use **Connect Ollama** inside PlumbCheck. The interface is bundled in the application. A hosted website is not required.
 
 ## First model test

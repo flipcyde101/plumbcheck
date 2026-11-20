@@ -4,6 +4,16 @@ Contracts are JSON. Unknown structural keys fail validation before any calls exe
 
 That call-list rule applies to default planned-call mode. With `--agent` or `runAgentSuite`, cases use `input` and omit `calls`: the supplied agent function chooses the actual calls. Agent cases may additionally assert `expect.output`; both modes may carry `expect.outputChecks`, which only agent and model runs evaluate. See [agent testing](AGENT_TESTING.md). A fixture or explicit assertion is required to avoid empty passing tests.
 
+## Editor support and `$schema`
+
+A JSON Schema for this format is published at `https://stepan4002.github.io/plumbcheck/schema/contract-v1.schema.json` and ships in the npm package as `schema/contract-v1.schema.json`. To get completion and inline errors in an editor, add it to the top of the contract:
+
+```json
+{ "$schema": "https://stepan4002.github.io/plumbcheck/schema/contract-v1.schema.json", "version": 1, "name": "..." }
+```
+
+PlumbCheck 1.0 and later accept `$schema` and ignore it. PlumbCheck 0.2 rejects unknown keys, so omit `$schema` if a 0.2 reader must accept the contract. The schema checks structure only. PlumbCheck's validator stays authoritative and also checks that assertion indexes exist, that case names are unique, that patterns compile and that size limits hold.
+
 ## Policies
 
 `policies` is required; its optional `allow`, `deny`, and `requireApproval` fields are arrays of exact, case-sensitive tool names. No wildcards. Deny wins over allow. Tools absent from `allow` are blocked. Requiring approval does not implicitly allow a tool.
@@ -36,7 +46,7 @@ Any otherwise passing case with unused fixtures fails. Each case gets a fresh fi
 
 `results` read the replayed fixture, so in replay they confirm your fixture data, not a live integration.
 
-This alpha intentionally avoids claiming full JSON Schema result validation. Equality checks support a narrow, inspectable contract. JSON Schema integration is a roadmap item.
+Result assertions use exact equality on purpose: the check stays narrow and inspectable. They do not validate tool results against a JSON Schema. (The [contract schema](#editor-support-and-schema) describes contracts themselves, not tool results.)
 
 ## Tool declarations
 

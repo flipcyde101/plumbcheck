@@ -1,5 +1,7 @@
 # First-use acceptance pass
 
+> **Historical.** This document records planning or QA from the 0.2 previews and is kept for reference. It does not describe 1.0. For current direction see [ROADMAP.md](../ROADMAP.md); for what 1.x promises see [STABILITY.md](STABILITY.md).
+
 Target preview.5 application source: `4a829a5635f9d2d4fb4125d57c4f496e968018eb`. Record the exact commit/build, environment and pass/fail/not-run for each item. Automated baseline: 208 core tests, seven official MCP checks and one packed TypeScript consumer check. Native visual and physical-device checks are additional evidence.
 
 Use synthetic data and a new disposable workspace. Source Studio accepts an isolated `PLUMBCHECK_HOME`; open its private launch link. Do not overwrite a real user's workspace. Do not share launch fragments, capabilities, API keys, pairing codes, credential files or workspace databases. No paid providers, real business tools, installs beyond the locked test dependencies, security changes, publishing, pushes or merges are required by this pass.

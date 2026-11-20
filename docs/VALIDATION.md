@@ -1,5 +1,34 @@
 # Verification record
 
+> **Historical records.** Everything below the 1.0 sections describes preview builds. Mentions of "seven gates" refer to the gate model before 1.0.0-rc.1, when every gate was required. Since rc.1 each gate has a scope and only `1.0` gates block a release (see `release-readiness.json` and CHANGELOG.md). Superseded `core-and-integrations` evidence, recorded at 0.2.0-preview.5: "4a829a5: 208 core tests, seven MCP checks and packed TypeScript consumer check passed; all four Node 22/24 Windows/Linux CI jobs, Android unit/assembly/lint and Windows packaging/installed-helper workflows passed."
+
+## 1.0.0-rc.1
+
+Branch `release/v1.0.0`, recorded 20 November 2026 on Windows 11 with Node.js 26.13.0 and npm 11.20.0. This section collects the evidence for the four required gates. A gate moves to `verified` in `release-readiness.json` only when its evidence below is complete, one commit per gate.
+
+### Local verification (before CI)
+
+| Check | Result |
+| --- | --- |
+| `npm test` | 321/321 passed (264 at the start of the branch). New: compatibility fixtures, schema, version, release check, package contents, update notice (unit and DOM), alias deprecation, experimental labels. |
+| `npm run test:mcp` | 7/7 |
+| `npm run test:types` | 1/1 packed TypeScript consumer |
+| `npm run check:agent`, `npm run example:sdk` | passed |
+| `npm run mobile:build`, `npm run plugin:build` | built; bundles carry 1.0.0-rc.1 |
+| `npm run demo` | exit 1 by design (4 of 6 cases fail) |
+| `npm run release:check` | exit 1: four required gates open; three experimental and one post-1.0 gate reported |
+| `npm pack --dry-run` | 69 files, 117 KB packed, 394 KB unpacked |
+| `npm audit --omit=dev --audit-level=high` | 0 vulnerabilities (root and desktop) |
+
+One pre-existing timing test (`workspace-ui.test.js`, "a new launch link refreshes authorization…") failed once in four full runs while the machine was loaded and passed 5/5 alone; it is unrelated to this branch.
+
+### Gate evidence (pending)
+
+- **core-and-integrations:** CI run URLs for `ci.yml` (all four jobs and audit), `windows-desktop.yml` (including `upgrade-path`) and `android.yml` on the release commit; the release workflow dry run.
+- **live-models:** `npm run test:probe` summary for OpenAI (`reports/probe/<slug>/summary.json`), model IDs and token usage.
+- **windows-clean-machine:** the Windows Sandbox walkthrough (`launch/CLEAN_MACHINE_CHECKLIST.md`) with screenshots, plus the CI `upgrade-path` run.
+- **windows-authenticode:** `Get-AuthenticodeSignature` output for the signed installer and `PlumbCheck.exe` of a signed release candidate, publisher SignPath Foundation.
+
 ## 0.2.0-preview.5 first-use workflow
 
 The README now contains all seven usability/release work areas and distinguishes implemented features from planned or unverified work. The first implementation increment adds a shared Windows/Android form builder for one-tool scenarios, nested text/number/boolean argument and response fields, order/ticket templates, expected versus planned arguments and a bounded generated contract. Windows builder saves update the same active project, so a wrong planned value can fail and be corrected without removing cases or changing expected values. Android preserves the draft on cancellation/storage failure and restores saved evidence without rerunning it.

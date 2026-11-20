@@ -1,8 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import { version } from './version.js';
 
 export function createControlServer(call) {
-  const server = new McpServer({ name: 'PlumbCheck testing control', version: '0.2.0-preview.5' }, { maxToolInputElements: 20000 });
+  const server = new McpServer({ name: 'PlumbCheck testing control', version }, { maxToolInputElements: 20000 });
   const id = z.string().uuid();
   const specs = [
     ['plumbcheck_list_projects', 'List saved projects and their current revision. No credentials or raw fixtures.', {}],

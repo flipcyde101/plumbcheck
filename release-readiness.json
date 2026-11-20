@@ -1,44 +1,52 @@
 {
   "version": 1,
-  "channel": "preview",
+  "channel": "release-candidate",
   "required": [
     {
       "id": "core-and-integrations",
-      "status": "verified",
-      "evidence": "4a829a5: 208 core tests, seven MCP checks and packed TypeScript consumer check passed; all four Node 22/24 Windows/Linux CI jobs, Android unit/assembly/lint and Windows packaging/installed-helper workflows passed. Generated Windows and bundled Android DOM checks cover the first-test builder, same-case failure/fix, draft/storage preservation and feedback recovery. Actual builder-generated Qwen pass and wrong-argument evidence is retained. Native preview.5 visual, physical-phone and actual assistant-host checks remain pending. Exact run links and boundaries are in docs/VALIDATION.md."
+      "scope": "1.0",
+      "status": "pending",
+      "reason": "Re-verify on the 1.0 release build: full test suite, MCP and TypeScript compatibility checks and every CI workflow. The previous evidence (4a829a5, 0.2.0-preview.5) is kept in docs/VALIDATION.md."
     },
     {
       "id": "windows-authenticode",
+      "scope": "1.0",
       "status": "pending",
       "reason": "A publisher signing identity is required for the production Windows installer."
     },
     {
       "id": "windows-clean-machine",
+      "scope": "1.0",
       "status": "pending",
       "reason": "Native save dialogs and real OS-encrypted credential recovery passed locally; CI installed and checked the helper. Clean-account interactive install/uninstall and upgrade behavior still need verification."
     },
     {
       "id": "live-models",
+      "scope": "1.0",
       "status": "pending",
-      "reason": "Ollama Qwen 3.5:4B has passed correct and deliberate-regression live tests with usage/evidence exports. A live cloud-provider account/model still needs authorized verification."
+      "reason": "OpenAI live probe on the release build (npm run test:probe). Anthropic is experimental until verified (decided 2026-11-20). Ollama Qwen 3.5:4B has already passed correct and deliberate-regression live tests."
     },
     {
       "id": "assistant-hosts",
+      "scope": "experimental",
       "status": "pending",
       "reason": "Walk through actual supported assistant hosts; official SDK tests alone do not prove Claude or ChatGPT host compatibility."
     },
     {
       "id": "android-device",
+      "scope": "experimental",
       "status": "pending",
       "reason": "Verify the signed APK on real devices, including native Ollama LAN access, file pickers, Keystore persistence and HTTPS snapshot pairing. Emulator model tests passed; the physical-phone network path remains unverified."
     },
     {
       "id": "remote-service",
+      "scope": "experimental",
       "status": "pending",
       "reason": "Provision reviewed HTTPS hosting and verify deployment, device revocation, backups, privacy and operational controls."
     },
     {
       "id": "external-review",
+      "scope": "post-1.0",
       "status": "pending",
       "reason": "Complete independent security/accessibility/usability review and resolve findings."
     }

@@ -1,5 +1,7 @@
 # Assistant testing control
 
+> **Experimental.** This surface ships with PlumbCheck 1.0 but has no compatibility promise and can change in any release. See [STABILITY.md](STABILITY.md#experimental).
+
 PlumbCheck has two distinct MCP roles:
 
 - The fixture server supplies simulated tools to the agent being tested.

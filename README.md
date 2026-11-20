@@ -4,7 +4,7 @@
 
 Local regression tests for what your AI agent *does*: catch a wrong tool argument, an unapproved send, a forbidden operation or a wrong final answer before the agent touches real systems.
 
-[![CI](https://github.com/stepan4002/plumbcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/stepan4002/plumbcheck/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Release](https://img.shields.io/github/v/release/stepan4002/plumbcheck?include_prereleases&label=release)](https://github.com/stepan4002/plumbcheck/releases)
+[![CI](https://github.com/stepan4002/plumbcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/stepan4002/plumbcheck/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Release](https://img.shields.io/github/v/release/stepan4002/plumbcheck?label=release)](https://github.com/stepan4002/plumbcheck/releases/latest) [![npm](https://img.shields.io/npm/v/plumbcheck)](https://www.npmjs.com/package/plumbcheck)
 
 ![A tool reply hides an instruction to delete the order; the agent calls orders.delete; PlumbCheck blocks it and the live probe reports 6/6 caught](docs/images/demo.gif)
 
@@ -12,9 +12,16 @@ Local regression tests for what your AI agent *does*: catch a wrong tool argumen
 
 ## Quick start
 
-**Windows app (no Node.js needed):** download `PlumbCheck-…-Windows-x64-Setup.exe` from the [latest release](https://github.com/stepan4002/plumbcheck/releases) and run it. This is an unsigned preview, so Windows SmartScreen asks you to confirm.
+**Windows app (no Node.js needed):** download `PlumbCheck-…-Windows-x64-Setup.exe` from the [latest release](https://github.com/stepan4002/plumbcheck/releases) and run it. From 1.0.0 the installer and app are signed ([code signing policy](#code-signing-policy)). Until the new signature builds reputation, SmartScreen may still ask you to confirm with **More info → Run anyway**.
 
-**From source (Node.js 22+):**
+**From npm (Node.js 22+):**
+
+```sh
+npx plumbcheck demo
+npm install --save-dev plumbcheck   # then: npx plumbcheck run suite.json
+```
+
+**From source:**
 
 ```sh
 git clone https://github.com/stepan4002/plumbcheck && cd plumbcheck && npm ci && npm run demo
@@ -24,17 +31,17 @@ git clone https://github.com/stepan4002/plumbcheck && cd plumbcheck && npm ci &&
 
 Built by [Plumbnote](https://plumbnote.com). MIT licensed. Offline fixture checks need no account or API key. Optional model connections use your API account or a local server. No telemetry. The fixture engine uses Node built-ins; model and assistant integrations use pinned SDK dependencies bundled into the Windows app.
 
-Canonical commands: `plumbcheck` and `plumbcheck-mcp`. Earlier `plumcheck` / `plumcheck-mcp` aliases remain supported. TypeScript declarations ship with the package; see [typed usage and completed recording snapshots](docs/TYPESCRIPT.md).
+Commands: `plumbcheck` and `plumbcheck-mcp`. The earlier `plumcheck` / `plumcheck-mcp` aliases still work but are deprecated and will be removed in 2.0. TypeScript declarations ship with the package; see [typed usage and completed recording snapshots](docs/TYPESCRIPT.md).
 
-**Status: v0.2 preview, not a production release.** Windows application, saved projects, model-selected tool tests, run history, cancellation, comparison, Python/JavaScript adapters, fixture MCP and testing-control MCP, Android APK preview, and optional self-hosted snapshot sync. [Release gates](release-readiness.json) record the remaining verification and distribution requirements; the usability plan is in [ROADMAP.md](ROADMAP.md#usability-work-and-release-plan). Questions and ideas: [Discussions](https://github.com/stepan4002/plumbcheck/discussions). Help and response times: [SUPPORT.md](SUPPORT.md).
+**Status: 1.0.** Stable: the CLI, the contract and report formats, the JavaScript API, the Python adapter, the fixture and testing-control MCP servers, and the Windows app with saved projects, model-selected tool tests, run history, cancellation and comparison. Experimental: the Android app, self-hosted snapshot sync and the assistant-host plugin bundle. [What 1.x promises](docs/STABILITY.md). [Release gates](release-readiness.json) record the evidence behind each release; the usability plan is in [ROADMAP.md](ROADMAP.md#usability-work-and-release-plan). Questions and ideas: [Discussions](https://github.com/stepan4002/plumbcheck/discussions). Help and response times: [SUPPORT.md](SUPPORT.md).
 
 ![PlumbCheck local workbench](docs/images/workbench.jpg)
 
 ## Install and start
 
-**Windows app:** download the `.exe` installer or the portable ZIP from the [latest release](https://github.com/stepan4002/plumbcheck/releases) (`SHA256SUMS.txt` lists checksums). Builds of every commit are also available from the [Windows desktop workflow](https://github.com/stepan4002/plumbcheck/actions/workflows/windows-desktop.yml). No Node.js setup is needed. This unsigned preview includes saved projects, model connections, run evidence, and bundled fixture/control MCP helpers. See [the Windows app guide](docs/WINDOWS_APP.md).
+**Windows app:** download the `.exe` installer or the portable ZIP from the [latest release](https://github.com/stepan4002/plumbcheck/releases) (`SHA256SUMS.txt` lists checksums). Builds of every commit are also available from the [Windows desktop workflow](https://github.com/stepan4002/plumbcheck/actions/workflows/windows-desktop.yml). No Node.js setup is needed. It includes saved projects, model connections, run evidence, and bundled fixture/control MCP helpers. See [the Windows app guide](docs/WINDOWS_APP.md).
 
-**Android preview:** a debug-signed APK is attached to each [release](https://github.com/stepan4002/plumbcheck/releases) and built by the [Android workflow](https://github.com/stepan4002/plumbcheck/actions/workflows/android.yml). It runs fixture checks offline, saves a project, imports/exports JSON, and runs a built-in tool agent through your Ollama server using native Android networking. Actual Qwen calls passed a correct scenario and failed a deliberate wrong-order scenario on the QA emulator. Optional HTTPS snapshot sync is separate. Imported snapshots retain their reports in Windows History with source/revision labels; report upload from Android is explicit. A locally built release-variant APK uses a private preview signing key. Real-phone networking and a long-term distribution identity remain release gates. See [connect Android to Ollama](docs/ANDROID_OLLAMA.md) and [Android and sync](docs/ANDROID_AND_SYNC.md).
+**Android (experimental):** a debug-signed APK is attached to each [release](https://github.com/stepan4002/plumbcheck/releases) and built by the [Android workflow](https://github.com/stepan4002/plumbcheck/actions/workflows/android.yml). It runs fixture checks offline, saves a project, imports/exports JSON, and runs a built-in tool agent through your Ollama server using native Android networking. Actual Qwen calls passed a correct scenario and failed a deliberate wrong-order scenario on the QA emulator. Optional HTTPS snapshot sync is separate. Imported snapshots retain their reports in Windows History with source/revision labels; report upload from Android is explicit. A locally built release-variant APK uses a private preview signing key. Real-phone networking and a long-term distribution identity are not yet verified, so Android is experimental and may change in any release. See [connect Android to Ollama](docs/ANDROID_OLLAMA.md) and [Android and sync](docs/ANDROID_AND_SYNC.md).
 
 **Source version:**
 
@@ -167,13 +174,13 @@ await yourAgent(client); // client.callTool({ name, arguments })
 client.verifyComplete();
 ```
 
-`callTool` follows the common MCP JavaScript client request shape. It supports one JSON object response per call; task-based, streaming, and multi-round interactions are outside this alpha. It is not a drop-in implementation of every MCP Client method. No official MCP SDK dependency or compatibility certification is claimed.
+`callTool` follows the common MCP JavaScript client request shape. It supports one JSON object response per call; task-based, streaming, and multi-round interactions are not supported. It is not a drop-in implementation of every MCP Client method. No official MCP SDK dependency or compatibility certification is claimed.
 
 `createRecorder(client)` wraps a client with that same method and collects `{ tool, arguments, result }` fixtures in memory. Use `await recorder.snapshot()` to wait for calls already in flight and obtain completed, independent JSON fixtures. **Recording with a live client executes its real tools.** Snapshots are raw data; review and sanitize them before persisting or committing. Never expose recording to an untrusted agent. See [the example](examples/customer-support/agent.js).
 
 ## Use an MCP client directly
 
-To let an assistant **operate PlumbCheck**, use **Create assistant configuration** in the Windows Workspace. Its separate control service can list saved projects, validate contracts, start offline jobs, inspect evidence, compare runs, and cancel. It has no arbitrary shell tool and cannot spend model credits. The self-contained local plugin is built with `npm run plugin:build`. Host installation and ChatGPT web/mobile HTTPS integration need separate validation; a local stdio package does not enable a cloud connection automatically. [Assistant integration](docs/ASSISTANT_INTEGRATION.md).
+To let an assistant **operate PlumbCheck**, use **Create assistant configuration** in the Windows Workspace. Its separate control service can list saved projects, validate contracts, start offline jobs, inspect evidence, compare runs, and cancel. It has no arbitrary shell tool and cannot spend model credits. The self-contained local plugin (experimental, build from source) is built with `npm run plugin:build`. Host installation and ChatGPT web/mobile HTTPS integration need separate validation; a local stdio package does not enable a cloud connection automatically. [Assistant integration](docs/ASSISTANT_INTEGRATION.md).
 
 To test **an agent's own MCP calls**, use the fixture server below.
 
@@ -202,10 +209,19 @@ The included [CI workflow](.github/workflows/ci.yml) tests Node 22 and 24 on Lin
 
 ## Build with us
 
-The Windows app and Android/snapshot-sync previews are implemented. Remaining direction includes phone-to-worker execution, authenticated remote assistant connections, additional framework adapters, official subscription login routes, and signed public distribution. See [the prioritised improvement backlog](docs/IMPROVEMENT_BACKLOG.md) and [the phased platform roadmap](docs/PLATFORM_ROADMAP.md) for the distinction between implemented features and verified host/device support. This is not universal-agent compatibility.
+After 1.0 the direction includes automatic updates, a stable Android release, phone-to-worker execution, authenticated remote assistant connections, hosted agent platforms and additional framework adapters. See [the roadmap](ROADMAP.md); the older [improvement backlog](docs/IMPROVEMENT_BACKLOG.md) and [platform roadmap](docs/PLATFORM_ROADMAP.md) are kept as historical planning records. This is not universal-agent compatibility.
 
 Start with [CONTRIBUTING.md](CONTRIBUTING.md), [the roadmap](ROADMAP.md), and [the security policy](SECURITY.md). The [product brief](docs/PRODUCT_BRIEF.md) explains the differentiation, research, and validation still needed. The [build prompt](docs/BUILD_PROMPT.md) gives a reusable implementation brief for future coding sessions.
 
-The source repository is [stepan4002/plumbcheck](https://github.com/stepan4002/plumbcheck). The npm package name has not been reserved or published; do not assume `npx plumbcheck` installs this project. Download or clone this repository to run the commands above.
+The source repository is [stepan4002/plumbcheck](https://github.com/stepan4002/plumbcheck). The npm package is [`plumbcheck`](https://www.npmjs.com/package/plumbcheck), published from this repository's release workflow with [npm provenance](https://docs.npmjs.com/generating-provenance-statements).
+
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).
+
+- **Signed files:** the Windows installer (`PlumbCheck-<version>-Windows-x64-Setup.exe`) and the app (`PlumbCheck.exe`, also inside the portable ZIP), built from this repository by the [release workflow](.github/workflows/release.yml). Nothing built elsewhere is signed.
+- **Roles:** author and committer, reviewer, and approver: [@stepan4002](https://github.com/stepan4002). Every signing request is approved by hand in SignPath, and every change reaches `main` through a reviewed pull request.
+- **Privacy:** PlumbCheck sends no telemetry; see the [privacy policy](docs/PRIVACY.md) for every connection the app can make.
+- **Uninstall:** Settings → Apps → Installed apps → PlumbCheck, or run `Uninstall PlumbCheck.exe` in the install folder. Your projects in `%APPDATA%\PlumbCheck` are kept unless you delete that folder.
 
 Copyright © 2026 Plumbnote. [MIT License](LICENSE).

@@ -1,10 +1,27 @@
-# Public release checklist
+# Releasing
 
-The founder selected `stepan4002/plumbcheck` as the source repository. Preview releases are tagged and published on GitHub Releases with the Windows installer, portable ZIP, checksums, SBOM and Android APK attached; record each in `CHANGELOG.md`. The npm package has not been published. Verify repository visibility separately before a public launch.
+Releases are cut from `stepan4002/plumbcheck` by [the release workflow](../.github/workflows/release.yml): a `v*` tag builds and tests everything, signs the Windows files when SignPath is enabled, drafts a GitHub release with the installer, portable ZIP, checksums, SBOM and the experimental Android APK, and publishes the npm package with provenance. A maintainer reviews and publishes the draft. Record every release in `CHANGELOG.md`.
 
-## Version 0.2 preview
+## Cutting a release
 
-`release-readiness.json` records production gates. Run `npm run release:check`; a nonzero result means required evidence is missing, even when preview builds work. Keep the preview label until every relevant gate has reviewable evidence. Do not mark signing, cloud integrations, assistant hosts, or actual-device checks verified based on mocks or SDK tests.
+1. **Bump the version** on a branch: `npm run version:set -- 1.2.3` (or `1.2.3-rc.1`). It writes `package.json` and both lock files, `desktop/package.json`, `src/version.js`, `plugins/plumbcheck/plugin.json`, the Python adapter and the Android `versionName`/`versionCode` (`major*10000 + minor*100 + patch`; pre-releases share their base code). `test/version.test.js` fails if any copy disagrees.
+2. **Changelog:** add a `## [1.2.3] - YYYY-MM-DD` section and its link reference to `CHANGELOG.md`. The release notes are taken from that section; the release fails if it is missing or empty.
+3. **Verify locally** (see below), then **dry-run the workflow** on the branch: `gh workflow run release.yml --ref <branch> -f dry_run=true`. Manual runs never create a release or publish; they build, test and list the files.
+4. **Merge** the pull request after CI is green, then **tag** `main`: `git tag v1.2.3 && git push origin v1.2.3`. The tag must equal `v` plus the `package.json` version.
+5. The workflow runs CI, the Windows build with its upgrade-path test, and Android. For a stable version it also requires `npm run release:check` to pass.
+6. **Signing** (when `vars.SIGNPATH_ENABLED` is `true`): approve **two** requests in SignPath, first the app (`PlumbCheck.exe`), then the installer that the workflow rebuilds around the signed app. Each waits up to an hour. A stable release without signed files fails; a pre-release may be unsigned.
+7. The workflow computes `SHA256SUMS.txt` over the final files and **drafts** the GitHub release (marked pre-release when the version contains `-`). Review the draft and publish it. Re-running the workflow for the same tag replaces the files of a release that is still a draft; once a release is published its files are never replaced, so cut a new version instead.
+8. **npm** (when `vars.NPM_TRUSTED_PUBLISHING` is `true`): the `npm` job publishes with provenance through OIDC, using `--tag next` for pre-releases. It skips a version that is already on npm, so re-runs are safe.
+
+### One-time setup
+
+- **SignPath Foundation:** create the project with artifact configurations `app` and `installer` from [`.github/signpath/`](../.github/signpath/), then add the repository secret `SIGNPATH_API_TOKEN` and the variables `SIGNPATH_ORGANIZATION_ID`, `SIGNPATH_PROJECT_SLUG`, `SIGNPATH_POLICY_SLUG` and `SIGNPATH_ENABLED=true`. The `windows-authenticode` gate needs evidence from a signed build, so sign a release candidate before cutting a stable version.
+- **npm:** the first version has to be published by hand (`npm publish --tag next` after `npm login` with 2FA), because a trusted publisher can only be added to an existing package. Then on npmjs.com add the trusted publisher (repository `stepan4002/plumbcheck`, workflow `release.yml`, environment `npm`), set publishing access to *Require two-factor authentication and disallow tokens*, and set the repository variable `NPM_TRUSTED_PUBLISHING=true`.
+- **Known limit:** the NSIS uninstaller inside the installer is not signed by this flow.
+
+## Gates and verification
+
+`release-readiness.json` records release gates. Each gate has a `scope`: `1.0` gates are required, `experimental` and `post-1.0` gates are reported but do not block, and a gate with no scope counts as required. Run `npm run release:check`; a nonzero result means a required gate is still missing reviewable evidence, even when preview builds work. Do not mark signing, cloud integrations, assistant hosts, or actual-device checks verified based on mocks or SDK tests.
 
 Install root dependencies with `npm ci`, then run `npm test`, `npm run test:mcp`, `npm run test:types`, `npm run mobile:build`, and `npm run plugin:build`. Compatibility workspaces need their own `npm ci --prefix compat/mcp-sdk` and `npm ci --prefix compat/typescript`. Invoke `npm run test:local-model` separately with an authorized running Ollama model; ordinary CI never calls paid or local models.
 

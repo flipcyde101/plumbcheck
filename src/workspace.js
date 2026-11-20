@@ -1,4 +1,5 @@
-import { mkdir, readFile, rename, open, unlink } from 'node:fs/promises';
+import { mkdir, readFile, open, unlink } from 'node:fs/promises';
+import { replaceFile } from './replace-file.js';
 import { join, resolve } from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 import { validateSuite } from './validation.js';
@@ -87,7 +88,7 @@ export class Workspace {
       try {
         const output = await open(temporary, 'wx', 0o600);
         try { await output.writeFile(payload); await output.sync(); } finally { await output.close(); }
-        await rename(temporary, this.file);
+        await replaceFile(temporary, this.file);
       } finally { await unlink(temporary).catch(error => { if (error.code !== 'ENOENT') throw error; }); }
       this.state = next;
       return structuredClone(result);

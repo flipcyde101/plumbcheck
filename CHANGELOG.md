@@ -4,6 +4,9 @@ All notable changes to PlumbCheck are listed here. The project follows [Semantic
 
 ## [Unreleased]
 
+### Fixed
+- Windows: saving a workspace, credentials, app settings or relay devices no longer fails with `EPERM` when antivirus or the search indexer briefly holds the file open. The atomic replace now retries those transient locks for up to about 3 seconds, then reports the error as before.
+
 ## [1.0.0-rc.1] - 2026-11-20
 
 Release candidate for 1.0.0. Windows binaries in this pre-release are **not signed** yet; 1.0.0 will be. Verify downloads against `SHA256SUMS.txt`.

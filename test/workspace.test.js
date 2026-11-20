@@ -115,7 +115,8 @@ test('a storage failure cannot turn an unfinished model job into a reported pass
   assert.ok(complete);
   await rename(w.file, `${w.file}.retained`); await mkdir(w.file);
   complete(await runSuite(p.contract));
-  for (let i = 0; i < 100 && !w.failure; i++) await new Promise(resolve => setTimeout(resolve, 10));
+  // On Windows the blocked replace is EPERM, which replaceFile retries for ~3 s before giving up.
+  for (let i = 0; i < 600 && !w.failure; i++) await new Promise(resolve => setTimeout(resolve, 10));
   assert.throws(() => w.summary(), /storage is unavailable/);
   await rm(w.file, { recursive: true }); await rename(`${w.file}.retained`, w.file);
   const reopened = await f.reopen(); assert.equal(reopened.run(r.id).status, 'interrupted');

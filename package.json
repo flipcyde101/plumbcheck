@@ -103,6 +103,6 @@
   "devDependencies": {
     "ajv": "8.20.0",
     "esbuild": "0.28.2",
-    "jsdom": "26.1.0"
+    "jsdom": "31.0.1"
   }
 }

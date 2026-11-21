@@ -1,6 +1,6 @@
 {
   "name": "plumbcheck-desktop-build",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Isolated Windows desktop build tools for PlumbCheck",
   "license": "MIT",

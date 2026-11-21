@@ -82,6 +82,10 @@ npm run check:agent
 
 # Buggy agent fails even though it catches the tool error
 npm run demo:agent
+
+# Second domain: calendar-booking agent with approval and must-not checks
+npm run check:calendar
+npm run demo:calendar
 ```
 
 The demo uses planned tool calls to illustrate contract checking. The SDK example runs a JavaScript function against replayed responses. Neither example invokes an LLM.
@@ -93,6 +97,8 @@ For an explicitly opted-in local-model check, start a tool-capable model server 
 ```sh
 node bin/plumbcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/support-agent.js --out reports/agent
 ```
+
+For a second domain showing approval-gated and denied (`must-not`) checks, see [the calendar-booking example](examples/calendar-booking/README.md) (`npm run check:calendar` / `npm run demo:calendar`).
 
 Your module exports `async function (client, { input, name })` as its default export. The function chooses tool calls from fixture responses; PlumbCheck checks every attempted call and the final `expect.output`. Tool failures still fail the test if the function catches the exception. Each case receives a frozen, fixture-only `callTool` client and cloned input.
 

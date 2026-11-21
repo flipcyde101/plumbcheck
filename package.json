@@ -78,6 +78,8 @@
     "example:sdk": "node examples/customer-support/agent.js",
     "check:agent": "node bin/plumbcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/support-agent.js --out reports/agent",
     "demo:agent": "node bin/plumbcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/regressed-agent.js --out reports/regressed-agent",
+    "check:calendar": "node bin/plumbcheck.js run examples/calendar-booking/agent-contract.json --agent examples/calendar-booking/booking-agent.js --out reports/calendar-agent",
+    "demo:calendar": "node bin/plumbcheck.js run examples/calendar-booking/agent-contract.json --agent examples/calendar-booking/regressed-agent.js --out reports/regressed-calendar-agent",
     "test:probe": "node scripts/probe-model.mjs"
   },
   "keywords": [

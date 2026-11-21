@@ -75,7 +75,8 @@ test('the real gate file gives every gate a known scope and keeps the 1.0 gates 
   const gates = JSON.parse(await readFile(new URL('../release-readiness.json', import.meta.url), 'utf8'));
   const scopes = Object.fromEntries(gates.required.map(g => [g.id, g.scope]));
   assert.deepEqual(scopes, {
-    'core-and-integrations': '1.0', 'windows-authenticode': '1.0', 'windows-clean-machine': '1.0', 'live-models': '1.0',
+    // windows-authenticode moved to post-1.0 on 2026-11-21: 1.0.0 ships unsigned while SignPath is pending.
+    'core-and-integrations': '1.0', 'windows-authenticode': 'post-1.0', 'windows-clean-machine': '1.0', 'live-models': '1.0',
     'assistant-hosts': 'experimental', 'android-device': 'experimental', 'remote-service': 'experimental', 'external-review': 'post-1.0',
   });
   for (const g of gates.required) assert.ok(g.status === 'verified' ? g.evidence : g.reason, `${g.id} needs evidence or a reason`);

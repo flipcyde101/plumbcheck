@@ -165,7 +165,10 @@ jobs:
           path: artifacts/android
       - name: Assemble the release files and checksums
         run: |
-          if [ "$PRERELEASE" = false ] && [ "$SIGNED" != true ] && [ "$DRY_RUN" != true ]; then
+          # Signing blocks a stable release only while release-readiness.json lists
+          # windows-authenticode as a required (scope "1.0") gate; a missing gate counts as required.
+          signing_required=$(node -p "(require('./release-readiness.json').required.find(g => g.id === 'windows-authenticode') || { scope: '1.0' }).scope === '1.0'")
+          if [ "$PRERELEASE" = false ] && [ "$SIGNED" != true ] && [ "$DRY_RUN" != true ] && [ "$signing_required" = true ]; then
             echo "::error::A stable release needs signed Windows binaries. Enable SignPath (vars.SIGNPATH_ENABLED) and approve both signing requests."
             exit 1
           fi

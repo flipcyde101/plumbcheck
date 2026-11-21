@@ -12,7 +12,7 @@ Local regression tests for what your AI agent *does*: catch a wrong tool argumen
 
 ## Quick start
 
-**Windows app (no Node.js needed):** download `PlumbCheck-…-Windows-x64-Setup.exe` from the [latest release](https://github.com/stepan4002/plumbcheck/releases) and run it. From 1.0.0 the installer and app are signed ([code signing policy](#code-signing-policy)). Until the new signature builds reputation, SmartScreen may still ask you to confirm with **More info → Run anyway**.
+**Windows app (no Node.js needed):** download `PlumbCheck-…-Windows-x64-Setup.exe` from the [latest release](https://github.com/stepan4002/plumbcheck/releases) and run it. > **The Windows installer is not code-signed yet.** Windows SmartScreen will show "Windows protected your PC". Check the file against `SHA256SUMS.txt` from the same release (`Get-FileHash .\PlumbCheck-…-Setup.exe` in PowerShell), then choose **More info → Run anyway**. Free code signing through SignPath Foundation has been applied for and is **pending**; signed builds will follow in a 1.x release ([code signing policy](#code-signing-policy)).
 
 **From npm (Node.js 22+):**
 
@@ -216,6 +216,8 @@ Start with [CONTRIBUTING.md](CONTRIBUTING.md), [the roadmap](ROADMAP.md), and [t
 The source repository is [stepan4002/plumbcheck](https://github.com/stepan4002/plumbcheck). The npm package is [`plumbcheck`](https://www.npmjs.com/package/plumbcheck), published from this repository's release workflow with [npm provenance](https://docs.npmjs.com/generating-provenance-statements).
 
 ## Code signing policy
+
+**Status: pending.** PlumbCheck has applied to the SignPath Foundation program (20 November 2026). Until it is approved, Windows releases, including 1.0.0, are **unsigned**. The policy below applies from the first signed release.
 
 Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).
 

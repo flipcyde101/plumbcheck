@@ -201,8 +201,17 @@ export function startWorkbench(artifacts, diffs) {
   });
   $('export').addEventListener('click', () => download(JSON.stringify(report, null, 2), 'plumbcheck-report.json'));
   document.addEventListener('plumbcheck:report', event => {
-    try { const item = event.detail?.mode ? { report: event.detail, source: 'workspace' } : event.detail; const checked = artifacts.open(JSON.stringify(item?.report)); report = checked.value; viewingSavedReport = true; sourceName = item?.source === 'snapshot' ? 'Imported snapshot evidence · provenance unverified' : 'Saved workspace run'; resetSelection(); render(); showView('overview'); }
-    catch (error) { showError(error.message); }
+    try {
+      const item = event.detail?.mode ? { report: event.detail, source: 'workspace' } : event.detail;
+      const checked = artifacts.open(JSON.stringify(item?.report));
+      report = checked.value;
+      viewingSavedReport = true;
+      sourceName = item?.source === 'snapshot' ? 'Imported snapshot evidence · provenance unverified' : 'Saved workspace run';
+      resetSelection();
+      render();
+      showView('overview');
+      $('evidence-heading').focus();
+    } catch (error) { showError(error.message); }
   });
   render();
   if (studio) {

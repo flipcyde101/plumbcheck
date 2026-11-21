@@ -4,6 +4,20 @@ All notable changes to PlumbCheck are listed here. The project follows [Semantic
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-21
+
+A patch release: two keyboard-accessibility fixes, a second example agent and dependency updates. Thanks to @flipcyde101, who contributed all three code changes. Windows binaries are still unsigned while the SignPath Foundation application is pending; verify downloads against `SHA256SUMS.txt`.
+
+### Added
+- A calendar-booking example (`examples/calendar-booking/`, `npm run check:calendar` / `npm run demo:calendar`): an agent that must get approval before sending invites and must never delete events, plus a deliberately broken variant that fails with `APPROVAL_REQUIRED` and `DENIED_TOOL` (#22, @flipcyde101).
+
+### Fixed
+- Keyboard focus returns to **Save this test** after the builder saves, instead of falling back to the page; it is not moved if you already reached another control, and a failed focus call cannot break a completed save (#23, @flipcyde101).
+- **Inspect** in Workspace History moves keyboard focus to the **Execution evidence** heading of the opened report (#9, @flipcyde101).
+
+### Changed
+- Dependencies: Electron 45.3.4 (security patch), AI SDK provider patches (the OpenAI Responses provider now takes tool definitions only from tools registered in the call, not from replayed history), jsdom 31 for tests, and newer pinned GitHub Actions (checkout v7, upload-artifact v7, download-artifact v8, setup-python v7, setup-android v4). The release workflow was verified with a dry run before the action updates were merged.
+
 ## [1.0.0] - 2026-11-21
 
 PlumbCheck's first stable release. From here on the project follows Semantic Versioning: contract format v1, report v1, the CLI flags and exit codes, the JavaScript API, the Python adapter, the MCP tool names and the Windows data folder only change incompatibly in a new major version. The [stability policy](docs/STABILITY.md) lists what is stable and what ships experimental (Android, `plumbcheck-sync`, the assistant-host plugin, the Anthropic and Google providers).
@@ -78,7 +92,8 @@ First tagged release. Preview: not production-ready; see [release gates](release
 - Hosted agents (n8n, Zapier, OpenAI Assistants) and remote MCP are not supported yet.
 - The Windows installer is unsigned; the Android APK is debug-signed.
 
-[Unreleased]: https://github.com/stepan4002/plumbcheck/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/stepan4002/plumbcheck/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/stepan4002/plumbcheck/releases/tag/v1.0.1
 [1.0.0]: https://github.com/stepan4002/plumbcheck/releases/tag/v1.0.0
 [1.0.0-rc.1]: https://github.com/stepan4002/plumbcheck/releases/tag/v1.0.0-rc.1
 [0.2.0-preview.5]: https://github.com/stepan4002/plumbcheck/releases/tag/v0.2.0-preview.5

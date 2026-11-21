@@ -309,6 +309,21 @@ test('saving the first test leaves focus on the control a keyboard user reached 
   assert.equal(f.server.workspace.summary().projects.length, 1);
 });
 
+test('inspecting a saved run moves focus to the execution evidence heading', async t => {
+  const f = await fixture(t);
+  f.open(f.q.id);
+  await until(() => f.$('project-name').value === f.q.name);
+  const workspaceButton = f.dom.window.document.querySelector('[data-view="workspace"]');
+  workspaceButton.click();
+  f.$('run-project').click();
+  const inspect = () => f.$('run-history').querySelector('[data-report]');
+  await until(inspect);
+  inspect().focus();
+  inspect().click();
+  await until(() => !f.$('overview').hidden);
+  assert.equal(f.dom.window.document.activeElement.id, 'evidence-heading');
+});
+
 test('builder validation and cancellation preserve the existing project and render hostile-looking names as text', async t => {
   const f = await fixture(t);
   f.open(f.p.id); await until(() => f.$('project-name').value === f.p.name);

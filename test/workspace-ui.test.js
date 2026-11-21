@@ -14,6 +14,20 @@ const until = async predicate => {
   }
 };
 
+// jsdom 26 keeps focus on a control it disables. Chrome blurs that control first.
+function blurFocusedControlWhenDisabled(window, control) {
+  const owner = Object.getPrototypeOf(control);
+  const descriptor = Object.getOwnPropertyDescriptor(owner, 'disabled');
+  Object.defineProperty(owner, 'disabled', {
+    configurable: true,
+    get() { return descriptor.get.call(this); },
+    set(value) {
+      if (value && window.document.activeElement === this) this.blur();
+      descriptor.set.call(this, value);
+    },
+  });
+}
+
 // Execute the actual generated, inlined application in a DOM against a real
 // isolated Studio server. No user workspace, credentials or model calls are used.
 async function fixture(t, intercept, empty = false) {
@@ -247,6 +261,52 @@ test('no-JSON builder saves, exposes a real failure, fixes the same scenario and
   await f.restart();
   assert.equal(f.server.workspace.project(created.id).revision, 2);
   assert.equal(f.server.workspace.run(second.id).report.passed, true);
+});
+
+test('saving the first test returns keyboard focus to the builder control that started it', async t => {
+  const f = await fixture(t, null, true);
+  const root = f.$('scenario-builder');
+  const button = root.querySelector('[data-create]');
+  blurFocusedControlWhenDisabled(f.dom.window, button);
+  button.focus();
+  root.querySelector('form').dispatchEvent(new f.dom.window.Event('submit', { bubbles: true, cancelable: true }));
+  await until(() => /Saved revision 1/.test(root.querySelector('[data-message]').textContent));
+  assert.equal(f.dom.window.document.activeElement, button);
+});
+
+test('a focus failure after a saved builder test does not reject the completed save', async t => {
+  const rejections = [];
+  const f = await fixture(t, null, true);
+  f.dom.window.addEventListener('unhandledrejection', event => { rejections.push(event.reason); event.preventDefault(); });
+  const root = f.$('scenario-builder');
+  const button = root.querySelector('[data-create]');
+  blurFocusedControlWhenDisabled(f.dom.window, button);
+  button.focus();
+  button.focus = () => { throw new Error('focus unavailable'); };
+  root.querySelector('form').dispatchEvent(new f.dom.window.Event('submit', { bubbles: true, cancelable: true }));
+  await until(() => /Saved revision 1/.test(root.querySelector('[data-message]').textContent));
+  await new Promise(resolve => setTimeout(resolve, 20));
+  assert.deepEqual(rejections, []);
+  assert.equal(f.server.workspace.summary().projects.length, 1);
+});
+
+test('saving the first test leaves focus on the control a keyboard user reached while save was pending', async t => {
+  let release;
+  const f = await fixture(t, (path, perform, options) => path === '/api/projects' && options?.method === 'POST'
+    ? new Promise(resolve => { release = () => resolve(perform()); })
+    : perform(), true);
+  const root = f.$('scenario-builder');
+  const button = root.querySelector('[data-create]');
+  const next = f.dom.window.document.querySelector('[data-view="overview"]');
+  blurFocusedControlWhenDisabled(f.dom.window, button);
+  button.focus();
+  root.querySelector('form').dispatchEvent(new f.dom.window.Event('submit', { bubbles: true, cancelable: true }));
+  await until(() => button.disabled && release);
+  next.focus();
+  release();
+  await until(() => /Saved revision 1/.test(root.querySelector('[data-message]').textContent));
+  assert.equal(f.dom.window.document.activeElement, next);
+  assert.equal(f.server.workspace.summary().projects.length, 1);
 });
 
 test('builder validation and cancellation preserve the existing project and render hostile-looking names as text', async t => {

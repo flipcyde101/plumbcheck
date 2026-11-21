@@ -58,6 +58,8 @@ export function mountScenarioBuilder({ root, scenarios, onCreate }) {
   $('[data-template]').onclick = () => { if (!busy && confirm('Replace the builder fields with this template? Saved projects and the Contract draft will stay unchanged.')) load($('[data-template-kind]').value); };
   $('form').onsubmit = async event => {
     event.preventDefault(); if (busy) return;
+    const focused = document.activeElement;
+    const restoreFocus = root.contains(focused) ? focused : null;
     document.dispatchEvent(new CustomEvent('plumbcheck:feedback', { detail: { source: 'builder' } }));
     try {
       const kind = $('[data-guard-kind]').value;
@@ -67,7 +69,15 @@ export function mountScenarioBuilder({ root, scenarios, onCreate }) {
       const result = await onCreate(input);
       $('[data-message]').textContent = result === false ? 'Creation canceled. Your existing draft is unchanged.' : result?.message || 'Project saved. Run the real model test to see what the agent does, or the planned-call check to verify the draft.';
     } catch (error) { $('[data-message]').textContent = error.message; }
-    finally { busy = false; root.removeAttribute('aria-busy'); root.querySelectorAll('input,select,textarea,button').forEach(field => field.disabled = false); }
+    finally {
+      busy = false; root.removeAttribute('aria-busy'); root.querySelectorAll('input,select,textarea,button').forEach(field => field.disabled = false);
+      const active = document.activeElement;
+      const focusLost = !active || active === document.body || active === document.documentElement;
+      if (focusLost && restoreFocus?.isConnected && !restoreFocus.disabled) {
+        try { restoreFocus.focus({ preventScroll: true, focusVisible: true }); }
+        catch { try { restoreFocus.focus(); } catch { /* A failed focus call must not reject a completed save. */ } }
+      }
+    }
   };
   load('order');
 }

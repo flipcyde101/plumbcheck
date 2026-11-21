@@ -71,9 +71,11 @@ export function mountScenarioBuilder({ root, scenarios, onCreate }) {
     } catch (error) { $('[data-message]').textContent = error.message; }
     finally {
       busy = false; root.removeAttribute('aria-busy'); root.querySelectorAll('input,select,textarea,button').forEach(field => field.disabled = false);
-      if (restoreFocus?.isConnected && !restoreFocus.disabled) {
+      const active = document.activeElement;
+      const focusLost = !active || active === document.body || active === document.documentElement;
+      if (focusLost && restoreFocus?.isConnected && !restoreFocus.disabled) {
         try { restoreFocus.focus({ preventScroll: true, focusVisible: true }); }
-        catch { restoreFocus.focus(); }
+        catch { try { restoreFocus.focus(); } catch { /* A failed focus call must not reject a completed save. */ } }
       }
     }
   };

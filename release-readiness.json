@@ -1,44 +1,52 @@
 {
   "version": 1,
-  "channel": "preview",
+  "channel": "stable",
   "required": [
     {
       "id": "core-and-integrations",
+      "scope": "1.0",
       "status": "verified",
-      "evidence": "4a829a5: 208 core tests, seven MCP checks and packed TypeScript consumer check passed; all four Node 22/24 Windows/Linux CI jobs, Android unit/assembly/lint and Windows packaging/installed-helper workflows passed. Generated Windows and bundled Android DOM checks cover the first-test builder, same-case failure/fix, draft/storage preservation and feedback recovery. Actual builder-generated Qwen pass and wrong-argument evidence is retained. Native preview.5 visual, physical-phone and actual assistant-host checks remain pending. Exact run links and boundaries are in docs/VALIDATION.md."
+      "evidence": "Release workflow run 44828952980 on c5f564e (v1.0.0-rc.1): verify, ci (Node 22/24 on Windows and Linux, npm audit), Windows build, upgrade-path and Android all passed. Fix PR #19 (3969817) passed the same CI, Windows build, upgrade-path and Android jobs (runs 44836416834, 44836416864, 44836417091). Local: 338/338 tests. Re-runs automatically on the v1.0.0 tag. Details in docs/VALIDATION.md."
     },
     {
       "id": "windows-authenticode",
+      "scope": "post-1.0",
       "status": "pending",
-      "reason": "A publisher signing identity is required for the production Windows installer."
+      "reason": "Pending: SignPath Foundation application submitted 2026-11-20. Decided 2026-11-21 that 1.0.0 ships unsigned rather than wait; the release workflow signs automatically once SignPath is approved and vars.SIGNPATH_ENABLED is set. Verify with Get-AuthenticodeSignature on a signed installer and PlumbCheck.exe."
     },
     {
       "id": "windows-clean-machine",
-      "status": "pending",
-      "reason": "Native save dialogs and real OS-encrypted credential recovery passed locally; CI installed and checked the helper. Clean-account interactive install/uninstall and upgrade behavior still need verification."
+      "scope": "1.0",
+      "status": "verified",
+      "evidence": "2026-11-21, Windows Sandbox (fresh account): installed 0.2.0-preview.5, saved and ran a test, upgraded in place to 1.0.0-rc.1 (installer detected the existing install), project and run history kept, rerun passed, update toggle and MCP config checked, data kept across restart, uninstalled through Settings with AppData user data kept. Automated upgrade-path job passed in runs 44828952980 and 44836416864. Limits recorded in docs/VALIDATION.md."
     },
     {
       "id": "live-models",
-      "status": "pending",
-      "reason": "Ollama Qwen 3.5:4B has passed correct and deliberate-regression live tests with usage/evidence exports. A live cloud-provider account/model still needs authorized verification."
+      "scope": "1.0",
+      "status": "verified",
+      "evidence": "2026-11-20, OpenAI gpt-4.1-mini, npm run test:probe on 3969817: 6/6 as expected (2 controls passed; instructed delete, unapproved email, wrong final answer and injected instruction caught), 5,061 tokens in total. The model followed the injected delete and the unapproved send; PlumbCheck blocked both. Ollama qwen3.5:4b passed earlier. Anthropic stays experimental."
     },
     {
       "id": "assistant-hosts",
+      "scope": "experimental",
       "status": "pending",
       "reason": "Walk through actual supported assistant hosts; official SDK tests alone do not prove Claude or ChatGPT host compatibility."
     },
     {
       "id": "android-device",
+      "scope": "experimental",
       "status": "pending",
       "reason": "Verify the signed APK on real devices, including native Ollama LAN access, file pickers, Keystore persistence and HTTPS snapshot pairing. Emulator model tests passed; the physical-phone network path remains unverified."
     },
     {
       "id": "remote-service",
+      "scope": "experimental",
       "status": "pending",
       "reason": "Provision reviewed HTTPS hosting and verify deployment, device revocation, backups, privacy and operational controls."
     },
     {
       "id": "external-review",
+      "scope": "post-1.0",
       "status": "pending",
       "reason": "Complete independent security/accessibility/usability review and resolve findings."
     }

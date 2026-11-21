@@ -7,6 +7,7 @@ import { startWorkbench } from '../web/workbench.js';
 import { startWorkspaceUI } from '../web/workspace.js';
 import { createScenarioTools } from './scenario-builder.js';
 import { mountScenarioBuilder } from '../web/scenario-builder.js';
+import { version } from './version.js';
 
 export const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
@@ -21,7 +22,7 @@ export async function toHtml(report) {
   // JSON lives in a non-executable script element. Escape < to prevent closing it.
   const payload = JSON.stringify(redact(report)).replace(/</g, '\\u003c');
   const helpers = `(${createArtifactTools.toString()})(${redact.toString()}, (${createContractValidator.toString()})())`;
-  const bindings = { REPORT: payload, ARTIFACT_TOOLS: helpers, DIFF_TOOLS: `(${createDiffTools.toString()})(${redact.toString()})`, SCENARIO_TOOLS: `(${createScenarioTools.toString()})(${createContractValidator.toString()}())`, SCENARIO_BUILDER: `(${mountScenarioBuilder.toString()})`, WORKBENCH: `(${startWorkbench.toString()})`, WORKSPACE: `(${startWorkspaceUI.toString()})` };
+  const bindings = { REPORT: payload, ARTIFACT_TOOLS: helpers, DIFF_TOOLS: `(${createDiffTools.toString()})(${redact.toString()})`, SCENARIO_TOOLS: `(${createScenarioTools.toString()})(${createContractValidator.toString()}())`, SCENARIO_BUILDER: `(${mountScenarioBuilder.toString()})`, WORKBENCH: `(${startWorkbench.toString()})`, WORKSPACE: `(${startWorkspaceUI.toString()})`, VERSION: escapeHtml(version) };
   // One pass: marker-like strings inside report data must never be reprocessed.
-  return template.replace(/\/\*__(REPORT|ARTIFACT_TOOLS|DIFF_TOOLS|SCENARIO_TOOLS|SCENARIO_BUILDER|WORKBENCH|WORKSPACE)__\*\/null/g, (_match, key) => bindings[key]);
+  return template.replace(/\/\*__(REPORT|ARTIFACT_TOOLS|DIFF_TOOLS|SCENARIO_TOOLS|SCENARIO_BUILDER|WORKBENCH|WORKSPACE|VERSION)__\*\/null/g, (_match, key) => bindings[key]);
 }

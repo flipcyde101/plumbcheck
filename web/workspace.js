@@ -215,6 +215,37 @@ export function startWorkspaceUI(scenarios, mountScenarioBuilder) {
     $('control-setup').hidden = false;
     $('control-setup').onclick = async () => { try { $('control-config').textContent = JSON.stringify(await window.plumbcheckDesktop.controlSetup(), null, 2); notice('Copy this configuration into a compatible MCP desktop client. Keep PlumbCheck open while using it.'); } catch (e) { notice(e.message, true); } };
   }
+  // Windows app only: an opt-out notice that links to the release page. Nothing is installed.
+  const desktop = window.plumbcheckDesktop;
+  if (typeof desktop?.updateStatus === 'function' && typeof desktop?.setUpdateChecks === 'function') {
+    let shownUpdate = null, dismissedUpdate = null;
+    const showUpdate = status => {
+      const url = typeof status?.url === 'string' && status.url.startsWith('https://github.com/stepan4002/plumbcheck/releases/') ? status.url : null;
+      $('update-toggle').checked = status?.enabled !== false;
+      shownUpdate = status?.available && url && typeof status.version === 'string' ? status.version : null;
+      $('update-banner').hidden = !shownUpdate || shownUpdate === dismissedUpdate;
+      if (!shownUpdate) return;
+      $('update-text').textContent = `PlumbCheck ${shownUpdate} is available.`;
+      $('update-link').href = url;
+    };
+    // Answers can arrive out of order (a check may wait on the network); only the newest request may update the UI.
+    let latestRequest = 0;
+    const request = async call => { const id = ++latestRequest; const status = await call(); return id === latestRequest ? status : undefined; };
+    // Checks are on by default. The user can opt out at once; their choice wins over any earlier answer.
+    $('update-toggle').checked = true;
+    $('update-toggle-row').hidden = false;
+    $('update-dismiss').onclick = () => { dismissedUpdate = shownUpdate; $('update-banner').hidden = true; };
+    $('update-toggle').onchange = async () => {
+      const enabled = $('update-toggle').checked;
+      try {
+        const status = await request(() => desktop.setUpdateChecks(enabled));
+        if (!status) return;
+        showUpdate(status);
+        notice(enabled ? 'Update checks are on. PlumbCheck asks GitHub at most once a day.' : 'Update checks are off. PlumbCheck will not contact GitHub.');
+      } catch { $('update-toggle').checked = !enabled; notice('The update setting could not be saved.', true); }
+    };
+    request(() => desktop.updateStatus()).then(status => { if (status) showUpdate(status); }, () => {});
+  }
   async function connect(initial = false) {
     const requestSession = session;
     const previousNotice = $('workspace-message').textContent;

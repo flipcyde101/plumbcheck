@@ -1,5 +1,7 @@
 # Reusable build prompt
 
+> **Historical.** This document records planning or QA from the 0.2 previews and is kept for reference. It does not describe 1.0. For current direction see [ROADMAP.md](../ROADMAP.md); for what 1.x promises see [STABILITY.md](STABILITY.md).
+
 Use this prompt to continue building PlumbCheck. Read the current repository first; do not restart it from scratch.
 
 ---

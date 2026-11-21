@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
-import { mkdir, readFile, writeFile, rename, unlink, readdir } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, unlink, readdir } from 'node:fs/promises';
+import { replaceFile } from './replace-file.js';
 import { randomBytes, createHash, randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { jsonBody } from './workspace-http.js';
@@ -29,7 +30,7 @@ export async function startSyncRelay({ directory, port = 4181, ownerToken } = {}
     const operation = queue.then(async () => {
       const next = { ...devices }; update(next);
       const temporary = `${devicesFile}.${randomUUID()}.tmp`;
-      try { await writeFile(temporary, JSON.stringify(next), { flag: 'wx', mode: 0o600 }); await rename(temporary, devicesFile); devices = next; }
+      try { await writeFile(temporary, JSON.stringify(next), { flag: 'wx', mode: 0o600 }); await replaceFile(temporary, devicesFile); devices = next; }
       finally { await unlink(temporary).catch(e => { if (e.code !== 'ENOENT') throw e; }); }
     });
     queue = operation.catch(() => {}); return operation;

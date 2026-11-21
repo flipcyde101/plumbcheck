@@ -1,5 +1,7 @@
 # PlumbCheck platform roadmap
 
+> **Historical.** This document records planning or QA from the 0.2 previews and is kept for reference. It does not describe 1.0. For current direction see [ROADMAP.md](../ROADMAP.md); for what 1.x promises see [STABILITY.md](STABILITY.md).
+
 Updated 16 November 2026 from the founder's Windows, Android, sync, multi-agent, and AI integration requirements. This is the product direction and delivery plan. Unchecked items are planned capabilities, not compatibility claims or shipped features. Milestones have exit criteria rather than unverified release dates.
 
 ## Product we are building

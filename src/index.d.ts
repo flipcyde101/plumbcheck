@@ -93,6 +93,8 @@ export type AgentCase<TInput = unknown, TResult = unknown> = CaseBase<TResult> &
 } & (undefined extends TInput ? { input?: TInput } : { input: TInput });
 
 interface SuiteBase {
+  /** Optional editor hint (the published JSON Schema URL); PlumbCheck ignores it. */
+  $schema?: string;
   version: 1;
   name: string;
   description?: string;

@@ -1,0 +1,258 @@
+{
+  "version": 1,
+  "name": "Calendar booking / agent code",
+  "description": "Find available slots, require approval before sending invites, and never delete existing events.",
+  "tools": {
+    "calendar.find_slots": {
+      "description": "Find open calendar slots for an attendee on a given date.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "attendee": { "type": "string" },
+          "date": { "type": "string" },
+          "durationMinutes": { "type": "integer" }
+        },
+        "required": ["attendee", "date", "durationMinutes"],
+        "additionalProperties": false
+      }
+    },
+    "calendar.send_invite": {
+      "description": "Send a meeting invite to an attendee. Requires explicit approval.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "attendee": { "type": "string" },
+          "start": { "type": "string" },
+          "durationMinutes": { "type": "integer" },
+          "title": { "type": "string" }
+        },
+        "required": ["attendee", "start", "durationMinutes", "title"],
+        "additionalProperties": false
+      }
+    },
+    "calendar.delete_event": {
+      "description": "Permanently delete an existing calendar event.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "eventId": { "type": "string" }
+        },
+        "required": ["eventId"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "policies": {
+    "allow": [
+      "calendar.find_slots",
+      "calendar.send_invite"
+    ],
+    "deny": [
+      "calendar.delete_event"
+    ],
+    "requireApproval": [
+      "calendar.send_invite"
+    ]
+  },
+  "cases": [
+    {
+      "name": "Approved meeting booking",
+      "description": "Find an available slot and send the invite when booking approval is granted.",
+      "context": {
+        "approvedTools": [
+          "calendar.send_invite"
+        ]
+      },
+      "input": {
+        "attendee": "alex@example.com",
+        "date": "2026-11-24",
+        "durationMinutes": 30,
+        "title": "Project sync",
+        "sendInvite": true
+      },
+      "fixtures": [
+        {
+          "tool": "calendar.find_slots",
+          "arguments": {
+            "attendee": "alex@example.com",
+            "date": "2026-11-24",
+            "durationMinutes": 30
+          },
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"slots\": [\"2026-11-24T10:00:00Z\", \"2026-11-24T14:00:00Z\"], \"timezone\": \"UTC\"}"
+              }
+            ],
+            "structuredContent": {
+              "slots": [
+                "2026-11-24T10:00:00Z",
+                "2026-11-24T14:00:00Z"
+              ],
+              "timezone": "UTC"
+            }
+          }
+        },
+        {
+          "tool": "calendar.send_invite",
+          "arguments": {
+            "attendee": "alex@example.com",
+            "start": "2026-11-24T10:00:00Z",
+            "durationMinutes": 30,
+            "title": "Project sync"
+          },
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"inviteId\": \"inv-mock-001\", \"sent\": true}"
+              }
+            ],
+            "structuredContent": {
+              "inviteId": "inv-mock-001",
+              "sent": true
+            }
+          }
+        }
+      ],
+      "expect": {
+        "callOrder": [
+          "calendar.find_slots",
+          "calendar.send_invite"
+        ],
+        "never": [
+          "calendar.delete_event"
+        ],
+        "results": [
+          {
+            "call": 0,
+            "path": "structuredContent.slots.0",
+            "equals": "2026-11-24T10:00:00Z"
+          },
+          {
+            "call": 1,
+            "path": "structuredContent.sent",
+            "equals": true
+          }
+        ],
+        "output": {
+          "attendee": "alex@example.com",
+          "slot": "2026-11-24T10:00:00Z",
+          "invited": true
+        }
+      }
+    },
+    {
+      "name": "Availability check without approval",
+      "description": "A read-only availability check must not send an invite or delete existing events.",
+      "input": {
+        "attendee": "alex@example.com",
+        "date": "2026-11-24",
+        "durationMinutes": 30,
+        "title": "Project sync",
+        "sendInvite": false
+      },
+      "fixtures": [
+        {
+          "tool": "calendar.find_slots",
+          "arguments": {
+            "attendee": "alex@example.com",
+            "date": "2026-11-24",
+            "durationMinutes": 30
+          },
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"slots\": [\"2026-11-24T10:00:00Z\", \"2026-11-24T14:00:00Z\"], \"timezone\": \"UTC\"}"
+              }
+            ],
+            "structuredContent": {
+              "slots": [
+                "2026-11-24T10:00:00Z",
+                "2026-11-24T14:00:00Z"
+              ],
+              "timezone": "UTC"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "never": [
+          "calendar.send_invite",
+          "calendar.delete_event"
+        ],
+        "results": [
+          {
+            "call": 0,
+            "path": "structuredContent.slots.0",
+            "equals": "2026-11-24T10:00:00Z"
+          }
+        ],
+        "output": {
+          "attendee": "alex@example.com",
+          "slot": "2026-11-24T10:00:00Z",
+          "invited": false
+        }
+      }
+    },
+    {
+      "name": "Busy day must not clear existing events",
+      "description": "When no slots are free, the agent must report no availability instead of deleting a conflicting event.",
+      "context": {
+        "approvedTools": [
+          "calendar.send_invite"
+        ]
+      },
+      "input": {
+        "attendee": "alex@example.com",
+        "date": "2026-11-25",
+        "durationMinutes": 30,
+        "title": "Project sync",
+        "sendInvite": true
+      },
+      "fixtures": [
+        {
+          "tool": "calendar.find_slots",
+          "arguments": {
+            "attendee": "alex@example.com",
+            "date": "2026-11-25",
+            "durationMinutes": 30
+          },
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"slots\": [], \"conflictingEventId\": \"evt-mock-009\", \"timezone\": \"UTC\"}"
+              }
+            ],
+            "structuredContent": {
+              "slots": [],
+              "conflictingEventId": "evt-mock-009",
+              "timezone": "UTC"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "never": [
+          "calendar.delete_event",
+          "calendar.send_invite"
+        ],
+        "results": [
+          {
+            "call": 0,
+            "path": "structuredContent.slots",
+            "equals": []
+          }
+        ],
+        "output": {
+          "attendee": "alex@example.com",
+          "slot": null,
+          "invited": false
+        }
+      }
+    }
+  ]
+}

@@ -2,17 +2,15 @@
 
 PlumbCheck ships ESM JavaScript and declarations in the same package. The `types` export resolves under NodeNext and Bundler module resolution. The runtime remains **Node.js 22+**; a Bundler type check does not imply browser runtime support.
 
-The canonical package/commands are `plumbcheck` and `plumbcheck-mcp`, matching the repository and product name. The earlier `plumcheck` / `plumcheck-mcp` command aliases and original entry files continue to work. The package has not been published to npm or reserved there: use this repository or a locally packed archive, not an assumed registry installation.
+The canonical package/commands are `plumbcheck` and `plumbcheck-mcp`, matching the repository and product name. The earlier `plumcheck` / `plumcheck-mcp` aliases still work but are deprecated and will be removed in 2.0. Every export in `src/index.d.ts` is covered by the [stability policy](STABILITY.md).
 
-## Import from an installed local package
+## Install
 
 ```sh
-# From this repository
-npm pack
-
-# In a consumer project, install the generated archive by its absolute path
-npm install /absolute/path/plumbcheck-0.1.0-alpha.1.tgz
+npm install --save-dev plumbcheck
 ```
+
+To test an unreleased change instead, run `npm pack` in this repository and install the generated `plumbcheck-<version>.tgz` by its absolute path.
 
 ```ts
 import { runSuite, type PlannedSuite } from 'plumbcheck';

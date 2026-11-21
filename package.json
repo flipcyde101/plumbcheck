@@ -1,6 +1,6 @@
 {
   "name": "plumbcheck",
-  "version": "0.2.0-preview.5",
+  "version": "1.0.0",
   "description": "Test what your AI automation does before it does it. Local tool-call contracts, fixture replay, and CI reports.",
   "type": "module",
   "license": "MIT",
@@ -37,7 +37,21 @@
     "src",
     "web",
     "examples",
-    "docs",
+    "schema",
+    "adapters/python/plumbcheck.py",
+    "adapters/python/README.md",
+    "docs/CONTRACTS.md",
+    "docs/CONNECT_YOUR_AGENT.md",
+    "docs/MCP.md",
+    "docs/TYPESCRIPT.md",
+    "docs/AGENT_TESTING.md",
+    "docs/ASSISTANT_INTEGRATION.md",
+    "docs/WORKBENCH.md",
+    "docs/WINDOWS_APP.md",
+    "docs/APP_WORKSPACE.md",
+    "docs/STABILITY.md",
+    "docs/PRIVACY.md",
+    "docs/TROUBLESHOOTING.md",
     "ROADMAP.md",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
@@ -58,11 +72,14 @@
     "mobile:preview": "node scripts/preview-mobile.mjs",
     "plugin:build": "node scripts/build-plugin.mjs",
     "release:check": "node scripts/release-check.mjs",
+    "version:set": "node scripts/set-version.mjs",
     "sbom": "node scripts/build-sbom.mjs",
     "check": "node bin/plumbcheck.js run examples/customer-support/safe.json",
     "example:sdk": "node examples/customer-support/agent.js",
     "check:agent": "node bin/plumbcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/support-agent.js --out reports/agent",
     "demo:agent": "node bin/plumbcheck.js run examples/customer-support/agent-contract.json --agent examples/customer-support/regressed-agent.js --out reports/regressed-agent",
+    "check:calendar": "node bin/plumbcheck.js run examples/calendar-booking/agent-contract.json --agent examples/calendar-booking/booking-agent.js --out reports/calendar-agent",
+    "demo:calendar": "node bin/plumbcheck.js run examples/calendar-booking/agent-contract.json --agent examples/calendar-booking/regressed-agent.js --out reports/regressed-calendar-agent",
     "test:probe": "node scripts/probe-model.mjs"
   },
   "keywords": [
@@ -76,14 +93,15 @@
     "ci"
   ],
   "dependencies": {
-    "@ai-sdk/anthropic": "4.0.105",
-    "@ai-sdk/google": "4.0.121",
-    "@ai-sdk/openai": "4.0.118",
+    "@ai-sdk/anthropic": "4.0.106",
+    "@ai-sdk/google": "4.0.122",
+    "@ai-sdk/openai": "4.0.121",
     "@modelcontextprotocol/sdk": "1.32.2",
-    "ai": "7.0.173",
+    "ai": "7.0.176",
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "ajv": "8.20.0",
     "esbuild": "0.28.2",
     "jsdom": "26.1.0"
   }

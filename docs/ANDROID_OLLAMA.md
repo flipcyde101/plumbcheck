@@ -1,5 +1,7 @@
 # Connect Android to Ollama
 
+> **Experimental.** This surface ships with PlumbCheck 1.0 but has no compatibility promise and can change in any release. See [STABILITY.md](STABILITY.md#experimental).
+
 Available in **0.2.0-preview.2**. Install the Android APK, then use **Connect Ollama** inside PlumbCheck. The interface is bundled in the application. A hosted website is not required.
 
 ## First model test
@@ -23,6 +25,8 @@ Limits are 180 seconds per run, four model steps per case, 1,024 output tokens p
 Server address and model ID are saved locally. The two consent checkboxes reset when the interface reloads. No cloud API key is stored by this connector. Optional snapshot sync is separate and needs an HTTPS relay; it does not relay inference or automatically keep these devices in sync.
 
 ## Connection diagnostics
+
+See [Troubleshoot Ollama connections](TROUBLESHOOTING.md) for the error messages shown during discovery and model runs.
 
 **Network details** reports Android version, active transport, and target SDK. The app targets SDK 36. Android documents implicit local-network access for apps targeting below 37; targeting 37 will require the new runtime permission. A browser has its own permissions and networking behavior. See [Android local-network protection](https://developer.android.com/privacy-and-security/local-network-permission).
 

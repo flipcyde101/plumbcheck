@@ -249,6 +249,26 @@ test('no-JSON builder saves, exposes a real failure, fixes the same scenario and
   assert.equal(f.server.workspace.run(second.id).report.passed, true);
 });
 
+test('saving the first test returns keyboard focus to the builder control that started it', async t => {
+  const f = await fixture(t, null, true);
+  const root = f.$('scenario-builder');
+  const button = root.querySelector('[data-create]');
+  const owner = Object.getPrototypeOf(button);
+  const descriptor = Object.getOwnPropertyDescriptor(owner, 'disabled');
+  Object.defineProperty(owner, 'disabled', {
+    configurable: true,
+    get() { return descriptor.get.call(this); },
+    set(value) {
+      if (value && f.dom.window.document.activeElement === this) this.blur();
+      descriptor.set.call(this, value);
+    },
+  });
+  button.focus();
+  root.querySelector('form').dispatchEvent(new f.dom.window.Event('submit', { bubbles: true, cancelable: true }));
+  await until(() => /Saved revision 1/.test(root.querySelector('[data-message]').textContent));
+  assert.equal(f.dom.window.document.activeElement, button);
+});
+
 test('builder validation and cancellation preserve the existing project and render hostile-looking names as text', async t => {
   const f = await fixture(t);
   f.open(f.p.id); await until(() => f.$('project-name').value === f.p.name);
